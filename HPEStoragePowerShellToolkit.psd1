@@ -12,7 +12,7 @@
 # RootModule = ''
 
 # Version number of this module.
-ModuleVersion = '3.1.0.0'
+ModuleVersion = '3.2.0.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -27,7 +27,7 @@ Author = 'Hewlett Packard Enterprise Development LP'
 CompanyName = 'Hewlett Packard Enterprise Development LP'
 
 # Copyright statement for this module
-Copyright = '© 2020,2021 Hewlett Packard Enterprise Development LP'
+Copyright = '© 2020,2021,2023 Hewlett Packard Enterprise Development LP'
 
 # Description of the functionality provided by this module
 Description = 'HPE Alletra 9000 and Primera and 3PAR PowerShell Toolkit provides storage administrators the convenience of managing HPE Alletra 9000 and HPE Primera and HPE 3PAR Storage Systems from a Microsoft Windows PowerShell environment.'
@@ -67,51 +67,51 @@ PowerShellVersion = '3.0'
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = @('.\GLOBAL\VS-Functions.psm1', 
-               '.\GLOBAL\Logger.psm1', 
-               '.\CLI\AdaptiveOptimization.psm1', 
-               '.\CLI\ConfigWebServicesAPI.psm1', 
-               '.\CLI\CPGManagement.psm1', 
-               '.\CLI\DiskEnclosureManagement.psm1', 
-               '.\CLI\DomainManagement.psm1', 
-               '.\CLI\FilePersonaManagement.psm1', 
-               '.\CLI\Flashcache.psm1', 
-               '.\CLI\HealthAndAlertManagement.psm1', 
-               '.\CLI\HostManagement.psm1', 
-               '.\CLI\Internal.psm1', 
-               '.\CLI\InventoryManagement.psm1', 
-               '.\CLI\MaintenanceMode.psm1', 
-               '.\CLI\NodeSubsystemManagement.psm1', 
-               '.\CLI\PerformanceManagement.psm1', 
-               '.\CLI\Replication.psm1', 
-               '.\CLI\ServiceCommands.psm1', 
-               '.\CLI\SnapShotManagement.psm1', 
-               '.\CLI\Sparing.psm1', 
-               '.\CLI\SystemManager.psm1', 
-               '.\CLI\SystemReporter.psm1', 
-               '.\CLI\TaskManagement.psm1', 
-			   '.\CLI\CimManagement.psm1', 
-               '.\CLI\UserManagement.psm1', 
-               '.\CLI\Vasa.psm1', 
-               '.\CLI\StorageFederation.psm1', 
-               '.\CLI\VirtualVolumeManagement.psm1', 
-               '.\CLI\vLunManagement.psm1', 
-               '.\WSAPI\AoConfigurationInformation.psm1', 
-               '.\WSAPI\AvailableSpace.psm1', 
-               '.\WSAPI\CopyOperations.psm1', 
-               '.\WSAPI\CpgManagement.psm1', 
-               '.\WSAPI\FilePersona.psm1', 
-               '.\WSAPI\FlashCacheOperations.psm1', 
-               '.\WSAPI\HostManagement.psm1', 
-               '.\WSAPI\HostSetsAndVirtualVolumeSets.psm1', 
-               '.\WSAPI\PortsAndSwitches.psm1', 
-               '.\WSAPI\RemoteCopy.psm1', 
-               '.\WSAPI\SessionKeysAndWsapiSystemAccess.psm1', 
-               '.\WSAPI\StorageVolumes.psm1', 
-               '.\WSAPI\SystemEvents.psm1', 
-               '.\WSAPI\SystemInformationQueriesAndManagement.psm1', 
-               '.\WSAPI\SystemReporter.psm1', 
-               '.\WSAPI\VirtualLUNs.psm1', 
-               '.\WSAPI\WsapiUserAndRoleInformation.psm1')
+                '.\GLOBAL\Logger.psm1', 
+                '.\CLI\AdaptiveOptimization.psm1', 
+                '.\CLI\ConfigWebServicesAPI.psm1', 
+                '.\CLI\CPGManagement.psm1', 
+                '.\CLI\DiskEnclosureManagement.psm1', 
+                '.\CLI\DomainManagement.psm1', 
+                '.\CLI\FilePersonaManagement.psm1', 
+                '.\CLI\Flashcache.psm1', 
+                '.\CLI\HealthAndAlertManagement.psm1', 
+                '.\CLI\HostManagement.psm1', 
+                '.\CLI\Internal.psm1', 
+                '.\CLI\InventoryManagement.psm1', 
+                '.\CLI\MaintenanceMode.psm1', 
+                '.\CLI\NodeSubsystemManagement.psm1', 
+                '.\CLI\PerformanceManagement.psm1', 
+                '.\CLI\Replication.psm1', 
+                '.\CLI\ServiceCommands.psm1', 
+                '.\CLI\SnapShotManagement.psm1', 
+                '.\CLI\Sparing.psm1', 
+                '.\CLI\SystemManager.psm1', 
+                '.\CLI\SystemReporter.psm1', 
+                '.\CLI\TaskManagement.psm1', 
+                '.\CLI\CimManagement.psm1', 
+                '.\CLI\UserManagement.psm1', 
+                '.\CLI\Vasa.psm1', 
+                '.\CLI\StorageFederation.psm1', 
+                '.\CLI\VirtualVolumeManagement.psm1', 
+                '.\CLI\vLunManagement.psm1', 
+                '.\WSAPI\AoConfigurationInformation.psm1', 
+                '.\WSAPI\AvailableSpace.psm1', 
+                '.\WSAPI\CopyOperations.psm1', 
+                '.\WSAPI\CpgManagement.psm1', 
+                '.\WSAPI\FilePersona.psm1', 
+                '.\WSAPI\FlashCacheOperations.psm1', 
+                '.\WSAPI\HostManagement.psm1', 
+                '.\WSAPI\HostSetsAndVirtualVolumeSets.psm1', 
+                '.\WSAPI\PortsAndSwitches.psm1', 
+                '.\WSAPI\RemoteCopy.psm1', 
+                '.\WSAPI\SessionKeysAndWsapiSystemAccess.psm1', 
+                '.\WSAPI\StorageVolumes.psm1', 
+                '.\WSAPI\SystemEvents.psm1', 
+                '.\WSAPI\SystemInformationQueriesAndManagement.psm1', 
+                '.\WSAPI\SystemReporter.psm1', 
+                '.\WSAPI\VirtualLUNs.psm1', 
+                '.\WSAPI\WsapiUserAndRoleInformation.psm1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = '*'
@@ -140,9 +140,8 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = 'HPE Alletra PS Cmdlets', 'HPE Primera PS Cmdlets', 'HPE 3PAR PS Cmdlets', 'HPE Alletra CLI', 'HPE Primera CLI', 
-               'HPE 3PAR CLI', 'HPE Alletra WSAPI', 'HPE Primera WSAPI', 'HPE 3PAR WSAPI', '3PAR PSTK', 
-               'PRIMERA PSTK', 'ALLETRA PSTK'
+        Tags = @('Alletra' , 'Primera' , '3PAR' , 'CLI' , 
+		'WSAPI' , 'PSTK')
 
         # A URL to the license for this module.
         # LicenseUri = 'https://github.com/HewlettPackard/hpe3par_pstoolkit/blob/master/LICENSE.txt'
