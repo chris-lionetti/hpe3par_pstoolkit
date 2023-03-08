@@ -5,19 +5,12 @@
 ##
 ##	Description: 	CPG Management cmdlets 
 ##		
-##	Created:		February 2020
-##	Last Modified:	February 2020
-##	History:		v3.0 - Created	
-#####################################################################################
 
-$Info = "INFO:"
+$Info  = "INFO:"
 $Debug = "DEBUG:"
 $global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-############################################################################################################################################
-## FUNCTION New-Cpg_WSAPI
-############################################################################################################################################
 Function New-Cpg_WSAPI 
 {
 <#
@@ -101,13 +94,6 @@ Function New-Cpg_WSAPI
 	Disks must be of the specified speed.
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : New-Cpg_WSAPI    
-    LASTEDIT: February 2020
-    KEYWORDS: New-Cpg_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
 Param(	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of the CPG.')]
@@ -475,13 +461,6 @@ Function Update-Cpg_WSAPI
 	
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command	
-.Notes
-    NAME    : Update-Cpg_WSAPI    
-    LASTEDIT: February 2020
-    KEYWORDS: Update-Cpg_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
 Param(
@@ -777,13 +756,6 @@ Function Remove-Cpg_WSAPI
     Specify name of the CPG.
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Remove-Cpg_WSAPI     
-    LASTEDIT: February 2020
-    KEYWORDS: Remove-Cpg_WSAPI 
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
 Param(	[Parameter(ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of CPG.')]
@@ -845,13 +817,6 @@ Function Get-Cpg_WSAPI
 	Specify name of the cpg to be listed
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Get-Cpg_WSAPI   
-    LASTEDIT: February 2020
-    KEYWORDS: Get-Cpg_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
 Param(	[Parameter(ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'CPG Name')]

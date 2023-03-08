@@ -52,13 +52,6 @@ Function New-VvSnapshot_WSAPI
 	The name of the volume set to which the system adds your created snapshots. If the volume set does not exist, it will be created.
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : New-VvSnapshot_WSAPI    
-    LASTEDIT: 13/01/2018
-    KEYWORDS: New-VvSnapshot_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0     
 #>
 [CmdletBinding()]
 Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]		$VolumeName,
@@ -172,13 +165,6 @@ Function New-VvListGroupSnapshot_WSAPI
 	The name of the volume set to which the system adds your created snapshots. If the volume set does not exist, it will be created.
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : New-VvListGroupSnapshot_WSAPI    
-    LASTEDIT: 01/02/2018
-    KEYWORDS: New-VvListGroupSnapshot_WSAPI
-.Link
-	http://www.hpe.com
-	Requires PS -Version 3.0     
 #>
 [CmdletBinding()]
 Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeName,
@@ -346,13 +332,6 @@ Function New-VvPhysicalCopy_WSAPI
 	LOW : Low priority.
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : New-VvPhysicalCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: New-VvPhysicalCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0     
 #>
 [CmdletBinding()]
 Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]		$VolumeName,
@@ -393,44 +372,19 @@ Process
 				{	return "Specifies the destination CPG for an online copy."
 				}
 		}	
-    If ($WWN) 
-		{	$ParameterBody["WWN"] = "$($WWN)"
-		}
-	If ($TPVV) 
-		{	$ParameterBody["tpvv"] = $true
-		}
-	If ($TDVV) 
-		{	$ParameterBody["tdvv"] = $true
-		}
-	If ($Reduce) 
-		{	$ParameterBody["reduce"] = $true
-		}		
-	If ($SnapCPG) 
-		{	$ParameterBody["snapCPG"] = "$($SnapCPG)"
-		}
-	If ($SkipZero) 
-		{	$ParameterBody["skipZero"] = $true
-		}
-	If ($Compression) 
-		{	$ParameterBody["compression"] = $true
-		}
-	If ($SaveSnapshot) 
-		{	$ParameterBody["saveSnapshot"] = $SaveSnapshot
-		}
-	If ($Priority) 
-		{	if($Priority.ToUpper() -eq "HIGH")
-				{	$ParameterBody["priority"] = 1
-				}
-			elseif($Priority.ToUpper() -eq "MED")
-				{	$ParameterBody["priority"] = 2
-				}
-			elseif($Priority.ToUpper() -eq "LOW")
-				{	$ParameterBody["priority"] = 3
-				}
-			else
-				{	return "Priority value is wrong : $Priority , value should be [HIGH | MED | LOW ]."
-				}
-		}
+    If ($WWN) 			{	$ParameterBody["WWN"] = "$($WWN)"		}
+	If ($TPVV) 			{	$ParameterBody["tpvv"] = $true			}
+	If ($TDVV) 			{	$ParameterBody["tdvv"] = $true			}
+	If ($Reduce)		{	$ParameterBody["reduce"] = $true		}		
+	If ($SnapCPG)		{	$ParameterBody["snapCPG"] = "$($SnapCPG)"}
+	If ($SkipZero)		{	$ParameterBody["skipZero"] = $true		}
+	If ($Compression) 	{	$ParameterBody["compression"] = $true	}
+	If ($SaveSnapshot) 	{	$ParameterBody["saveSnapshot"] = $SaveSnapshot}
+	If ($Priority) 		{	if		($Priority.ToUpper() -eq "HIGH")	{	$ParameterBody["priority"] = 1}
+							elseif	($Priority.ToUpper() -eq "MED")		{	$ParameterBody["priority"] = 2}
+							elseif	($Priority.ToUpper() -eq "LOW")		{	$ParameterBody["priority"] = 3}
+							else	{return "Priority value is wrong : $Priority , value should be [HIGH | MED | LOW ]."	}
+						}
 	if($ParameterBody.Count -gt 0)
 		{	$body["parameters"] = $ParameterBody 
 		}
@@ -1178,13 +1132,6 @@ Function Update-VvOrVvSets_WSAPI
 	Specifies that if the virtual copy is read-write, the command updates the read-only parent volume also.
 .PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Update-VvOrVvSets_WSAPI    
-    LASTEDIT: 06/02/2018
-    KEYWORDS: Update-VvOrVvSets_WSAPI
-.Link
-	http://www.hpe.com
-	Requires PS -Version 3.0     
 #>
 [CmdletBinding()]
 Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String[]]	$VolumeSnapshotList,

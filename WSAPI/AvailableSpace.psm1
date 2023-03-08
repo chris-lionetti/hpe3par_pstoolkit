@@ -5,10 +5,6 @@
 ##
 ##	Description: 	Available space cmdlets 
 ##		
-##	Created:		February 2020
-##	Last Modified:	February 2020
-##	History:		v3.0 - Created	
-#####################################################################################
 
 $Info   = "INFO:"
 $Debug  = "DEBUG:"
@@ -27,16 +23,9 @@ Function Get-CapacityInfo_WSAPI
 .EXAMPLE
   Get-CapacityInfo_WSAPI
 	Display Overall system capacity.
-.Notes
-  NAME    : Get-CapacityInfo_WSAPI   
-  LASTEDIT: February 2020
-  KEYWORDS: Get-CapacityInfo_WSAPI
-.Link
-  http://www.hpe.com
-  Requires PS -Version 3.0
 #>
 [CmdletBinding()]
-Param(  [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
+Param(  [Parameter(Position=0, ValueFromPipeline=$true)]
         $WsapiConnection = $global:WsapiConnection
     )
 Process
