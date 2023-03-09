@@ -1,0 +1,26 @@
+03/08/2023 19:13:33 DEBUG: Running: Invoke-WebRequest for credential data.
+03/08/2023 19:13:33 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 19:13:33 DEBUG: Running: Validate the session key
+03/08/2023 19:13:33 INFO:  End: Connected
+03/08/2023 19:13:33 DEBUG: End: Test-WSAPIConnection
+03/08/2023 19:13:33 DEBUG: Request: Request Invoke-WSAPI URL : /system TYPE : GET 
+03/08/2023 19:13:33 DEBUG: Running: Constructing header.
+03/08/2023 19:13:33 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 19:13:33 INFO: SUCCESS:successfully Executed
+03/08/2023 19:13:33 INFO: End: If there are no errors reported on the console then the SAN connection object is set and ready to be used
+03/08/2023 19:13:38 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 19:13:38 DEBUG: Running: Validate the session key
+03/08/2023 19:13:38 INFO:  End: Connected
+03/08/2023 19:13:38 DEBUG: End: Test-WSAPIConnection
+03/08/2023 19:13:38 DEBUG: Request: Request Invoke-WSAPI URL : /users TYPE : GET 
+03/08/2023 19:13:38 DEBUG: Running: Constructing header.
+03/08/2023 19:13:38 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 19:13:38  SUCCESS: Command Get-Users_WSAPI Successfully Executed
+03/08/2023 19:15:36 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 19:15:36 DEBUG: Running: Validate the session key
+03/08/2023 19:15:36 INFO:  End: Connected
+03/08/2023 19:15:36 DEBUG: End: Test-WSAPIConnection
+03/08/2023 19:15:36 DEBUG: Request: Request Invoke-WSAPI URL : /roles TYPE : GET 
+03/08/2023 19:15:36 DEBUG: Running: Constructing header.
+03/08/2023 19:15:36 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 19:15:37  SUCCESS: Command Get-Roles_WSAPI Successfully Executed

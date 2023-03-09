@@ -1,0 +1,182 @@
+03/08/2023 17:04:28 DEBUG: Running: Invoke-WebRequest for credential data.
+03/08/2023 17:04:28 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 17:04:28 DEBUG: Running: Validate the session key
+03/08/2023 17:04:28 INFO:  End: Connected
+03/08/2023 17:04:28 DEBUG: End: Test-WSAPIConnection
+03/08/2023 17:04:28 DEBUG: Request: Request Invoke-WSAPI URL : /system TYPE : GET 
+03/08/2023 17:04:28 DEBUG: Running: Constructing header.
+03/08/2023 17:04:28 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 17:04:28 INFO: SUCCESS:successfully Executed
+03/08/2023 17:04:28 INFO: End: If there are no errors reported on the console then the SAN connection object is set and ready to be used
+03/08/2023 17:04:31 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 17:04:31 DEBUG: Running: Validate the session key
+03/08/2023 17:04:31 INFO:  End: Connected
+03/08/2023 17:04:31 DEBUG: End: Test-WSAPIConnection
+03/08/2023 17:04:31 DEBUG: Request: Request Invoke-WSAPI URL : /capacity TYPE : GET 
+03/08/2023 17:04:31 DEBUG: Running: Constructing header.
+03/08/2023 17:04:31 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 17:04:31  End: Get-CapacityInfo_WSAPI(WSAPI)
+03/08/2023 18:05:18 DEBUG: Running: Invoke-WebRequest for credential data.
+03/08/2023 18:05:18 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:05:18 DEBUG: Running: Validate the session key
+03/08/2023 18:05:18 INFO:  End: Connected
+03/08/2023 18:05:18 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:05:18 DEBUG: Request: Request Invoke-WSAPI URL : /system TYPE : GET 
+03/08/2023 18:05:18 DEBUG: Running: Constructing header.
+03/08/2023 18:05:18 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:05:18 INFO: SUCCESS:successfully Executed
+03/08/2023 18:05:18 INFO: End: If there are no errors reported on the console then the SAN connection object is set and ready to be used
+03/08/2023 18:13:38 Error :In function New-PoshSshConnection. System.Management.Automation.CommandNotFoundException: The term 'New-SSHSession' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)
+   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)
+   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)
+   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)
+03/08/2023 18:14:17 Error :In function New-PoshSshConnection. System.Management.Automation.CommandNotFoundException: The term 'New-SSHSession' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+   at System.Management.Automation.ExceptionHandlingOps.CheckActionPreference(FunctionContext funcContext, Exception exception)
+   at System.Management.Automation.Interpreter.ActionCallInstruction`2.Run(InterpretedFrame frame)
+   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)
+   at System.Management.Automation.Interpreter.EnterTryCatchFinallyInstruction.Run(InterpretedFrame frame)
+03/08/2023 18:23:46 DEBUG: Running: Executed . Check on PS console if there are any errors reported
+03/08/2023 18:23:46 DEBUG: Start: In Get-System - validating input values
+03/08/2023 18:23:46 INFO: Start : in Test-PARCli function 
+03/08/2023 18:23:46 INFO: Get system information 
+03/08/2023 18:23:46 INFO: Get system fan information cmd -> sysinfocmd 
+03/08/2023 18:23:46 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:23:46 DEBUG: Start: In Get-Version - validating input values
+03/08/2023 18:23:46 INFO: Start : in Test-PARCli function 
+03/08/2023 18:23:46 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:23:47 INFO: Get-version info 
+03/08/2023 18:23:47 INFO: End: If there are no errors reported on the console then the SAN connection object is set and ready to be used
+03/08/2023 18:23:54 DEBUG: Start: In Get-AOConfigurations - validating input values
+03/08/2023 18:23:54 INFO: Start : in Test-PARCli function 
+03/08/2023 18:23:54 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:23:54 INFO: Executing function : Get-AOConfigurations command -->
+03/08/2023 18:24:03 DEBUG: Start: In Get-CPG - validating input values
+03/08/2023 18:24:03 INFO: Start : in Test-PARCli function 
+03/08/2023 18:24:03 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:24:03 DEBUG: Start: In Get-Version - validating input values
+03/08/2023 18:24:03 INFO: Start : in Test-PARCli function 
+03/08/2023 18:24:03 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:24:03 INFO: Get-version info 
+03/08/2023 18:24:14 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:24:14 DEBUG: Running: Validate the session key
+03/08/2023 18:24:14 INFO:  End: Connected
+03/08/2023 18:24:14 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:24:14 DEBUG: Request: Request Invoke-WSAPI URL : /cpgs TYPE : GET 
+03/08/2023 18:24:14 DEBUG: Running: Constructing header.
+03/08/2023 18:24:14 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:24:14 DEBUG: Stop: Exception Occurs
+03/08/2023 18:34:08 DEBUG: Start: In Get-CPG - validating input values
+03/08/2023 18:34:08 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:08 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:09 DEBUG: Start: In Get-Version - validating input values
+03/08/2023 18:34:09 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:09 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:09 INFO: Get-version info 
+03/08/2023 18:34:15 DEBUG: Start: In Get-CPG - validating input values
+03/08/2023 18:34:15 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:15 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:15 DEBUG: Start: In Get-Version - validating input values
+03/08/2023 18:34:15 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:15 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:16 INFO: Get-version info 
+03/08/2023 18:34:32 DEBUG: Start: In Get-CPG - validating input values
+03/08/2023 18:34:32 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:32 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:33 DEBUG: Start: In Get-Version - validating input values
+03/08/2023 18:34:33 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:33 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:33 INFO: Get-version info 
+03/08/2023 18:34:52 DEBUG: Start: In Get-CPG - validating input values
+03/08/2023 18:34:52 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:52 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:52 DEBUG: Start: In Get-Version - validating input values
+03/08/2023 18:34:52 INFO: Start : in Test-PARCli function 
+03/08/2023 18:34:52 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:34:53 INFO: Get-version info 
+03/08/2023 18:35:07 DEBUG: Start: In Get-Vv - validating input values
+03/08/2023 18:35:07 INFO: Start : in Test-PARCli function 
+03/08/2023 18:35:07 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:35:08 INFO: Get list of Virtual Volumes
+03/08/2023 18:37:07 DEBUG: Start: In Get-Vv - validating input values
+03/08/2023 18:37:08 INFO: Start : in Test-PARCli function 
+03/08/2023 18:37:08 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:37:08 INFO: Get list of Virtual Volumes
+03/08/2023 18:37:22 DEBUG: Start: In Get-Vv - validating input values
+03/08/2023 18:37:22 INFO: Start : in Test-PARCli function 
+03/08/2023 18:37:22 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:37:22 INFO: Get list of Virtual Volumes
+03/08/2023 18:43:43 DEBUG: Running: Invoke-WebRequest for credential data.
+03/08/2023 18:43:43 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:43:43 DEBUG: Running: Validate the session key
+03/08/2023 18:43:43 INFO:  End: Connected
+03/08/2023 18:43:43 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:43:43 DEBUG: Request: Request Invoke-WSAPI URL : /system TYPE : GET 
+03/08/2023 18:43:43 DEBUG: Running: Constructing header.
+03/08/2023 18:43:43 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:43:43 INFO: SUCCESS:successfully Executed
+03/08/2023 18:43:43 INFO: End: If there are no errors reported on the console then the SAN connection object is set and ready to be used
+03/08/2023 18:43:50 DEBUG: Start: In Get-AOConfigurations - validating input values
+03/08/2023 18:43:50 INFO: Start : in Test-PARCli function 
+03/08/2023 18:43:50 DEBUG: Start: In Invoke-CLICommand - validating input values
+03/08/2023 18:43:50 INFO: Executing function : Get-AOConfigurations command -->
+03/08/2023 18:44:07 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:44:07 DEBUG: Running: Validate the session key
+03/08/2023 18:44:07 INFO:  End: Connected
+03/08/2023 18:44:07 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:44:07 DEBUG: Request: Request Invoke-WSAPI URL : /capacity TYPE : GET 
+03/08/2023 18:44:07 DEBUG: Running: Constructing header.
+03/08/2023 18:44:07 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:44:07  End: Get-CapacityInfo_WSAPI(WSAPI)
+03/08/2023 18:44:16 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:44:16 DEBUG: Running: Validate the session key
+03/08/2023 18:44:16 INFO:  End: Connected
+03/08/2023 18:44:16 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:44:16 DEBUG: Request: Request Invoke-WSAPI URL : /capacity TYPE : GET 
+03/08/2023 18:44:16 DEBUG: Running: Constructing header.
+03/08/2023 18:44:16 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:44:16  End: Get-CapacityInfo_WSAPI(WSAPI)
+03/08/2023 18:52:24 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:52:24 DEBUG: Running: Validate the session key
+03/08/2023 18:52:24 INFO:  End: Connected
+03/08/2023 18:52:24 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:52:24 DEBUG: Request: Request Invoke-WSAPI URL : /users TYPE : GET 
+03/08/2023 18:52:24 DEBUG: Running: Constructing header.
+03/08/2023 18:52:24 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:52:24 INFO: SUCCESS: Command Get-Users_WSAPI Successfully Executed
+03/08/2023 18:52:35 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:52:35 DEBUG: Running: Validate the session key
+03/08/2023 18:52:35 INFO:  End: Connected
+03/08/2023 18:52:35 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:52:35 DEBUG: Request: Request Invoke-WSAPI URL : /users TYPE : GET 
+03/08/2023 18:52:35 DEBUG: Running: Constructing header.
+03/08/2023 18:52:35 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:52:35 INFO: SUCCESS: Command Get-Users_WSAPI Successfully Executed
+03/08/2023 18:52:57 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:52:57 DEBUG: Running: Validate the session key
+03/08/2023 18:52:57 INFO:  End: Connected
+03/08/2023 18:52:57 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:52:57 DEBUG: Request: Request Invoke-WSAPI URL : /users TYPE : GET 
+03/08/2023 18:52:57 DEBUG: Running: Constructing header.
+03/08/2023 18:52:57 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:52:57 INFO: SUCCESS: Command Get-Users_WSAPI Successfully Executed
+03/08/2023 18:53:00 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 18:53:00 DEBUG: Running: Validate the session key
+03/08/2023 18:53:00 INFO:  End: Connected
+03/08/2023 18:53:00 DEBUG: End: Test-WSAPIConnection
+03/08/2023 18:53:00 DEBUG: Request: Request Invoke-WSAPI URL : /users TYPE : GET 
+03/08/2023 18:53:00 DEBUG: Running: Constructing header.
+03/08/2023 18:53:00 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 18:53:00 INFO: SUCCESS: Command Get-Users_WSAPI Successfully Executed
+03/08/2023 19:13:03 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 19:13:03 DEBUG: Running: Validate the session key
+03/08/2023 19:13:03 INFO:  End: Connected
+03/08/2023 19:13:03 DEBUG: End: Test-WSAPIConnection
+03/08/2023 19:13:03 DEBUG: Request: Request Invoke-WSAPI URL : /users TYPE : GET 
+03/08/2023 19:13:03 DEBUG: Running: Constructing header.
+03/08/2023 19:13:03 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 19:13:03 DEBUG: Stop: Exception Occurs
+03/08/2023 19:13:07 DEBUG: End: Invoke-WSAPI
+03/08/2023 19:13:07 INFO: FAILURE : While Executing Get-Users_WSAPI.

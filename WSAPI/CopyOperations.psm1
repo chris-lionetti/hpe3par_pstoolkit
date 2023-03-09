@@ -1,14 +1,6 @@
 ﻿####################################################################################
 ## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
-## 	See LICENSE.txt included in this package
-##
-##	Description: 	Copy Operations cmdlets 
-
-$Info  = "INFO:"
-$Debug = "DEBUG:"
-$global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Function New-VvSnapshot_WSAPI 
 {
@@ -54,19 +46,18 @@ Function New-VvSnapshot_WSAPI
     WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]		$VolumeName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]		$snpVVName,
-		[Parameter(Position=2, ValueFromPipeline=$true)][int]				$ID,
-		[Parameter(Position=3, ValueFromPipeline=$true)][System.String]		$Comment,
-		[Parameter(Position=4, ValueFromPipeline=$true)][boolean]			$ReadOnly,
-		[Parameter(Position=5, ValueFromPipeline=$true)][int]				$ExpirationHours,
-		[Parameter(Position=6, ValueFromPipeline=$true)][int]				$RetentionHours,
-		[Parameter(Position=7, ValueFromPipeline=$true)][System.String]		$AddToSet,
-		[Parameter(Position=8, ValueFromPipeline=$true)]					$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeName,
+		[Parameter(ValueFromPipeline=$true)][String]	$snpVVName,
+		[Parameter(ValueFromPipeline=$true)][int]		$ID,
+		[Parameter(ValueFromPipeline=$true)][String]	$Comment,
+		[Parameter(ValueFromPipeline=$true)][boolean]	$ReadOnly,
+		[Parameter(ValueFromPipeline=$true)][int]		$ExpirationHours,
+		[Parameter(ValueFromPipeline=$true)][int]		$RetentionHours,
+		[Parameter(ValueFromPipeline=$true)][String]	$AddToSet
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection 
 }
 Process 
 {   Write-DebugLog "Running: Creation of the body hash" $Debug
@@ -75,56 +66,33 @@ Process
 	$ParameterBody = @{}
     # Name parameter
     $body["action"] = "createSnapshot"
-    If($snpVVName) 
-		{	$ParameterBody["name"] 		= "$($snpVVName)"
-		}
-    If($ID) 
-		{	$ParameterBody["id"] 		= $ID
-		}
-	If($Comment) 
-		{	$ParameterBody["comment"] 	= "$($Comment)"
-		}
-    If($ReadOnly) 
-		{	$ParameterBody["readOnly"] 	= $ReadOnly
-		}
-	If($ExpirationHours) 
-		{	$ParameterBody["expirationHours"] = $ExpirationHours
-		}
-	If($RetentionHours) 
-		{	$ParameterBody["retentionHours"] = $RetentionHours
-		}
-	If($AddToSet) 
-		{	$ParameterBody["addToSet"] 	= "$($AddToSet)"
-		}
-	if($ParameterBody.Count -gt 0)
-		{	$body["parameters"] 		= $ParameterBody 
-		}
+    If($snpVVName) 		{	$ParameterBody["name"] 			= "$($snpVVName)"	}
+    If($ID) 			{	$ParameterBody["id"] 			= $ID				}
+	If($Comment) 		{	$ParameterBody["comment"] 		= "$($Comment)"		}
+    If($ReadOnly) 		{	$ParameterBody["readOnly"] 		= $ReadOnly			}
+	If($ExpirationHours){	$ParameterBody["expirationHours"] = $ExpirationHours}
+	If($RetentionHours)	{	$ParameterBody["retentionHours"]= $RetentionHours	}
+	If($AddToSet) 		{	$ParameterBody["addToSet"] 		= "$($AddToSet)"	}
+	if($ParameterBody.Count -gt 0) { $body["parameters"] 	= $ParameterBody 	}
     $Result = $null
     #Request
 	Write-DebugLog "Request: Request to New-VvSnapshot_WSAPI : $snpVVName (Invoke-WSAPI)." $Debug	
 	$uri = '/volumes/'+$VolumeName
-    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{ 	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{ 	write-host "`n Cmdlet executed successfully, `n" -foreground green
 			Write-DebugLog "SUCCESS: volume snapshot:$snpVVName created successfully" $Info		
 			# Results
 			return $Result
 			Write-DebugLog "End: New-VvSnapshot_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While creating volume snapshot: $snpVVName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While creating volume snapshot: $snpVVName `n"
 			Write-DebugLog "FAILURE : While creating volume snapshot: $snpVVName " $Info	
 			return $Result.StatusDescription
 		}
 }
-End 
-{	# No Cleanup needed.  
-}	
 }
 
 Function New-VvListGroupSnapshot_WSAPI 
@@ -167,23 +135,22 @@ Function New-VvListGroupSnapshot_WSAPI
     WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]	$SnapshotName,
-		[Parameter(Position=2, ValueFromPipeline=$true)][int]			$SnapshotId,
-		[Parameter(Position=3, ValueFromPipeline=$true)][System.String]	$SnapshotWWN,
-		[Parameter(Position=4, ValueFromPipeline=$true)][boolean]		$ReadWrite,
-		[Parameter(Position=5, ValueFromPipeline=$true)][System.String]	$Comment,
-		[Parameter(Position=6, ValueFromPipeline=$true)][boolean]		$ReadOnly,
-		[Parameter(Position=7, ValueFromPipeline=$true)][boolean]		$Match,
-		[Parameter(Position=8, ValueFromPipeline=$true)][int]			$ExpirationHours,
-		[Parameter(Position=9, ValueFromPipeline=$true)][int]			$RetentionHours,
-		[Parameter(Position=10, ValueFromPipeline=$true)][boolean]		$SkipBlock,
-		[Parameter(Position=11, ValueFromPipeline=$true)][System.String]$AddToSet,
-		[Parameter(Position=12, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeName,
+		[Parameter(ValueFromPipeline=$true)][String]	$SnapshotName,
+		[Parameter(ValueFromPipeline=$true)][int]		$SnapshotId,
+		[Parameter(ValueFromPipeline=$true)][String]	$SnapshotWWN,
+		[Parameter(ValueFromPipeline=$true)][boolean]	$ReadWrite,
+		[Parameter(ValueFromPipeline=$true)][String]	$Comment,
+		[Parameter(ValueFromPipeline=$true)][boolean]	$ReadOnly,
+		[Parameter(ValueFromPipeline=$true)][boolean]	$Match,
+		[Parameter(ValueFromPipeline=$true)][int]		$ExpirationHours,
+		[Parameter(ValueFromPipeline=$true)][int]		$RetentionHours,
+		[Parameter(ValueFromPipeline=$true)][boolean]	$SkipBlock,
+		[Parameter(ValueFromPipeline=$true)][String]	$AddToSet
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
@@ -222,34 +189,18 @@ Process
 	if($VolumeGroupBody.Count -gt 0)
 		{	$ParameterBody["volumeGroup"] = $VolumeGroupBody 
 		}	
-	If ($Comment) 
-		{	$ParameterBody["comment"] = "$($Comment)"
-		}	
-	If ($ReadOnly) 
-		{	$ParameterBody["readOnly"] = $ReadOnly
-		}	
-	If ($Match) 
-		{	$ParameterBody["match"] = $Match
-		}	
-	If ($ExpirationHours) 
-		{	$ParameterBody["expirationHours"] = $ExpirationHours
-		}
-	If ($RetentionHours) 
-		{	$ParameterBody["retentionHours"] = $RetentionHours
-		}
-	If ($SkipBlock) 
-		{	$ParameterBody["skipBlock"] = $SkipBlock
-		}
-	If ($AddToSet) 
-		{	$ParameterBody["addToSet"] = "$($AddToSet)"
-		}
-	if($ParameterBody.Count -gt 0)
-		{	$body["parameters"] = $ParameterBody 
-		}	
+	If ($Comment) 		{	$ParameterBody["comment"] = "$($Comment)"	}	
+	If ($ReadOnly) 		{	$ParameterBody["readOnly"] = $ReadOnly		}	
+	If ($Match) 		{	$ParameterBody["match"] = $Match			}	
+	If ($ExpirationHours){	$ParameterBody["expirationHours"] = $ExpirationHours }
+	If ($RetentionHours){	$ParameterBody["retentionHours"] = $RetentionHours }
+	If ($SkipBlock) 	{	$ParameterBody["skipBlock"] = $SkipBlock	}
+	If ($AddToSet) 		{	$ParameterBody["addToSet"] = "$($AddToSet)"	}
+	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody}	
     $Result = $null
     #Request
 	Write-DebugLog "Request: Request to New-VvListGroupSnapshot_WSAPI : $SnapshotName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri '/volumes' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri '/volumes' -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 300)
 		{	write-host ""
@@ -334,24 +285,24 @@ Function New-VvPhysicalCopy_WSAPI
     WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]		$VolumeName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]		$DestVolume,
-		[Parameter(Position=2, ValueFromPipeline=$true)][System.String]		$DestCPG,
-		[Parameter(Position=3, ValueFromPipeline=$true)][switch]			$Online,
-		[Parameter(Position=4, ValueFromPipeline=$true)][System.String]		$WWN,
-		[Parameter(Position=5, ValueFromPipeline=$true)][switch]			$TPVV,
-		[Parameter(Position=6, ValueFromPipeline=$true)][switch]			$TDVV,
-		[Parameter(Position=7, ValueFromPipeline=$true)][switch]			$Reduce,
-		[Parameter(Position=8, ValueFromPipeline=$true)][System.String]		$SnapCPG,
-		[Parameter(Position=9, ValueFromPipeline=$true)][switch]			$SkipZero,
-		[Parameter(Position=10,ValueFromPipeline=$true)][switch]			$Compression,
-		[Parameter(Position=11,ValueFromPipeline=$true)][switch]			$SaveSnapshot,
-		[Parameter(Position=12,ValueFromPipeline=$true)][System.String]		$Priority,
-		[Parameter(Position=13,ValueFromPipeline=$true)]					$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName,
+		[Parameter(ValueFromPipeline=$true)][String]		$DestVolume,
+		[Parameter(ValueFromPipeline=$true)][String]		$DestCPG,
+		[Parameter(ValueFromPipeline=$true)][switch]		$Online,
+		[Parameter(ValueFromPipeline=$true)][String]		$WWN,
+		[Parameter(ValueFromPipeline=$true)][switch]		$TPVV,
+		[Parameter(ValueFromPipeline=$true)][switch]		$TDVV,
+		[Parameter(ValueFromPipeline=$true)][switch]		$Reduce,
+		[Parameter(ValueFromPipeline=$true)][String]		$SnapCPG,
+		[Parameter(ValueFromPipeline=$true)][switch]		$SkipZero,
+		[Parameter(ValueFromPipeline=$true)][switch]		$Compression,
+		[Parameter(ValueFromPipeline=$true)][switch]		$SaveSnapshot,
+		[Parameter(ValueFromPipeline=$true)]
+		[ValidateSet('HIGH','MED','LOW')] 	[String]		$Priority
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
@@ -360,9 +311,7 @@ Process
 	$ParameterBody = @{}
     # Name parameter
     $body["action"] = "createPhysicalCopy"
-    If ($DestVolume) 
-		{	$ParameterBody["destVolume"] = "$($DestVolume)"
-		}    
+    If ($DestVolume) 			{	$ParameterBody["destVolume"] = "$($DestVolume)"}    
 	If ($Online) 
 		{	$ParameterBody["online"] = $true
 			If ($DestCPG) 
@@ -372,47 +321,36 @@ Process
 				{	return "Specifies the destination CPG for an online copy."
 				}
 		}	
-    If ($WWN) 			{	$ParameterBody["WWN"] = "$($WWN)"		}
-	If ($TPVV) 			{	$ParameterBody["tpvv"] = $true			}
-	If ($TDVV) 			{	$ParameterBody["tdvv"] = $true			}
-	If ($Reduce)		{	$ParameterBody["reduce"] = $true		}		
-	If ($SnapCPG)		{	$ParameterBody["snapCPG"] = "$($SnapCPG)"}
-	If ($SkipZero)		{	$ParameterBody["skipZero"] = $true		}
-	If ($Compression) 	{	$ParameterBody["compression"] = $true	}
-	If ($SaveSnapshot) 	{	$ParameterBody["saveSnapshot"] = $SaveSnapshot}
-	If ($Priority) 		{	if		($Priority.ToUpper() -eq "HIGH")	{	$ParameterBody["priority"] = 1}
-							elseif	($Priority.ToUpper() -eq "MED")		{	$ParameterBody["priority"] = 2}
-							elseif	($Priority.ToUpper() -eq "LOW")		{	$ParameterBody["priority"] = 3}
-							else	{return "Priority value is wrong : $Priority , value should be [HIGH | MED | LOW ]."	}
-						}
-	if($ParameterBody.Count -gt 0)
-		{	$body["parameters"] = $ParameterBody 
-		}
+    If ($WWN) 					{	$ParameterBody["WWN"] 		= "$($WWN)"	}
+	If ($TPVV) 					{	$ParameterBody["tpvv"] 		= $true		}
+	If ($TDVV) 					{	$ParameterBody["tdvv"] 		= $true		}
+	If ($Reduce)				{	$ParameterBody["reduce"] 	= $true		}		
+	If ($SnapCPG)				{	$ParameterBody["snapCPG"] 	= "$($SnapCPG)"}
+	If ($SkipZero)				{	$ParameterBody["skipZero"] 	= $true		}
+	If ($Compression) 			{	$ParameterBody["compression"] = $true	}
+	If ($SaveSnapshot) 			{	$ParameterBody["saveSnapshot"] = $SaveSnapshot}
+	if ($Priority -eq "HIGH")	{	$ParameterBody["priority"] 	= 1			}
+	if ($Priority -eq "MED")	{	$ParameterBody["priority"] 	= 2			}
+	if ($Priority -eq "LOW")	{	$ParameterBody["priority"] 	= 3			}
+	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody 	}
     $Result = $null
     #Request
 	Write-DebugLog "Request: Request to New-VvPhysicalCopy_WSAPI : $VolumeName (Invoke-WSAPI)." $Debug
 	$uri = '/volumes/'+$VolumeName
-    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Physical copy of a volume: $VolumeName created successfully" $Info	
 			# Results
 			return $Result
 			Write-DebugLog "End: New-VvPhysicalCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While creating Physical copy of a volume : $VolumeName " -foreground red
-			write-host ""
+		{	write-error "`n FAILURE : While creating Physical copy of a volume : $VolumeName `n"
 			Write-DebugLog "FAILURE : While creating Physical copy of a volume : $VolumeName " $Info
 			return $Result.StatusDescription
 		}
-}
-End
-{ 
 }
 }
 
@@ -428,23 +366,13 @@ Function Reset-PhysicalCopy_WSAPI
 	Resynchronizing a physical copy to its parent volume
 .PARAMETER VolumeName 
 	The <VolumeName> parameter specifies the name of the destination volume you want to resynchronize.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Reset-PhysicalCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: Reset-PhysicalCopy_WSAPI
-.Link
-    http://www.hpe.com
-	requires PS -Version 3.0
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]		$VolumeName,
-		[Parameter(Position=1, ValueFromPipeline=$true)]					$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection 
 }
 Process 
 {  	$body = @{}	
@@ -453,26 +381,19 @@ Process
 	$uri = "/volumes/" + $VolumeName
     #Request
 	Write-DebugLog "Request: Request to Reset-PhysicalCopy_WSAPI : $VolumeName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Resynchronize a physical copy to its parent volume : $VolumeName ." $Info		
 			# Results		
 			return $Result		
 			Write-DebugLog "End: Reset-PhysicalCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Resynchronizing a physical copy to its parent volume : $VolumeName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While Resynchronizing a physical copy to its parent volume : $VolumeName `n"
 			Write-DebugLog "FAILURE : While Resynchronizing a physical copy to its parent volume : $VolumeName " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{  
 }
 }
 
@@ -488,23 +409,13 @@ Function Stop-PhysicalCopy_WSAPI
 	Stop a physical copy of given Volume 
 .PARAMETER VolumeName 
 	The <VolumeName> parameter specifies the name of the destination volume you want to resynchronize.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Stop-PhysicalCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: Stop-PhysicalCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]		$VolumeName,
-		[Parameter(Position=1, ValueFromPipeline=$true)]					$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection 
 }
 Process 
 {  	$body = @{}	
@@ -513,26 +424,19 @@ Process
 	$uri = "/volumes/" + $VolumeName
     #Request
 	Write-DebugLog "Request: Request to Stop-PhysicalCopy_WSAPI : $VolumeName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	if($Result.StatusCode -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Stop a physical copy of : $VolumeName ." $Info				
 			# Results		
 			return $Result		
 			Write-DebugLog "End: Stop-PhysicalCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While stopping a physical copy : $VolumeName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While stopping a physical copy : $VolumeName `n "
 			Write-DebugLog "FAILURE : While stopping a physical copy : $VolumeName " $Info
 			return $Result.StatusDescription
 		}
-}
-End
-{
 }
 }
 
@@ -556,54 +460,28 @@ Function Move-VirtualCopy_WSAPI
 .PARAMETER Online	
 	Enables (true) or disables (false) executing the promote operation on an online volume. The default setting is false.
 .PARAMETER Priority
-	Task priority.
-	HIGH : High priority.
-	MED : Medium priority.
-	LOW : Low priority.
+	Task priority which can be either HIGH, MED, or LOW. 
 .PARAMETER AllowRemoteCopyParent
 	Allows the promote operation to proceed even if the RW parent volume is currently in a Remote Copy volume group, if that group has not been started. If the Remote Copy group has been started, this command fails.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Move-VirtualCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: Move-VirtualCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VirtualCopyName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][Switch]		$Online,
-		[Parameter(Position=2, ValueFromPipeline=$true)][System.String]	$Priority,
-		[Parameter(Position=3, ValueFromPipeline=$true)][Switch]		$AllowRemoteCopyParent,
-		[Parameter(Position=4, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VirtualCopyName,
+		[Parameter(ValueFromPipeline=$true)][Switch]	$Online,
+		[Parameter(ValueFromPipeline=$true)]
+		[ValidateSet('HIGH','MED','LOW')] 	[String]	$Priority,
+		[Parameter(ValueFromPipeline=$true)][Switch]	$AllowRemoteCopyParent
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection 
 }
 Process 
 { 	$body = @{}	
 	$body["action"] = 4
-	if($Online)
-		{	$body["online"] = $true	
-		}	
-	if($Priority)
-		{	if($Priority.ToUpper() -eq "HIGH")
-				{	$body["priority"] = 1		
-				}
-			elseif($Priority.ToUpper() -eq "MED")
-				{	$body["priority"] = 2		
-				}
-			elseif($Priority.ToUpper() -eq "LOW")
-				{	$body["priority"] = 3		
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-					Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-				}	
-		}
+	if($Online)				{	$body["online"] 	= $true	}	
+	if($Priority -eq "HIGH"){	$body["priority"] 	= 1 }
+	if($Priority -eq "MED")	{	$body["priority"] 	= 2 }
+	if($Priority -eq "MED")	{	$body["priority"] 	= 3 }
 	if($AllowRemoteCopyParent)
 		{	$body["allowRemoteCopyParent"] = $true	
 		}
@@ -611,26 +489,19 @@ Process
 	$uri = "/volumes/" + $VirtualCopyName
     #Request
 	Write-DebugLog "Request: Request to Move-VirtualCopy_WSAPI : $VirtualCopyName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Promoted a virtual copy : $VirtualCopyName ." $Info			
 			# Results		
 			return $Result		
 			Write-DebugLog "End: Move-VirtualCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Promoting a virtual copy : $VirtualCopyName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While Promoting a virtual copy : $VirtualCopyName `n"
 			Write-DebugLog "FAILURE : While Promoting a virtual copy : $VirtualCopyName " $Info
 			return $Result.StatusDescription
 		}
-}
-End
-{  
 }
 }
 
@@ -654,83 +525,48 @@ Function Move-VvSetVirtualCopy_WSAPI
 .PARAMETER VirtualCopyName 
 	The <virtual_copy_name> parameter specifies the name of the virtual copy to be promoted.
 .PARAMETER Online	
-	Enables (true) or disables (false) executing the promote operation on an online volume. The default setting is false.
+	Enables executing the promote operation on an online volume. The default setting is false.
 .PARAMETER Priority
-	Task priority.
-	HIGH : High priority.
-	MED : Medium priority.
-	LOW : Low priority.
+	Task priority which can be set to the values HIGH, MED, or LOW only.
 .PARAMETER AllowRemoteCopyParent
 	Allows the promote operation to proceed even if the RW parent volume is currently in a Remote Copy volume group, if that group has not been started. If the Remote Copy group has been started, this command fails.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command	
-.Notes
-    NAME    : Move-VvSetVirtualCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: Move-VvSetVirtualCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VVSetName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][Switch]		$Online,
-		[Parameter(Position=2, ValueFromPipeline=$true)][System.String]	$Priority,
-		[Parameter(Position=3, ValueFromPipeline=$true)][Switch]		$AllowRemoteCopyParent,
-		[Parameter(Position=4, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VVSetName,
+		[Parameter(ValueFromPipeline=$true)][Switch]	$Online,
+		[Parameter(ValueFromPipeline=$true)][String]
+		[ValidateSet('HIGH','MED','LOW')]				$Priority,
+		[Parameter(ValueFromPipeline=$true)][Switch]	$AllowRemoteCopyParent
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {  	$body = @{}	
 	$body["action"] = 4
-	if($Online)
-		{	$body["online"] = $true	
-		}	
-	if($Priority)
-		{	if($Priority.ToUpper() -eq "HIGH")
-				{	$body["priority"] = 1		
-				}
-			elseif($Priority.ToUpper() -eq "MED")
-				{	$body["priority"] = 2		
-				}
-			elseif($Priority.ToUpper() -eq "LOW")
-				{	$body["priority"] = 3		
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-					Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-				}	
-		}
-	if($AllowRemoteCopyParent)
-		{	$body["allowRemoteCopyParent"] = $true	
-		} 
+	if($Online)					{	$body["online"] = $true	}	
+	if($Priority -eq "HIGH")	{	$body["priority"] = 1 }
+	if($Priority -eq "MED")		{	$body["priority"] = 2 }
+	if($Priority -eq "LOW")		{	$body["priority"] = 3 }
+	if($AllowRemoteCopyParent)	{	$body["allowRemoteCopyParent"] = $true	} 
     $Result = $null	
 	$uri = "/volumesets/" + $VVSetName
     #Request
 	Write-DebugLog "Request: Request to Move-VvSetVirtualCopy_WSAPI : $VVSetName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	if($Result.StatusCode -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Promoted a VV-Set virtual copy : $VVSetName ." $Info
 			# Results		
 			return $Result		
 			Write-DebugLog "End: Move-VvSetVirtualCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Promoting a VV-Set virtual copy : $VVSetName " -foreground red
-			write-host ""
+		{	write-host "`n FAILURE : While Promoting a VV-Set virtual copy : $VVSetName `n"
 			Write-DebugLog "FAILURE : While Promoting a VV-Set virtual copy : $VVSetName " $Info	
 			return $Result.StatusDescription
 		}
-}
-End
-{
 }
 }
 
@@ -762,30 +598,20 @@ Function New-VvSetSnapshot_WSAPI
 	Specifies the relative time from the current time that the volume will expire. Value is a positive integer and in the range of 1–43,800 hours, or 1825 days.
 .PARAMETER AddToSet 
 	The name of the volume set to which the system adds your created snapshots. If the volume set does not exist, it will be created.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : New-VvSetSnapshot_WSAPI    
-    LASTEDIT: 05/02/2018
-    KEYWORDS: New-VvSetSnapshot_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0     
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeSetName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]	$SnpVVName,
-		[Parameter(Position=2, ValueFromPipeline=$true)][int]			$ID,
-		[Parameter(Position=3, ValueFromPipeline=$true)][System.String]	$Comment,
-		[Parameter(Position=4, ValueFromPipeline=$true)][switch]		$readOnly,
-		[Parameter(Position=5, ValueFromPipeline=$true)][int]			$ExpirationHours,
-		[Parameter(Position=6, ValueFromPipeline=$true)][int]			$RetentionHours,
-		[Parameter(Position=7, ValueFromPipeline=$true)][System.String]	$AddToSet,
-		[Parameter(Position=8, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$VolumeSetName,
+		[Parameter(Position=1, ValueFromPipeline=$true)][String]	$SnpVVName,
+		[Parameter(Position=2, ValueFromPipeline=$true)][int]		$ID,
+		[Parameter(Position=3, ValueFromPipeline=$true)][String]	$Comment,
+		[Parameter(Position=4, ValueFromPipeline=$true)][switch]	$readOnly,
+		[Parameter(Position=5, ValueFromPipeline=$true)][int]		$ExpirationHours,
+		[Parameter(Position=6, ValueFromPipeline=$true)][int]		$RetentionHours,
+		[Parameter(Position=7, ValueFromPipeline=$true)][String]	$AddToSet
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
@@ -794,55 +620,32 @@ Process
 	$ParameterBody = @{}
     # Name parameter
     $body["action"] = "createSnapshot"
-	If ($SnpVVName) 
-		{	$ParameterBody["name"] = "$($SnpVVName)"
-		}    
-	If ($ID) 
-		{	$ParameterBody["id"] = $ID		
-		}	
-    If ($Comment) 
-		{	$ParameterBody["comment"] = "$($Comment)"
-		}
-	If ($ReadOnly) 
-		{	$ParameterBody["readOnly"] = $true
-		}
-	If ($ExpirationHours) 
-		{	$ParameterBody["expirationHours"] = $ExpirationHours
-		}
-	If ($RetentionHours) 
-		{	$ParameterBody["retentionHours"] = "$($RetentionHours)"
-		}
-	If ($AddToSet) 
-		{	$ParameterBody["addToSet"] = "$($AddToSet)"
-		}
-	if($ParameterBody.Count -gt 0)
-		{	$body["parameters"] = $ParameterBody 
-		}
+	If ($SnpVVName) 	{	$ParameterBody["name"] 		= "$($SnpVVName)"	}    
+	If ($ID) 			{	$ParameterBody["id"] 		= $ID				}	
+    If ($Comment) 		{	$ParameterBody["comment"] 	= "$($Comment)"		}
+	If ($ReadOnly) 		{	$ParameterBody["readOnly"] 	= $true				}
+	If ($ExpirationHours){	$ParameterBody["expirationHours"] = $ExpirationHours}
+	If ($RetentionHours){	$ParameterBody["retentionHours"] = "$($RetentionHours)"}
+	If ($AddToSet) 		{	$ParameterBody["addToSet"] 	= "$($AddToSet)"	}
+	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody 	}
     $Result = $null	
     #Request
 	Write-DebugLog "Request: Request to New-VvSetSnapshot_WSAPI : $SnpVVName (Invoke-WSAPI)." $Debug	
 	$uri = '/volumesets/'+$VolumeSetName	
-    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: VV-set snapshot : $SnpVVName created successfully" $Info
 			# Results
 			return $Result
 			Write-DebugLog "End: New-VvSetSnapshot_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While creating VV-set snapshot : $SnpVVName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While creating VV-set snapshot : $SnpVVName `n"
 			Write-DebugLog "FAILURE : While creating VV-set snapshot : $SnpVVName " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{  
 }
 }
 
@@ -863,30 +666,18 @@ Function New-VvSetPhysicalCopy_WSAPI
 .PARAMETER SaveSnapshot
 	Enables (true) or disables (false) whether to save the source volume snapshot after completing VV set copy.
 .PARAMETER Priority
-	Task priority.
-	HIGH High priority.
-	MED Medium priority.
-	LOW Low priority.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : New-VvSetPhysicalCopy_WSAPI    
-    LASTEDIT: 05/02/2018
-    KEYWORDS: New-VvSetPhysicalCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0     
+	Task priority which can be set to HIGH, MED, or LOW.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeSetName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]	$DestVolume,
-		[Parameter(Position=2, ValueFromPipeline=$true)][boolean]		$SaveSnapshot,
-		[Parameter(Position=3, ValueFromPipeline=$true)][System.String]	$Priority,
-		[Parameter(Position=4, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$VolumeSetName,
+		[Parameter(Position=1, ValueFromPipeline=$true)][String]	$DestVolume,
+		[Parameter(Position=2, ValueFromPipeline=$true)][boolean]	$SaveSnapshot,
+		[Parameter(Position=3, ValueFromPipeline=$true)]
+		[ValidateSet('HIGH','MED','LOW')]				[String]	$Priority
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
@@ -895,55 +686,30 @@ Process
 	$ParameterBody = @{}
     # Name parameter
     $body["action"] = "createPhysicalCopy"
-	If ($DestVolume) 
-		{	$ParameterBody["destVolume"] = "$($DestVolume)"
-		}    
-	If ($SaveSnapshot) 
-		{	$ParameterBody["saveSnapshot"] = $SaveSnapshot		
-		}
-	if($Priority)
-		{	if($Priority -eq "HIGH")
-				{	$ParameterBody["priority"] = 1		
-				}
-			elseif($Priority -eq "MED")
-				{	$ParameterBody["priority"] = 2		
-				}
-			elseif($Priority -eq "LOW")
-				{	$ParameterBody["priority"] = 3		
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-					Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-				}	
-		}
-	if($ParameterBody.Count -gt 0)
-		{	$body["parameters"] = $ParameterBody 
-		}
+	If ($DestVolume) 			{	$ParameterBody["destVolume"] = "$($DestVolume)"}    
+	If ($SaveSnapshot) 			{	$ParameterBody["saveSnapshot"] = $SaveSnapshot }
+	if($Priority -eq "HIGH")	{	$ParameterBody["priority"] = 1 }
+	if($Priority -eq "MED")		{	$ParameterBody["priority"] = 2 }
+	if($Priority -eq "LOW")		{	$ParameterBody["priority"] = 3 }
+	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody }
     $Result = $null	
     #Request
 	Write-DebugLog "Request: Request to New-VvSetPhysicalCopy_WSAPI : $VolumeSetName (Invoke-WSAPI)." $Debug	
 	$uri = '/volumesets/'+$VolumeSetName
-    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Physical copy of a VV set : $VolumeSetName created successfully" $Info		
 			# Results
 			return $Result
 			Write-DebugLog "End: New-VvSetPhysicalCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While creating Physical copy of a VV set : $VolumeSetName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While creating Physical copy of a VV set : $VolumeSetName `n"
 			Write-DebugLog "FAILURE : While creating Physical copy of a VV set : $VolumeSetName " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{
 }
 }
 
@@ -961,71 +727,40 @@ Function Reset-VvSetPhysicalCopy_WSAPI
 .PARAMETER VolumeSetName 
 	The <VolumeSetName> specifies the name of the destination VV set to resynchronize.
 .PARAMETER Priority
-	Task priority.
-	HIGH High priority.
-	MED Medium priority.
-	LOW Low priority.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Reset-VvSetPhysicalCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: Reset-VvSetPhysicalCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
+	Task priority which can be either HIGH, MED, or LOW
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeSetName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]	$Priority,
-		[Parameter(Position=2, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeSetName,
+		[Parameter(ValueFromPipeline=$true)]
+		[ValidateSet('HIGH','MED','LOW')]	[String]	$Priority
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {  	$body = @{}	
 	$body["action"] = 3
-	if($Priority)
-		{	if($Priority -eq "HIGH")
-				{	$body["priority"] = 1		
-				}
-			elseif($Priority -eq "MED")
-				{	$body["priority"] = 2		
-				}
-			elseif($Priority -eq "LOW")
-				{	$body["priority"] = 3		
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-					Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-				}
-		}
+	if($Priority -eq "HIGH")	{	$body["priority"] = 1	}
+	if($Priority -eq "MED")		{	$body["priority"] = 2	}
+	if($Priority -eq "LOW")		{	$body["priority"] = 3	}
     $Result = $null	
 	$uri = "/volumesets/" + $VolumeSetName
     #Request
 	Write-DebugLog "Request: Request to Reset-VvSetPhysicalCopy_WSAPI : $VolumeSetName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection	
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body	
 	if($Result.StatusCode -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Resynchronize a VV set physical copy : $VolumeSetName ." $Info		
 			# Results		
 			return $Result		
 			Write-DebugLog "End: Reset-VvSetPhysicalCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Resynchronizing a VV set physical copy : $VolumeSetName " -foreground red
-			write-host ""
+		{	write-host "`n FAILURE : While Resynchronizing a VV set physical copy : $VolumeSetName `n" -foreground red
 			Write-DebugLog "FAILURE : While Resynchronizing a VV set physical copy : $VolumeSetName " $Info	
 			return $Result.StatusDescription
 		}
-}
-End 
-{
 }
 }
 
@@ -1043,72 +778,39 @@ Function Stop-VvSetPhysicalCopy_WSAPI
 .PARAMETER VolumeSetName 
 	The <VolumeSetName> specifies the name of the destination VV set to resynchronize.
 .PARAMETER Priority
-	Task priority.
-	HIGH High priority.
-	MED Medium priority.
-	LOW Low priority.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-.Notes
-    NAME    : Stop-VvSetPhysicalCopy_WSAPI    
-    LASTEDIT: 02/02/2018
-    KEYWORDS: Stop-VvSetPhysicalCopy_WSAPI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
+	Task priority which can be set to either HIGH, MED, or LOW.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeSetName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]	$Priority,
-		[Parameter(Position=2, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$VolumeSetName,
+		[Parameter(Position=1, ValueFromPipeline=$true)][String]	$Priority
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {	$body = @{}	
 	$body["action"] = 4
-	if($Priority)
-		{	if($Priority -eq "HIGH")
-				{	$body["priority"] = 1		
-				}
-			elseif($Priority -eq "MED")
-				{	$body["priority"] = 2		
-				}
-			elseif($Priority -eq "LOW")
-				{	$body["priority"] = 3		
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-					Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-				}
-		
-		}
+	if($Priority -eq "HIGH")	{	$body["priority"] = 1	}
+	if($Priority -eq "MED")		{	$body["priority"] = 2	}
+	if($Priority -eq "LOW")		{	$body["priority"] = 3	}
     $Result = $null	
 	$uri = "/volumesets/" + $VolumeSetName
     #Request
 	Write-DebugLog "Request: Request to Stop-VvSetPhysicalCopy_WSAPI : $VolumeSetName (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	if($Result.StatusCode -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Stop a VV set physical copy : $VolumeSetName ." $Info	
 			# Results		
 			return $Result		
 			Write-DebugLog "End: Stop-VvSetPhysicalCopy_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Stopping a VV set physical copy : $VolumeSetName " -foreground red
-			write-host ""
+		{	write-Error "`nFAILURE : While Stopping a VV set physical copy : $VolumeSetName `n"
 			Write-DebugLog "FAILURE : While Stopping a VV set physical copy : $VolumeSetName " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{ 
 }
 }
 
@@ -1130,57 +832,41 @@ Function Update-VvOrVvSets_WSAPI
 	set:vvset_name.
 .PARAMETER VolumeSnapshotList
 	Specifies that if the virtual copy is read-write, the command updates the read-only parent volume also.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
 Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String[]]	$VolumeSnapshotList,
-		[Parameter(Position=1, ValueFromPipeline=$true)][boolean]	$ReadOnly,
-		[Parameter(Position=2, ValueFromPipeline=$true)]			$WsapiConnection = $global:WsapiConnection
+		[Parameter(Position=1, ValueFromPipeline=$true)][boolean]	$ReadOnly
 	)
 Begin 
 {	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+    Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     # Creation of the body hash
-    $body = @{}	
+    $body = @{}
 	$ParameterBody = @{}
     # Name parameter
     $body["action"] = 7
-    If ($VolumeSnapshotList) 
-		{	$ParameterBody["volumeSnapshotList"] = $VolumeSnapshotList
-		}    
-	If ($ReadOnly) 
-		{	$ParameterBody["readOnly"] = $ReadOnly		
-		}
-	if($ParameterBody.Count -gt 0)
-		{	$body["parameters"] = $ParameterBody 
-		}	
+    If ($VolumeSnapshotList) 	{	$ParameterBody["volumeSnapshotList"] = $VolumeSnapshotList}
+	If ($ReadOnly) 				{	$ParameterBody["readOnly"] = $ReadOnly			}
+	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody }
     $Result = $null	
     #Request
 	Write-DebugLog "Request: Request to Update-VvOrVvSets_WSAPI : $VolumeSnapshotList (Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/volumes/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri '/volumes/' -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Virtual copies or VV-sets : $VolumeSnapshotList successfully Updated." $Info
 			return $Result
 			Write-DebugLog "End: Update-VvOrVvSets_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Updating virtual copies or VV-sets : $VolumeSnapshotList " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While Updating virtual copies or VV-sets : $VolumeSnapshotList `n"
 			Write-DebugLog "FAILURE : While Updating virtual copies or VV-sets : $VolumeSnapshotList " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{  
 }
 }
 

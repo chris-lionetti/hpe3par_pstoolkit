@@ -160,6 +160,7 @@ if (!$global:ConfigDir)
 	}
 $Info 					= "INFO:"
 $Debug 					= "DEBUG:"
+$global:VSLibraries 	= Split-Path $MyInvocation.MyCommand.Path
 
 Function Invoke-CLICommand 
 {
@@ -429,19 +430,15 @@ param(	[string]$Address = $(throw "Missing IP address parameter"))
 Function Test-WSAPIConnection 
 {
 [CmdletBinding()]
-Param(	[Parameter(Position = 0, Mandatory = $false, ValueFromPipeline = $true)]
-		$WsapiConnection = $global:WsapiConnection
+Param(	$WsapiConnection = $global:WsapiConnection
 	)
 Process
-{
-	Write-DebugLog "Request: Test-WSAPIConnection to Test if the session key exists." $Debug  
+{	Write-DebugLog "Request: Test-WSAPIConnection to Test if the session key exists." $Debug  
 	Write-DebugLog "Running: Validate the session key" $Debug  
-	$Validate = "Success"	
+	# $Validate = "Success"	
 	if (($null -eq $WsapiConnection) -or (-not ($WsapiConnection.IPAddress)) -or (-not ($WsapiConnection.Key))) 
 		{	Write-DebugLog "Stop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back."
-			Write-Host
-			Write-Host "Stop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back." -foreground yellow
-			Write-Host
+			Write-Warning "`nStop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back." -foreground yellow
 			throw 
 		}
 	else 
@@ -458,13 +455,14 @@ Param (	[parameter(Position = 0, Mandatory = $true, HelpMessage = "Enter the res
 		[ValidateScript( { if ($_.startswith('/')) { $true } else { throw "-URI must begin with a '/' (eg. /volumes) in its value. Correct the value and try again." } })]
 		[string]	$uri,
 		
-		[parameter(Position = 1, Mandatory = $true, HelpMessage = "Enter request type (GET POST DELETE)")]
+		[parameter(Position = 1)]
+		[ValidateSet('GET','PUT','DELETE')]
 		[string]	$type,
 		
-		[parameter(Position = 2, Mandatory = $false, HelpMessage = "Body of the message")]
+		[parameter(Position = 2, HelpMessage = "Body of the message")]
 		[array]		$body,
 		
-		[Parameter(Position = 0, Mandatory = $false, ValueFromPipeline = $true)]
+		[Parameter(Position = 0, ValueFromPipeline = $true)]
 		$WsapiConnection = $global:WsapiConnection
 	)
 Process
@@ -708,12 +706,13 @@ param(	[Parameter(ValueFromPipeline = $true)]
 		$SANConnection = $global:SANConnection 
 	)
 Process
-{	$Result = Get-SSHSession | fl
+{	$Result = Get-SSHSession | format-list
 	if ($Result.count -gt 1) 
 		{
 		}
 	else 
-		{	return "`nFAILURE : FATAL ERROR : Please check your connection and try again"
+		{	Write-Error "`nFAILURE : FATAL ERROR : Please check your connection and try again"
+			return 
 		}
 }	
 }

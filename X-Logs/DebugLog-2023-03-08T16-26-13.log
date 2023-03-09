@@ -1,0 +1,19 @@
+03/08/2023 16:26:25 DEBUG: Running: Invoke-WebRequest for credential data.
+03/08/2023 16:26:25 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 16:26:25 DEBUG: Running: Validate the session key
+03/08/2023 16:26:25 INFO:  End: Connected
+03/08/2023 16:26:25 DEBUG: End: Test-WSAPIConnection
+03/08/2023 16:26:25 DEBUG: Request: Request Invoke-WSAPI URL : /system TYPE : GET 
+03/08/2023 16:26:25 DEBUG: Running: Constructing header.
+03/08/2023 16:26:25 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 16:26:25 INFO: SUCCESS:successfully Executed
+03/08/2023 16:26:25 INFO: End: If there are no errors reported on the console then the SAN connection object is set and ready to be used
+03/08/2023 16:26:36 DEBUG: Request: Test-WSAPIConnection to Test if the session key exists.
+03/08/2023 16:26:36 DEBUG: Running: Validate the session key
+03/08/2023 16:26:36 INFO:  End: Connected
+03/08/2023 16:26:36 DEBUG: End: Test-WSAPIConnection
+03/08/2023 16:26:36 DEBUG: Request: Request Invoke-WSAPI URL : /cpgs TYPE : GET 
+03/08/2023 16:26:36 DEBUG: Running: Constructing header.
+03/08/2023 16:26:36 DEBUG: Request: Invoke-WebRequest for Data, Request Type : GET
+03/08/2023 16:26:36  SUCCESS: CPG: Successfully Executed
+03/08/2023 16:26:36  Running: Add custom type to the resulting object for formatting purpose

@@ -1,284 +1,132 @@
 ﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
-## 	See LICENSE.txt included in this package
-##
-##	Description: 	Virtual LUNs cmdlets 
 ##		
 
-$Info = "INFO:"
-$Debug = "DEBUG:"
-$global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-############################################################################################################################################
-## FUNCTION New-vLun_WSAPI
-############################################################################################################################################
 Function New-vLun_WSAPI 
 {
-  <#
-  
-  .SYNOPSIS
+<#
+.SYNOPSIS
 	Creating a VLUN
-	
-  .DESCRIPTION
+.DESCRIPTION
 	Creating a VLUN
 	Any user with Super or Edit role, or any role granted vlun_create permission, can perform this operation.
-	
-  .EXAMPLE
+.EXAMPLE
 	New-vLun_WSAPI -VolumeName xxx -LUNID x -HostName xxx
-
-  .EXAMPLE
+.EXAMPLE
 	New-vLun_WSAPI -VolumeName xxx -LUNID x -HostName xxx -NSP 1:1:1
-	
-  .PARAMETER VolumeName
+.PARAMETER VolumeName
 	Name of the volume or VV set to export.
-
-  .PARAMETER LUNID
+.PARAMETER LUNID
 	LUN ID.
-	
-  .PARAMETER HostName  
+.PARAMETER HostName  
 	Name of the host or host set to which the volume or VV set is to be exported.
 	The host set should be in set:hostset_name format.
-	
-  .PARAMETER NSP
+.PARAMETER NSP
 	System port of VLUN exported to. It includes node number, slot number, and card port number.
-
-  .PARAMETER NoVcn
+.PARAMETER NoVcn
 	Specifies that a VCN not be issued after export (-novcn). Default: false.
-	
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : New-vLun_WSAPI    
-    LASTEDIT: February 2020
-    KEYWORDS: New-vLun_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-  
-  #>
-  [CmdletBinding()]
-  Param(
-	  [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $VolumeName,
-	  
-	  [Parameter(Position=1, Mandatory=$true, ValueFromPipeline=$true)]
-      [int]
-	  $LUNID,
-	  
-	  [Parameter(Position=2, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $HostName,
-	  
-	  [Parameter(Position=3, ValueFromPipeline=$true)]
-      [System.String]
-	  $NSP,
-	  
-	  [Parameter(Position=4, ValueFromPipeline=$true)]
-      [Boolean]
-	  $NoVcn = $false,
-	  
-	  [Parameter(Position=5, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    # Creation of the body hash
+#>
+[CmdletBinding()]
+Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)]	[String]	$VolumeName,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]	[int]		$LUNID,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]	[String]	$HostName,
+		[Parameter(ValueFromPipeline=$true)]					[String]	$NSP,
+		[Parameter(ValueFromPipeline=$true)]					[Boolean]	$NoVcn = $false
+	)
+Begin 
+{	Test-WSAPIConnection 
+}
+Process 
+{	# Creation of the body hash
 	Write-DebugLog "Running: Creation of the body hash" $Debug
     $body = @{}    
-    
-	If ($VolumeName) 
-	{ 
-		$body["volumeName"] ="$($VolumeName)" 
-	}  
-	If ($LUNID) 
-	{ 
-		$body["lun"] =$LUNID
-	}
-	If ($HostName) 
-	{ 
-		$body["hostname"] ="$($HostName)" 
-	}
-	If ($NSP) 
-	{
-		$NSPbody = @{} 
-		
-		$list = $NSP.split(":")
-		
-		$NSPbody["node"] = [int]$list[0]		
-		$NSPbody["slot"] = [int]$list[1]
-		$NSPbody["cardPort"] = [int]$list[2]		
-		
-		$body["portPos"] = $NSPbody		
-	}
-	If ($NoVcn) 
-	{ 
-		$body["noVcn"] = $NoVcn
-	}
-	
-    
-    $Result = $null
-	
-    #Request	
-    $Result = Invoke-WSAPI -uri '/vluns' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+	If ($VolumeName) 	{ 	$body["volumeName"] = "$($VolumeName)" 	}  
+	If ($LUNID) 		{ 	$body["lun"] 		= $LUNID			}
+	If ($HostName) 		{ 	$body["hostname"] 	= "$($HostName)" 	}
+	If ($NSP) 			{	$NSPbody 			= @{} 
+							$list = $NSP.split(":")
+							$NSPbody["node"] 	= [int]$list[0]		
+							$NSPbody["slot"] 	= [int]$list[1]
+							$NSPbody["cardPort"] = [int]$list[2]		
+							$body["portPos"] 	= $NSPbody		
+						}
+	If ($NoVcn) 		{ 	$body["noVcn"] = $NoVcn					}
+	$Result = $null
+	#Request	
+    $Result = Invoke-WSAPI -uri '/vluns' -type 'POST' -body $body
 	$status = $Result.StatusCode	
 	if($status -eq 201)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		#write-host "SUCCESS: Status Code : $Result.StatusCode ." -foreground green
-		#write-host "SUCCESS: Status Description : $Result.StatusDescription." -foreground green
-		write-host ""
+		{
+		write-host "`nCmdlet executed successfully. `n" -foreground green
 		Write-DebugLog "SUCCESS: Successfully Created a VLUN" $Info	
-		Get-vLun_WSAPI -VolumeName $VolumeName -LUNID $LUNID -HostName $HostName
-		
+		Get-vLun_WSAPI -VolumeName $VolumeName -LUNID $LUNID -HostName $HostName	
 		Write-DebugLog "End: New-vLun_WSAPI" $Debug
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Creating a VLUN" -foreground red
-		write-host ""
+	{	write-Error "`nFAILURE : While Creating a VLUN.`n"
 		Write-DebugLog "FAILURE : Creating a VLUN" $Info
 		Write-DebugLog "End: New-vLun_WSAPI" $Debug
-		
 		return $Result.StatusDescription
 	}	
-  }
-  End 
-  {
-  }  
 }
-#ENG New-vLun_WSAPI
+}
 
-############################################################################################################################################
-## FUNCTION Remove-vLun_WSAPI
-############################################################################################################################################
 Function Remove-vLun_WSAPI
- {
-  <#
-	
-  .SYNOPSIS
+{
+<#
+.SYNOPSIS
 	Removing a VLUN.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Removing a VLUN
     Any user with the Super or Edit role, or any role granted with the vlun_remove right, can perform this operation.    
-	
-  .EXAMPLE    
+.EXAMPLE    
 	Remove-vLun_WSAPI -VolumeName xxx -LUNID xx -HostName xxx
-
-  .EXAMPLE    
+.EXAMPLE    
 	Remove-vLun_WSAPI -VolumeName xxx -LUNID xx -HostName xxx -NSP x:x:x
-	
-  .PARAMETER VolumeName
+.PARAMETER VolumeName
 	Name of the volume or VV set to be exported.
 	The VV set should be in set:<volumeset_name> format.
-  
-  .PARAMETER LUNID
-   Lun Id
-   
-  .PARAMETER HostName
+.PARAMETER LUNID
+	Lun Id
+.PARAMETER HostName
 	Name of the host or host set to which the volume or VV set is to be exported. For VLUN of port type, the value is empty.
 	The host set should be in set:<hostset_name> format.required if volume is exported to host or host set,or to both the host or host set and port
-  
-  .PARAMETER NSP
+.PARAMETER NSP
 	Specifies the system port of the VLUN export. It includes the system node number, PCI bus slot number, and card port number on the FC card in the format:<node>:<slot>:<port>
 	required if volume is exported to port, or to both host and port .Notes NAME : Remove-vLun_WSAPI 
- 
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
- 
-  .Notes
-    NAME    : Remove-vLun_WSAPI    
-    LASTEDIT: February 2020
-    KEYWORDS: Remove-vLun_WSAPI 
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-	
-  #>
-  [CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
-  Param(
-	  [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $VolumeName,
-	  
-	  [Parameter(Position=1, Mandatory=$true, ValueFromPipeline=$true)]
-      [int]
-	  $LUNID,
-	  
-	  [Parameter(Position=2, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $HostName,
-	  
-	  [Parameter(Position=3, ValueFromPipeline=$true)]
-      [System.String]
-	  $NSP,
-
-	  [Parameter(Position=4, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection	  
+#>
+[CmdletBinding()]
+Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$VolumeName,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)][int]		$LUNID,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$HostName,
+		[Parameter(ValueFromPipeline=$true)]				 [String]	$NSP
 	)
-	
-  Begin 
-  {
-    # Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {    
-	#Build uri
+Begin 
+{	Test-WSAPIConnection 
+}
+Process 
+{   #Build uri
 	Write-DebugLog "Running: Building uri to Remove-vLun_WSAPI  ." $Debug
 	$uri = "/vluns/"+$VolumeName+","+$LUNID+","+$HostName
-	
-	if($NSP)
-	{
-		$uri = $uri+","+$NSP
-	}	
-
+	if($NSP)	{	$uri = $uri+","+$NSP	}	
 	#init the response var
 	$Result = $null
-
 	#Request
 	Write-DebugLog "Request: Request to Remove-vLun_WSAPI : $CPGName (Invoke-WSAPI)." $Debug
-	$Result = Invoke-WSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
-	
+	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: VLUN Successfully removed with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]." $Info
-		Write-DebugLog "End: Remove-vLun_WSAPI" $Debug
-		return $Result		
-	}
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
+			Write-DebugLog "SUCCESS: VLUN Successfully removed with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]." $Info
+			Write-DebugLog "End: Remove-vLun_WSAPI" $Debug
+			return $Result		
+		}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Removing VLUN with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]. " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Removing VLUN with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]." $Info
-		Write-DebugLog "End: Remove-vLun_WSAPI" $Debug
-		
-		return $Result.StatusDescription
-	}    
-	
-  }
-  End {}  
+		{	write-Error "`n FAILURE : While Removing VLUN with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]. `n"
+			Write-DebugLog "FAILURE : While Removing VLUN with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]." $Info
+			Write-DebugLog "End: Remove-vLun_WSAPI" $Debug
+			return $Result.StatusDescription
+		}    
+}
 }
 
 Function Get-vLun_WSAPI 
@@ -291,7 +139,6 @@ Function Get-vLun_WSAPI
 .EXAMPLE
 	Get-vLun_WSAPI
 	Display a list of VLun.
-	
 .EXAMPLE
 	Get-vLun_WSAPI -VolumeName xxx -LUNID x -HostName xxx 
 	Display a list of VLun.
@@ -301,7 +148,6 @@ Function Get-vLun_WSAPI
 	Lun
 .PARAMETER HostName
 	Name of the host to which the volume is to be exported. For VLUN of port type, the value is empty.
-		
 .PARAMETER NSP
 	The <n:s:p> variable identifies the node, slot, and port of the device.
 .PARAMETER WsapiConnection 
@@ -312,12 +158,10 @@ Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$Vlun_id,
 		[Parameter(Position=1, ValueFromPipeline=$true)][System.String]	$VolumeName,
 		[Parameter(Position=2, ValueFromPipeline=$true)][int]			$LUNID,
 		[Parameter(Position=3, ValueFromPipeline=$true)][System.String]	$HostName,
-		[Parameter(Position=4, ValueFromPipeline=$true)][System.String]	$NSP,
-		[Parameter(Position=5, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+		[Parameter(Position=4, ValueFromPipeline=$true)][System.String]	$NSP
 )
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection	 
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Request: Request to Get-vLun_WSAPI [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP] (Invoke-WSAPI)." $Debug
@@ -326,104 +170,63 @@ Process
 	$dataPS = $null		
 	$uri = "/vluns/"+$Vlun_id+"/"
 	# Results
-	if($VolumeName)
-		{	#Build uri
-			$uri = $uri+$VolumeName			
-		}
-	if($LUNID)
-		{	if($VolumeName)
-				{	#Build uri
-					$uri = $uri+","+$LUNID			
-				}
-		else
-		{
-			$uri = $uri+$LUNID
-		}
+	if($VolumeName)	{	$uri = $uri+$VolumeName	}
+	if($LUNID)		{	if($VolumeName)
+							{	$uri = $uri+","+$LUNID			
+							}
+						else
+							{	$uri = $uri+$LUNID
+							}
 		
-	}
-	if($HostName)
-	{
-		if($VolumeName -Or $LUNID)
-		{
-			#Build uri
-			$uri = $uri+","+$HostName			
-		}
-		else
-		{
-			$uri = $uri+$HostName
-		}
-	}
-	if($NSP)
-	{
-		if($VolumeName -Or $LUNID -Or $HostName)
-		{
-			#Build uri
-			$uri = $uri+","+$NSP			
-		}
-		else
-		{
-			$uri = $uri+$NSP
-		}
-	}
+					}
+	if($HostName)	{	if($VolumeName -Or $LUNID)
+							{	$uri = $uri+","+$HostName			
+							}
+						else
+							{	$uri = $uri+$HostName
+							}
+					}
+	if($NSP)		{	if($VolumeName -Or $LUNID -Or $HostName)
+							{	$uri = $uri+","+$NSP			
+							}
+						else
+							{	$uri = $uri+$NSP
+							}
+					}
 	if($Vlun_id -Or $VolumeName -Or $LUNID -Or $HostName -Or $NSP)
-	{
-		#Request
-		$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-		If($Result.StatusCode -eq 200)
-		{
-			$dataPS = ($Result.content | ConvertFrom-Json).members
+		{	#Request
+			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
+			If($Result.StatusCode -eq 200)
+				{	$dataPS = ($Result.content | ConvertFrom-Json).members
+				}
 		}
-	}
 	else
-	{
-		#Request
-		$Result = Invoke-WSAPI -uri '/vluns' -type 'GET' -WsapiConnection $WsapiConnection
-		If($Result.StatusCode -eq 200)
-		{			
-			$dataPS = ($Result.content | ConvertFrom-Json).members			
-		}		
-	}
-
+		{	#Request
+			$Result = Invoke-WSAPI -uri '/vluns' -type 'GET' -WsapiConnection $WsapiConnection
+			If($Result.StatusCode -eq 200)
+				{	$dataPS = ($Result.content | ConvertFrom-Json).members			
+				}		
+		}
 	If($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-			{
-				write-host ""
-				write-host "Cmdlet executed successfully" -foreground green
-				write-host ""
-				Write-DebugLog "SUCCESS: Get-vLun_WSAPI successfully Executed." $Info
-				
-				return $dataPS
-			}
+		{	if($dataPS.Count -gt 0)
+				{	write-host "`nCmdlet executed successfully.`n" -foreground green
+					Write-DebugLog "SUCCESS: Get-vLun_WSAPI successfully Executed." $Info	
+					return $dataPS
+				}
 			else
-			{
-				write-host ""
-				write-host "FAILURE : While Executing Get-vLun_WSAPI. Expected Result Not Found [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP]." -foreground red
-				write-host ""
-				Write-DebugLog "FAILURE : While Executing Get-vLun_WSAPI. Expected Result Not Found [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP]" $Info
-				
-				return 
-			}
-	}
+				{	write-Error "`nFAILURE : While Executing Get-vLun_WSAPI. Expected Result Not Found [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP]." 
+					Write-DebugLog "FAILURE : While Executing Get-vLun_WSAPI. Expected Result Not Found [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP]" $Info
+					return 
+				}
+		}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-vLun_WSAPI." -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Executing Get-vLun_WSAPI. " $Info
-		
-		return $Result.StatusDescription
-	}
+		{	write-Error "`nFAILURE : While Executing Get-vLun_WSAPI.`n"
+			Write-DebugLog "FAILURE : While Executing Get-vLun_WSAPI. " $Info	
+			return $Result.StatusDescription
+		}
 }
-End 
-{
 }
-}#END Get-vLun_WSAPI
 
-
-############################################################################################################################################
-## FUNCTION Get-vLunUsingFilters_WSAPI
-############################################################################################################################################
 Function Get-vLunUsingFilters_WSAPI 
 {
 <#
@@ -468,20 +271,16 @@ Function Get-vLunUsingFilters_WSAPI
 	Host Name
 .PARAMETER Serial
 	To Get volumes using a serial number
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][System.String]	$VolumeWWN,
-		[Parameter(Position=2, ValueFromPipeline=$true)][System.String]	$RemoteName,
-		[Parameter(Position=3, ValueFromPipeline=$true)][System.String]	$VolumeName,
-		[Parameter(Position=4, ValueFromPipeline=$true)][System.String]	$HostName,
-		[Parameter(Position=5, ValueFromPipeline=$true)][System.String]	$Serial,
-		[Parameter(Position=6, ValueFromPipeline=$true)]				$WsapiConnection = $global:WsapiConnection
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeWWN,
+		[Parameter(ValueFromPipeline=$true)][String]	$RemoteName,
+		[Parameter(ValueFromPipeline=$true)][String]	$VolumeName,
+		[Parameter(ValueFromPipeline=$true)][String]	$HostName,
+		[Parameter(ValueFromPipeline=$true)][String]	$Serial
 )
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection	 
+{	Test-WSAPIConnection 
 }
 Process 
 {	Write-DebugLog "Request: Request to Get-vLunUsingFilters_WSAPI VVSetName : $VVSetName (Invoke-WSAPI)." $Debug
@@ -528,7 +327,6 @@ Process
 	if($VolumeWWN -or $RemoteName -or $VolumeName -or $HostName -or $Serial)
 		{	#Build uri
 			$uri = '/vluns/'+$Query
-			#write-host "uri = $uri"
 			#Request
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection		
 			If($Result.StatusCode -eq 200)
@@ -537,30 +335,21 @@ Process
 		}		
 	If($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -gt 0)
-				{	write-host ""
-					write-host "Cmdlet executed successfully" -foreground green
-					write-host ""
+				{	write-host "`nCmdlet executed successfully.`n" -foreground green
 					Write-DebugLog "SUCCESS: Get-vLunUsingFilters_WSAPI successfully Executed." $Info
 					return $dataPS
 				}
 			else
-				{	write-host ""
-					write-host "FAILURE : While Executing Get-vLunUsingFilters_WSAPI. Expected Result Not Found with Given Filter Option : VolumeWWN/$VolumeWWN RemoteName/$RemoteName VolumeName/$VolumeName HostName/$HostName Serial/$Serial." -foreground red
-					write-host ""
+				{	write-Error "`n FAILURE : While Executing Get-vLunUsingFilters_WSAPI. Expected Result Not Found with Given Filter Option : VolumeWWN/$VolumeWWN RemoteName/$RemoteName VolumeName/$VolumeName HostName/$HostName Serial/$Serial. `n" 
 					Write-DebugLog "FAILURE : While Executing Get-vLunUsingFilters_WSAPI. Expected Result Not Found with Given Filter Option : VolumeWWN/$VolumeWWN RemoteName/$RemoteName VolumeName/$VolumeName HostName/$HostName Serial/$Serial." $Info
 					return 
 				}
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While Executing Get-vLunUsingFilters_WSAPI." -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While Executing Get-vLunUsingFilters_WSAPI. `n"
 			Write-DebugLog "FAILURE : While Executing Get-vLunUsingFilters_WSAPI. " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{
 }
 }
 
