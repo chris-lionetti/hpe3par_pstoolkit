@@ -1348,81 +1348,58 @@ Process
 
 Function Get-PortStatisticsReports_WSAPI 
 {
-  <#
-   
-  .SYNOPSIS	
+<#
+.SYNOPSIS	
 	Request a port statistics report using either Versus Time or At Time reports.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Request a port statistics report using either Versus Time or At Time reports.
-        
-  .EXAMPLE 
+.EXAMPLE 
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires
-  
-  .EXAMPLE  
+.EXAMPLE  
 	Get-PortStatisticsReports_WSAPI -VersusTime -Frequency_Hires
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -VersusTime -Frequency_Hires -NSP "1:0:1"
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires -PortType 1
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -VersusTime -Frequency_Hires -PortType :1,2"
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -VersusTime -Frequency_Hourly -Groupby slot
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hourly -Groupby "slot,type"
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -VersusTime -Frequency_Hourly -Summary max
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires -Summary max
-  
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -VersusTime -Frequency_Daily -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires -LETime "2018-04-09T12:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-PortStatisticsReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30" -LETime "2018-04-09T12:20:00+05:30"	
-		
-  .PARAMETER VersusTime
+.PARAMETER VersusTime
 	Request port statistics report using Versus Time reports.
-	
-  .PARAMETER AtTime
+.PARAMETER AtTime
 	Request port statistics report using At Time reports.
-	
-  .PARAMETER Frequency_Hires
+.PARAMETER Frequency_Hires
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• hires—based on 5 minutes (high resolution)
-		
-  .PARAMETER Frequency_Hourly
+.PARAMETER Frequency_Hourly
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:	
 	• hourly
-	
-  .PARAMETER Frequency_Daily
+.PARAMETER Frequency_Daily
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• daily
-
-  .PARAMETER NSP
+.PARAMETER NSP
 	Requests sample data for the specified ports only using n:s:p. For example, specify port:1:0:1,2:1:3,6:2:1. With no portPos specified, the system calculates performance data for all ports in the system.
-  
-  .PARAMETER PortType
+.PARAMETER PortType
 	Requests sample data for the specified port type (see, portConnType enumeration) . With no type specified, the system calculates performance data for all port types in the system. You can specify one or more port types by separating them with a comma (,). For example, specify type: 1,2,8.
 	Symbol Value Description
 	1 for :- HOST : FC port connected to hosts or fabric.	
@@ -1435,12 +1412,10 @@ Function Get-PortStatisticsReports_WSAPI
 	8 for :- ISCSI : iSCSI (Ethernet) port connected to hosts.	
 	9 for :- CNA : CNA port, which can be FCoE or iSCSI.	
 	10 for :- FS : Ethernet File Persona ports.
-	
-  .PARAMETER Groupby
+.PARAMETER Groupby
 	node | slot | cardPort | type | speed
 	Groups the sample data into specified categories. With no category specified, the system groups data into all categories. To specify multiple groupby categories, separate them using a comma (,). For example, slot,cardPort,type. 
-	      
-  .PARAMETER Summary
+.PARAMETER Summary
 	Provide at least one of the mandatory field names, and use a comma (,) to separate multiple fields.
 	Mandatory 
 	min : Display the minimum for each metric.
@@ -1452,312 +1427,179 @@ Function Get-PortStatisticsReports_WSAPI
 	perTime : When requesting data across multiple points in time(vstime) using multiple object groupings (groupby), use the perTime field name to compute 	summaries. Defaults to one summary computed across all records. Use this with the groupby field only.
 	perGroup : When requesting data across multiple points in time,(vstime) using multiple object groupings (groupby),use the perGroup field name to compute summaries per object grouping. Defaults to one summary computed across all records.
 	onlyCompareby : When using the compareby field to request data limited to certain object groupings, use this field name to compute summaries using only that reduced set of object groupings. Defaults to computing summaries from all records and ignores the limitation of the compareby option.
-	
-  .PARAMETER Compareby
+.PARAMETER Compareby
 	It should be either top or bottom, Specifies whether to display the top records or the bottom records. Choose one.
-
-  .PARAMETER NoOfRecords
+.PARAMETER NoOfRecords
 	Specifies the number of records to return in the range of 1 to 32 (Versus TIme) and 1 to 128 (At Time).
-	
-  .PARAMETER ComparebyField
+.PARAMETER ComparebyField
 	please select any one from
 	totalIOPs : Total IOPs.
-
-  .PARAMETER GETime
+.PARAMETER GETime
 	Gerater thane time For At Time query expressions, you can use the sampleTime parameter
-	
-  .PARAMETER LETime
+.PARAMETER LETime
 	Lase thane time For At Time query expressions, you can use the sampleTime parameter
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Get-PortStatisticsReports_WSAPI   
-    LASTEDIT: February 2020
-    KEYWORDS: Get-PortStatisticsReports_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-   
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $VersusTime,
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $AtTime,
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hires,
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hourly,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Daily,
-	  
-	  [Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $NSP,
-	  
-	  [Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $PortType,
-	  
-	  [Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Groupby,
-	  
-	  [Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Summary,
-	  
-	  [Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Compareby,
-	  
-	  [Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-      [int]
-	  $NoOfRecords,
-	  
-	  [Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $ComparebyField,
-	  	  
-	  [Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $GETime,
-	  
-	  [Parameter(Position=13, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $LETime,
-	  
-	  [Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
+#>
+[CmdletBinding()]
+Param(	[Switch]	$VersusTime,
+		[Switch]	$AtTime,
+		[Switch]	$Frequency_Hires,
+		[Switch]	$Frequency_Hourly,
+		[Switch]	$Frequency_Daily,
+		[String]	$NSP,
+		[String]	$PortType,
+		[String]	$Groupby,
+		[String]	$Summary,
+		[String]	$Compareby,
+		[int]		$NoOfRecords,
+		[String]	$ComparebyField,
+		[String]	$GETime,
+		[String]	$LETime
 	)
-
-  Begin 
-  {
-	#Test if connection exist
-	Test-WSAPIConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-	$Result = $null
+Begin 
+{	Test-WSAPIConnection -WsapiConnection $WsapiConnection
+}
+Process 
+{	$Result = $null
 	$dataPS = $null
 	$Action = $null
 	$Frequency = $null
 	$flg = "Yes"
 	$addQuery = "No"
-	$Query="?query=""  """
-	
-	if($VersusTime)	{	$Action = "vstime"	}	elseif($AtTime)	{	$Action = "attime"	}	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
-	
-	if($Frequency_Hires){	$Frequency = "hires"	}	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} elseif($Frequency_Daily)	{	$Frequency = "daily"	}	else{ Return "Please select Frequency it is mandatory" }
-	
+	$Query="?query=""  """	
+	if($VersusTime)	{	$Action = "vstime"	}	
+	elseif($AtTime)	{	$Action = "attime"	}	
+	else			{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
+	if($Frequency_Hires){	$Frequency = "hires"	}	
+	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
+	elseif($Frequency_Daily)	{	$Frequency = "daily"	}	
+	else						{ 	Return "Please select Frequency it is mandatory" }	
 	#Build uri
 	$uri = '/systemreporter/'+$Action+'/portstatistics/'+$Frequency
-		
-	if($NSP) { if($AtTime) { return "We cannot pass NSP in At Time report." } $uri = $uri+";portPos:$NSP"}
-	if($PortType) { if($AtTime) { return "We cannot pass PortType in At Time report." } $uri = $uri+";type:$PortType"}	
-	if($Groupby) {  $uri = $uri+";groupby:$Groupby"}
-	if($Summary) { $uri = $uri+";summary:$Summary"}
+	if($NSP) 	{ 	if($AtTime) { return "We cannot pass NSP in At Time report." } 
+					$uri = $uri+";portPos:$NSP"
+				}
+	if($PortType) 	{ 	if($AtTime) { return "We cannot pass PortType in At Time report." } 
+						$uri = $uri+";type:$PortType"
+					}	
+	if($Groupby) 	{  	$uri = $uri+";groupby:$Groupby"}
+	if($Summary) 	{ 	$uri = $uri+";summary:$Summary"}
     if($Compareby)
-	{ 
-		$cmpVal = $Compareby.ToLower()
+	{ 	$cmpVal = $Compareby.ToLower()
 		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")
-		{
-			$uri = $uri+";compareby:$cmpVal,"
+		{	$uri = $uri+";compareby:$cmpVal,"
 		}
 		else
-		{
-			return "Compareby should be either top or bottom"
+		{	return "Compareby should be either top or bottom"
 		}
 		if($NoOfRecords)
-		{
-			$uri = $uri+$NoOfRecords+","
+		{	$uri = $uri+$NoOfRecords+","
 		}
 		else
-		{
-			return "NoOfRecords is mandatory with Compareby. "
+		{	return "NoOfRecords is mandatory with Compareby. "
 		}
-		if($ComparebyField)
-		{
-			$uri = $uri+$ComparebyField
-		}
-		else
-		{
-			return "ComparebyField is mandatory with Compareby.please see the parameter help for this"
-		}		
+		if($ComparebyField)		{	$uri = $uri+$ComparebyField	}
+		else	{	return "ComparebyField is mandatory with Compareby.please see the parameter help for this"	}		
 	}		
 	if($GETime)
-	{		
-		$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
-		
+	{	$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
 		if($LETime)
-		{
-			$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
+		{	$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
 			$flg = "No"
 		}
 		$addQuery = "Yes"
 	}
 	if($LETime)
-	{
-		if($flg -eq "Yes")
-		{
-			$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")
+	{	if($flg -eq "Yes")
+		{	$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")
 		}
 		$addQuery = "Yes"		
 	}
-	
-	if($addQuery -eq "Yes")
-	{
-		$uri = $uri+$Query
-	}
+	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
 	#Request
-	$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-	
+	$Result = Invoke-WSAPI -uri $uri -type 'GET' 	
+	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
-	{
-		$dataPS = ($Result.content | ConvertFrom-Json).members	
-	}		
-		  
-	if($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-		{
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+	{	if($dataPS.Count -gt 0)
+		{	write-host "`n Cmdlet executed successfull.`n" -foreground green
 			Write-DebugLog "SUCCESS: Command Get-PortStatisticsReports_WSAPI Successfully Executed" $Info
-			
 			return $dataPS
 		}
 		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-PortStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option ." -foreground red
-			write-host ""
-			Write-DebugLog "FAILURE : While Executing Get-PortStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
-			
+		{	write-error "`n FAILURE : While Executing Get-PortStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
+			Write-DebugLog "FAILURE : While Executing Get-PortStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info	
 			return 
 		}
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-PortStatisticsReports_WSAPI." -foreground red
-		write-host ""
+	{	write-host "FAILURE : While Executing Get-PortStatisticsReports_WSAPI." -foreground red
 		Write-DebugLog "FAILURE : While Executing Get-PortStatisticsReports_WSAPI." $Info
-		
 		return $Result.StatusDescription
 	}
-  }	
+}	
 }
-#END Get-PortStatisticsReports_WSAPI
 
-
-############################################################################################################################################
-## FUNCTION Get-QoSStatisticalReports_WSAPI
-############################################################################################################################################
 Function Get-QoSStatisticalReports_WSAPI 
 {
-  <#
-   
-  .SYNOPSIS	
+<#
+.SYNOPSIS	
 	Request Quality of Service (QoS) statistical data using either Versus Time or At Time reports.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Request Quality of Service (QoS) statistical data using either Versus Time or At Time reports.
-
-  .EXAMPLE	
+.EXAMPLE	
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Hires
-	
-  .EXAMPLE	
+.EXAMPLE	
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Hires -VvSetName "asvvset2"
-
-  .EXAMPLE	
+.EXAMPLE	
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Hires -VvSetName "asvvset,asvvset2"
-
-  .EXAMPLE		
+.EXAMPLE		
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Daily -All_Others
-
-  .EXAMPLE		
+.EXAMPLE		
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Daily -Domain asdomain
-	
-  .EXAMPLE 
+.EXAMPLE 
 	Get-QoSStatisticalReports_WSAPI -AtTime -Frequency_Hires
-  
-  .EXAMPLE  
+.EXAMPLE  
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Hires
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Hourly -Summary max
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -AtTime -Frequency_Hires -Summary max
-  
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -VersusTime -Frequency_Daily -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -AtTime -Frequency_Hires -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -AtTime -Frequency_Hires -LETime "2018-04-09T12:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-QoSStatisticalReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30" -LETime "2018-04-09T12:20:00+05:30"	
-	
-  .PARAMETER VersusTime
+.PARAMETER VersusTime
 	Request port statistics report using Versus Time reports.
-	
-  .PARAMETER AtTime
+.PARAMETER AtTime
 	Request port statistics report using At Time reports.
-	
-  .PARAMETER Frequency_Hires
+.PARAMETER Frequency_Hires
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• hires—based on 5 minutes (high resolution)
-		
-  .PARAMETER Frequency_Hourly
+.PARAMETER Frequency_Hourly
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:	
 	• hourly
-	
-  .PARAMETER Frequency_Daily
+.PARAMETER Frequency_Daily
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• daily
-
-  .PARAMETER VvSetName
+.PARAMETER VvSetName
 	Retrieve QoS statistics for the specified vvset. Specify multiple vvsets using vvset_name1,vvset_name2...
-  
-  .PARAMETER Domain
+.PARAMETER Domain
 	Retrieve QoS statistics for the specified domain. Use the structure, domain:<domain_name>, or specify multiple domains using domain_name1,domain_name2...
-
-  .PARAMETER All_Others
+.PARAMETER All_Others
 	Specify all host I/Os not regulated by any active QoS rule. Use the structure, all_others
-	
-  .PARAMETER Groupby
+.PARAMETER Groupby
 	Group QoS statistical data into categories. With no groupby parameter specified, the system groups the
 	data into all categories. You can specify one or more groupby categories by separating them with a
 	comma. Use the structure, groupby:domain,type,name,ioLimit.
-      
-  .PARAMETER Summary
+.PARAMETER Summary
 	Provide at least one of the mandatory field names, and use a comma (,) to separate multiple fields.
 	Mandatory 
 	min : Display the minimum for each metric.
@@ -1769,14 +1611,11 @@ Function Get-QoSStatisticalReports_WSAPI
 	perTime : When requesting data across multiple points in time(vstime) using multiple object groupings (groupby), use the perTime field name to compute 	summaries. Defaults to one summary computed across all records. Use this with the groupby field only.
 	perGroup : When requesting data across multiple points in time,(vstime) using multiple object groupings (groupby),use the perGroup field name to compute summaries per object grouping. Defaults to one summary computed across all records.
 	onlyCompareby : When using the compareby field to request data limited to certain object groupings, use this field name to compute summaries using only that reduced set of object groupings. Defaults to computing summaries from all records and ignores the limitation of the compareby option.
-	
-  .PARAMETER Compareby
+.PARAMETER Compareby
 	It should be either top or bottom, Specifies whether to display the top records or the bottom records. Choose one.
-
-  .PARAMETER NoOfRecords
+.PARAMETER NoOfRecords
 	Specifies the number of records to return in the range of 1 to 32 (Versus TIme) and 1 to 128 (At Time).
-	
-  .PARAMETER ComparebyField
+.PARAMETER ComparebyField
 	please select any one from
 	readIOPS : Read input/output operations per second.
 	writeIOPS : Write input/output operations per second.
@@ -1803,352 +1642,195 @@ Function Get-QoSStatisticalReports_WSAPI
 	IORejection : Total input/output rejection.
 	latencyMS : Latency in milliseconds.
 	latencyTargetMS : Latency target in milliseconds.
-
-  .PARAMETER GETime
+.PARAMETER GETime
 	Gerater thane time For At Time query expressions, you can use the sampleTime parameter
-	
-  .PARAMETER LETime
+.PARAMETER LETime
 	Lase thane time For At Time query expressions, you can use the sampleTime parameter
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Get-QoSStatisticalReports_WSAPI   
-    LASTEDIT: February 2020
-    KEYWORDS: Get-QoSStatisticalReports_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-   
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $VersusTime,
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $AtTime,
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hires,
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hourly,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Daily,
-	  
-	  [Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $VvSetName,
-	  
-	  [Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Domain,
-	  
-	  [Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $All_Others,
-	  
-	  [Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Groupby,
-	  
-	  [Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Summary,
-	  
-	  [Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Compareby,
-	  
-	  [Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-      [int]
-	  $NoOfRecords,
-	  
-	  [Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $ComparebyField,
-	  	  
-	  [Parameter(Position=13, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $GETime,
-	  
-	  [Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $LETime,
-	  
-	  [Parameter(Position=15, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
+#>
+[CmdletBinding()]
+Param(	[Switch]	$VersusTime,
+		[Switch]	$AtTime,
+		[Switch]	$Frequency_Hires,
+		[Switch]	$Frequency_Hourly,
+		[Switch]	$Frequency_Daily,
+		[String]	$VvSetName,
+		[String]	$Domain,
+		[Switch]	$All_Others,
+		[String]	$Groupby,
+		[String]	$Summary,
+		[String]	$Compareby,
+		[int]		$NoOfRecords,
+		[String]	$ComparebyField,
+		[String]	$GETime,
+		[String]	$LETime
 	)
-
-  Begin 
-  {
-	#Test if connection exist
-	Test-WSAPIConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-	$Result = $null
+Begin 
+{	Test-WSAPIConnection 
+}
+Process 
+{	$Result = $null
 	$dataPS = $null
 	$Action = $null
 	$Frequency = $null
 	$flg = "Yes"
 	$addQuery = "No"
 	$Query="?query=""  """
-	
-	if($VersusTime)	{	$Action = "vstime"	}	elseif($AtTime)	{	$Action = "attime"	}	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
-	
-	if($Frequency_Hires){	$Frequency = "hires"	}	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} elseif($Frequency_Daily)	{	$Frequency = "daily"	}	else{ Return "Please select Frequency it is mandatory" }
-	
+	if($VersusTime)	{	$Action = "vstime"	}	
+	elseif($AtTime)	{	$Action = "attime"	}	
+	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
+	if($Frequency_Hires){	$Frequency = "hires"	}	
+	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
+	elseif($Frequency_Daily)	{	$Frequency = "daily"	}	
+	else{ Return "Please select Frequency it is mandatory" }
 	#Build uri
 	$uri = '/systemreporter/'+$Action+'/qosstatistics/'+$Frequency
-		
 	if($VvSetName) 
-	{ 
-		if($AtTime) { return "We cannot pass VvSetName in At Time report." }
+	{ if($AtTime) { return "We cannot pass VvSetName in At Time report." }
 		$lista = $VvSetName.split(",")		
 		$count = 1
 		$set =""
 		foreach($sub in $lista)
-		{
-			$prfx ="vvset:"+$sub
+		{	$prfx ="vvset:"+$sub
 			if($lista.Count -gt 1)
-			{
-				if($lista.Count -ne $count)
-				{					
-					$prfx = $prfx + ","
+			{	if($lista.Count -ne $count)
+				{	$prfx = $prfx + ","
 					$count = $count + 1
 				}				
 			}
 			$set = $prfx
 		}
-		
 		$uri = $uri+";$set"
 	}
 	if($Domain) 
-	{ 
-		if($AtTime) { return "We cannot pass Domain in At Time report." }
+	{ 	if($AtTime) { return "We cannot pass Domain in At Time report." }
 		$lista = $Domain.split(",")		
 		$count = 1
 		$dom =""
 		foreach($sub in $lista)
-		{
-			$prfx ="domain:"+$sub
+		{	$prfx ="domain:"+$sub
 			if($lista.Count -gt 1)
-			{
-				if($lista.Count -ne $count)
-				{					
-					$prfx = $prfx + ","
+			{	if($lista.Count -ne $count)
+				{	$prfx = $prfx + ","
 					$count = $count + 1
 				}				
 			}
 			$dom = $prfx
 		}
-		
 		$uri = $uri+";$dom"
 	}
 	if($All_Others) 
-	{ 
-		if($AtTime) { return "We cannot pass All_Others in At Time report." }			
+	{ 	if($AtTime) { return "We cannot pass All_Others in At Time report." }			
 		$uri = $uri+";sys:all_others"
 	}	
 	if($Groupby) {  $uri = $uri+";groupby:$Groupby"}
 	if($Summary) { $uri = $uri+";summary:$Summary"}
     if($Compareby)
-	{ 
-		$cmpVal = $Compareby.ToLower()
-		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")
-		{
-			$uri = $uri+";compareby:$cmpVal,"
-		}
-		else
-		{
-			return "Compareby should be either top or bottom"
-		}
-		if($NoOfRecords)
-		{
-			$uri = $uri+$NoOfRecords+","
-		}
-		else
-		{
-			return "NoOfRecords is mandatory with Compareby. "
-		}
-		if($ComparebyField)
-		{
-			$uri = $uri+$ComparebyField
-		}
-		else
-		{
-			return "ComparebyField is mandatory with Compareby.please see the parameter help for this"
-		}		
+	{ 	$cmpVal = $Compareby.ToLower()
+		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")	{	$uri = $uri+";compareby:$cmpVal,"	}
+		else	{	return "Compareby should be either top or bottom"	}
+		if($NoOfRecords)	{	$uri = $uri+$NoOfRecords+","	}
+		else	{	return "NoOfRecords is mandatory with Compareby. "}
+		if($ComparebyField)	{	$uri = $uri+$ComparebyField	}
+		else	{	return "ComparebyField is mandatory with Compareby.please see the parameter help for this"	}		
 	}		
 	if($GETime)
-	{		
-		$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
-		
+	{	$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
 		if($LETime)
-		{
-			$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
+		{	$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
 			$flg = "No"
 		}
 		$addQuery = "Yes"
 	}
 	if($LETime)
-	{
-		if($flg -eq "Yes")
-		{
-			$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")
-		}
+	{	if($flg -eq "Yes")		{	$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")	}
 		$addQuery = "Yes"		
 	}
-	
-	if($addQuery -eq "Yes")
-	{
-		$uri = $uri+$Query
-	}
-	
+	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
 	write-host " uri = $uri"
-	
 	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-	
+	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
-	{
-		$dataPS = ($Result.content | ConvertFrom-Json).members	
-	}		
-		  
-	if($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-		{
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+	{	if($dataPS.Count -gt 0)
+		{	write-host "`nCmdlet executed successfully.`n" -foreground green
 			Write-DebugLog "SUCCESS: Command Get-QoSStatisticalReports_WSAPI Successfully Executed" $Info
-			
 			return $dataPS
 		}
 		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-QoSStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option ." -foreground red
-			write-host ""
+		{	write-error "`n FAILURE : While Executing Get-QoSStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
 			Write-DebugLog "FAILURE : While Executing Get-QoSStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
-			
 			return 
 		}
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-QoSStatisticalReports_WSAPI." -foreground red
-		write-host ""
+	{	write-error "`n FAILURE : While Executing Get-QoSStatisticalReports_WSAPI.`n" 
 		Write-DebugLog "FAILURE : While Executing Get-QoSStatisticalReports_WSAPI." $Info
-		
 		return $Result.StatusDescription
 	}
-  }	
+}	
 }
-#END Get-QoSStatisticalReports_WSAPI
 
-############################################################################################################################################
-## FUNCTION Get-RCopyStatisticalReports_WSAPI
-############################################################################################################################################
 Function Get-RCopyStatisticalReports_WSAPI 
 {
-  <#
-   
-  .SYNOPSIS	
+<#
+.SYNOPSIS	
 	Request Remote Copy statistical data using either Versus Time or At Time reports.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Request Remote Copy statistical data using either Versus Time or At Time reports.
-        
-  .EXAMPLE 
+.EXAMPLE 
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires
-        
-  .EXAMPLE 	
+.EXAMPLE 	
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -TargetName xxx
-	        
-  .EXAMPLE 
+.EXAMPLE 
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -NSP x:x:x
-	        
-  .EXAMPLE 
+.EXAMPLE 
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -NSP "x:x:x,x:x:x:
-	        
-  .EXAMPLE 
+.EXAMPLE 
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -Groupby "targetName,linkId"
-  
-  .EXAMPLE  
+.EXAMPLE  
 	Get-RCopyStatisticalReports_WSAPI -VersusTime -Frequency_Hires
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -VersusTime -Frequency_Hourly -Summary max
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -Summary max
-  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -VersusTime -Frequency_Daily -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -LETime "2018-04-09T12:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyStatisticalReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30" -LETime "2018-04-09T12:20:00+05:30"	
-		
-  .PARAMETER VersusTime
+.PARAMETER VersusTime
 	Request port statistics report using Versus Time reports.
-	
-  .PARAMETER AtTime
+.PARAMETER AtTime
 	Request port statistics report using At Time reports.
-	
-  .PARAMETER Frequency_Hires
+.PARAMETER Frequency_Hires
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• hires—based on 5 minutes (high resolution)
-		
-  .PARAMETER Frequency_Hourly
+.PARAMETER Frequency_Hourly
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:	
 	• hourly
-	
-  .PARAMETER Frequency_Daily
+.PARAMETER Frequency_Daily
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• daily
-
-  .PARAMETER TargetName
+.PARAMETER TargetName
 	Specify the target from which to gather Remote Copy statistics. Separate multiple target names using a comma (,). 
 	With no target specified, the request calculates Remote Copy statistics for all targets in the system. Use the structure, targetName:<target1>,<target2> . . .
-
-  .PARAMETER NSP
+.PARAMETER NSP
 	Specify the port from which to gather Remote Copy statistics. Separate multiple port positions with a
 	comma (,) Use the structure, <n:s:p>,<n:s:p> . . .. With no port specified, the request
 	calculates Remote Copy statistics for all ports in the system.
-	
-  .PARAMETER Groupby
+.PARAMETER Groupby
 	Group Remote Copy statistical data into categories. With no groupby parameter specified, the system groups the data into all categories. 
 	Separate multiple groups with a comma (,). Use the structure,
 	groupby:targetName,linkId,linkAddr,node,slotPort,cardPort.  
-	
-  .PARAMETER Summary
+.PARAMETER Summary
 	Provide at least one of the mandatory field names, and use a comma (,) to separate multiple fields.
 	Mandatory 
 	min : Display the minimum for each metric.
@@ -2160,14 +1842,11 @@ Function Get-RCopyStatisticalReports_WSAPI
 	perTime : When requesting data across multiple points in time(vstime) using multiple object groupings (groupby), use the perTime field name to compute 	summaries. Defaults to one summary computed across all records. Use this with the groupby field only.
 	perGroup : When requesting data across multiple points in time,(vstime) using multiple object groupings (groupby),use the perGroup field name to compute summaries per object grouping. Defaults to one summary computed across all records.
 	onlyCompareby : When using the compareby field to request data limited to certain object groupings, use this field name to compute summaries using only that reduced set of object groupings. Defaults to computing summaries from all records and ignores the limitation of the compareby option.
-	
-  .PARAMETER Compareby
+.PARAMETER Compareby
 	It should be either top or bottom, Specifies whether to display the top records or the bottom records. Choose one.
-
-  .PARAMETER NoOfRecords
+.PARAMETER NoOfRecords
 	Specifies the number of records to return in the range of 1 to 32 (Versus TIme) and 1 to 128 (At Time).
-	
-  .PARAMETER ComparebyField
+.PARAMETER ComparebyField
 	please select any one from 
 	kbs : Kilobytes.
 	kbps : Kilobytes per second.
@@ -2178,320 +1857,176 @@ Function Get-RCopyStatisticalReports_WSAPI
 	node : Node number for the port used by a Remote Copy link.
 	slotPort : PCI slot number for the port used by a Remote Copy link.
 	cardPort : Port number for the port used by a Remote Copy link.
-
-  .PARAMETER GETime
+.PARAMETER GETime
 	Gerater thane time For At Time query expressions, you can use the sampleTime parameter
-	
-  .PARAMETER LETime
+.PARAMETER LETime
 	Lase thane time For At Time query expressions, you can use the sampleTime parameter
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Get-RCopyStatisticalReports_WSAPI   
-    LASTEDIT: February 2020
-    KEYWORDS: Get-RCopyStatisticalReports_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-   
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $VersusTime,
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $AtTime,
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hires,
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hourly,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Daily,
-	  
-	  [Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $TargetName,
-	  
-	  [Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $NSP,
-	  
-	  [Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Groupby,
-	  
-	  [Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Summary,
-	  
-	  [Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Compareby,
-	  
-	  [Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-      [int]
-	  $NoOfRecords,
-	  
-	  [Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $ComparebyField,
-	  	  
-	  [Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $GETime,
-	  
-	  [Parameter(Position=13, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $LETime,
-	  
-	  [Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
+#>
+[CmdletBinding()]
+Param(	[Switch]	$VersusTime,
+		[Switch]	$AtTime,
+		[Switch]	$Frequency_Hires,
+		[Switch]	$Frequency_Hourly,
+		[Switch]	$Frequency_Daily,
+		[String]	$TargetName,
+		[String]	$NSP,
+		[String]	$Groupby,
+		[String]	$Summary,
+		[String]	$Compareby,
+		[int]		$NoOfRecords,
+		[String]	$ComparebyField,
+		[String]	$GETime,
+		[String]	$LETime
 	)
-
-  Begin 
-  {
-	#Test if connection exist
-	Test-WSAPIConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-	$Result = $null
+Begin 
+{	Test-WSAPIConnection
+}
+Process 
+{	$Result = $null
 	$dataPS = $null
 	$Action = $null
 	$Frequency = $null
 	$flg = "Yes"
 	$addQuery = "No"
-	$Query="?query=""  """
-	
-	if($VersusTime)	{	$Action = "vstime"	}	elseif($AtTime)	{	$Action = "attime"	}	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
-	
-	if($Frequency_Hires){	$Frequency = "hires"	}	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} elseif($Frequency_Daily)	{	$Frequency = "daily"	}	else{ Return "Please select Frequency it is mandatory" }
-	
+	$Query="?query=""  """	
+	if($VersusTime)	{	$Action = "vstime"	}	
+	elseif($AtTime)	{	$Action = "attime"	}	
+	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
+	if($Frequency_Hires){	$Frequency = "hires"	}	
+	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
+	elseif($Frequency_Daily)	{	$Frequency = "daily"	}	
+	else{ Return "Please select Frequency it is mandatory" }
 	#Build uri
 	$uri = '/systemreporter/'+$Action+'/remotecopystatistics/'+$Frequency
-	
-	if($TargetName)	{ if($AtTime) { return "We cannot pass TargetName in At Time report." } $uri = $uri+";targetName:$TargetName" }
-	if($NSP)	{ if($AtTime) { return "We cannot pass NSP in At Time report." } $uri = $uri+";portPos:$NSP" }
-	if($Groupby) {  $uri = $uri+";groupby:$Groupby"}
-	if($Summary) { $uri = $uri+";summary:$Summary"}
+	if($TargetName)		{ 	if($AtTime) { return "We cannot pass TargetName in At Time report." } 
+							$uri = $uri+";targetName:$TargetName" 
+						}
+	if($NSP)	{ 	if($AtTime) { return "We cannot pass NSP in At Time report." } 
+					$uri = $uri+";portPos:$NSP" 
+				}
+	if($Groupby) {  $uri = $uri+";groupby:$Groupby"	}
+	if($Summary) { 	$uri = $uri+";summary:$Summary"	}
     if($Compareby)
-	{ 
-		$cmpVal = $Compareby.ToLower()
-		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")
-		{
-			$uri = $uri+";compareby:$cmpVal,"
-		}
-		else
-		{
-			return "Compareby should be either top or bottom"
-		}
-		if($NoOfRecords)
-		{
-			$uri = $uri+$NoOfRecords+","
-		}
-		else
-		{
-			return "NoOfRecords is mandatory with Compareby. "
-		}
-		if($ComparebyField)
-		{
-			$uri = $uri+$ComparebyField
-		}
-		else
-		{
-			return "ComparebyField is mandatory with Compareby.please see the parameter help for this"
-		}		
+	{ 	$cmpVal = $Compareby.ToLower()
+		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")	{	$uri = $uri+";compareby:$cmpVal,"	}
+		else											{	return "Compareby should be either top or bottom"	}
+		if($NoOfRecords)	{	$uri = $uri+$NoOfRecords+","}
+		else				{	return "NoOfRecords is mandatory with Compareby. "}
+		if($ComparebyField)	{	$uri = $uri+$ComparebyField	}
+		else				{	return "ComparebyField is mandatory with Compareby.please see the parameter help for this"}		
 	}		
 	if($GETime)
-	{		
-		$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
-		
+	{	$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
 		if($LETime)
-		{
-			$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
+		{	$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
 			$flg = "No"
 		}
 		$addQuery = "Yes"
 	}
 	if($LETime)
-	{
-		if($flg -eq "Yes")
-		{
-			$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")
-		}
+	{	if($flg -eq "Yes")	{	$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")	}
 		$addQuery = "Yes"		
 	}
-	
-	if($addQuery -eq "Yes")
-	{
-		$uri = $uri+$Query
-	}
+	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
 	#Request
-	$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-	
+	$Result = Invoke-WSAPI -uri $uri -type 'GET'
+	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
-	{
-		$dataPS = ($Result.content | ConvertFrom-Json).members	
-	}		
-		  
-	if($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-		{
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+	{	if($dataPS.Count -gt 0)
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Command Get-RCopyStatisticalReports_WSAPI Successfully Executed" $Info
-			
 			return $dataPS
 		}
 		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option ." -foreground red
-			write-host ""
+		{	write-host "`n FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option .`n" 
 			Write-DebugLog "FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
-			
 			return 
 		}
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI." -foreground red
-		write-host ""
+	{	write-error "`n FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI.`n" 
 		Write-DebugLog "FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI." $Info
-		
 		return $Result.StatusDescription
 	}
-  }	
+}	
 }
-#END Get-RCopyStatisticalReports_WSAPI
 
-
-############################################################################################################################################
-## FUNCTION Get-RCopyVolumeStatisticalReports_WSAPI
-############################################################################################################################################
 Function Get-RCopyVolumeStatisticalReports_WSAPI 
 {
-  <#
-   
-  .SYNOPSIS	
+<#
+.SYNOPSIS	
 	Request statistical data related to Remote Copy volumes using either Versus Time or At Time reports.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Request statistical data related to Remote Copy volumes using either Versus Time or At Time reports.
-        
-  .EXAMPLE 
+.EXAMPLE 
 	Get-RCopyVolumeStatisticalReports_WSAPI -AtTime -Frequency_Hires
-  
-  .EXAMPLE  
+.EXAMPLE  
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -vvName xxx
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -vvName "xxx,xxx"
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -TargetName xxx
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -TargetName "xxx,xxx"
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -Mode SYNC
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -RCopyGroup xxx
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -Groupby domain
-	  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hires -Groupby "domain,targetNamex"
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Hourly -Summary max
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -AtTime -Frequency_Hires -Summary max
-  
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -VersusTime -Frequency_Daily -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -AtTime -Frequency_Hires -Compareby top -NoOfRecords 10 -ComparebyField totalSpaceMiB
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -AtTime -Frequency_Hires -LETime "2018-04-09T12:20:00+05:30"
-        
-  .EXAMPLE
+.EXAMPLE
 	Get-RCopyVolumeStatisticalReports_WSAPI -AtTime -Frequency_Hires -GETime "2018-04-09T09:20:00+05:30" -LETime "2018-04-09T12:20:00+05:30"	
-		
-  .PARAMETER VersusTime
+.PARAMETER VersusTime
 	Request port statistics report using Versus Time reports.
-	
-  .PARAMETER AtTime
+.PARAMETER AtTime
 	Request port statistics report using At Time reports.
-	
-  .PARAMETER Frequency_Hires
+.PARAMETER Frequency_Hires
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• hires—based on 5 minutes (high resolution)
-		
-  .PARAMETER Frequency_Hourly
+.PARAMETER Frequency_Hourly
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:	
 	• hourly
-	
-  .PARAMETER Frequency_Daily
+.PARAMETER Frequency_Daily
 	As part of the report identifier, you must specify one <samplefreq> parameter. The <samplefreq> parameter indicates how often to generate the performance sample data. You may specify only one.
 	Options are:
 	• daily
-
-  .PARAMETER vvName
+.PARAMETER vvName
 	Specify the name of the volume from which to gather Remote Copy volume statistics. Separate multiple
 	names with a comma (,) Use <vvname1>,<vvname2> . . .. To specify the name of a set of volumes, use set:<vvsetname>.
-  
-  .PARAMETER TargetName
+.PARAMETER TargetName
 	Specify the target from which to gather Remote Copy volume statistics. Separate multiple target names using a comma (,). 
 	With no target specified, the request calculates Remote Copy volume statistics for all targets in the system.
-
-  .PARAMETER Mode
+.PARAMETER Mode
 	Specify the mode of the target from which to gather Remote Copy volume statistics.
 	SYNC : Remote Copy group mode is synchronous.
 	PERIODIC : Remote Copy group mode is periodic. Although WSAPI 1.5 and later supports PERIODIC 2, Hewlett Packard Enterprise	recommends using PERIODIC 3.
 	PERIODIC : Remote Copy group mode is periodic.
 	ASYNC : Remote Copy group mode is asynchronous.
-	
-  .PARAMETER RCopyGroup	
+.PARAMETER RCopyGroup	
 	Specify the remote copy group from which to gather Remote Copy volume statistics. Separate multiple group names using a comma (,).
 	With no remote copy group specified, the request calculates remote copy volume statistics for all remote copy groups in the system.
-	
-  .PARAMETER Groupby
+.PARAMETER Groupby
 	Group the Remote Copy volume statistical data into categories. With no groupby parameter specified,the system groups the data into all categories. 
 	Separate multiple groups with a comma (,). Use the structure,groupby:volumeName,volumeSetName,domain,targetName,mode,remoteCopyGroup,remote CopyGroupRole,node,slot,cardPort,portType.
-      
-  .PARAMETER Summary
+.PARAMETER Summary
 	Provide at least one of the mandatory field names, and use a comma (,) to separate multiple fields.
 	Mandatory 
 	min : Display the minimum for each metric.
@@ -2503,14 +2038,11 @@ Function Get-RCopyVolumeStatisticalReports_WSAPI
 	perTime : When requesting data across multiple points in time(vstime) using multiple object groupings (groupby), use the perTime field name to compute 	summaries. Defaults to one summary computed across all records. Use this with the groupby field only.
 	perGroup : When requesting data across multiple points in time,(vstime) using multiple object groupings (groupby),use the perGroup field name to compute summaries per object grouping. Defaults to one summary computed across all records.
 	onlyCompareby : When using the compareby field to request data limited to certain object groupings, use this field name to compute summaries using only that reduced set of object groupings. Defaults to computing summaries from all records and ignores the limitation of the compareby option.
-	
-  .PARAMETER Compareby
+.PARAMETER Compareby
 	It should be either top or bottom, Specifies whether to display the top records or the bottom records. Choose one.
-
-  .PARAMETER NoOfRecords
+.PARAMETER NoOfRecords
 	Specifies the number of records to return in the range of 1 to 32 (Versus TIme) and 1 to 128 (At Time).
-	
-  .PARAMETER ComparebyField
+.PARAMETER ComparebyField
 	please select any one from 
 	readIOLocal : Local read input/output operations per second.
 	writeIOLocal : Local write input/output operations per second.
@@ -2541,131 +2073,58 @@ Function Get-RCopyVolumeStatisticalReports_WSAPI
 	busyPctRemote : Remote busy Percentage.
 	queueLengthRemote : Remote queue length.
 	RPO : Recovery point objective.	
-	
-  .PARAMETER GETime
+.PARAMETER GETime
 	Gerater thane time For At Time query expressions, you can use the sampleTime parameter
-	
-  .PARAMETER LETime
+.PARAMETER LETime
 	Lase thane time For At Time query expressions, you can use the sampleTime parameter
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Get-RCopyVolumeStatisticalReports_WSAPI   
-    LASTEDIT: February 2020
-    KEYWORDS: Get-RCopyVolumeStatisticalReports_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-   
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $VersusTime,
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $AtTime,
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hires,
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Hourly,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-      [Switch]
-	  $Frequency_Daily,
-	  
-	  [Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $vvName,
-	  
-	  [Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $TargetName,
-	  
-	  [Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Mode,
-	  
-	  [Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $RCopyGroup,
-	  
-	  [Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Groupby,
-	  
-	  [Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Summary,
-	  
-	  [Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $Compareby,
-	  
-	  [Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-      [int]
-	  $NoOfRecords,
-	  
-	  [Parameter(Position=13, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $ComparebyField,
-	  	  
-	  [Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $GETime,
-	  
-	  [Parameter(Position=15, Mandatory=$false, ValueFromPipeline=$true)]
-      [String]
-	  $LETime,
-	  
-	  [Parameter(Position=16, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
+#>
+[CmdletBinding()]
+Param(	[Switch]	$VersusTime,
+		[Switch]	$AtTime,
+		[Switch]	$Frequency_Hires,
+		[Switch]	$Frequency_Hourly,
+		[Switch]	$Frequency_Daily,
+		[String]	$vvName,
+		[String]	$TargetName,
+		[String]	$Mode,
+		[String]	$RCopyGroup,
+		[String]	$Groupby,
+		[String]	$Summary,
+		[String]	$Compareby,
+		[int]		$NoOfRecords,
+		[String]	$ComparebyField,
+		[String]	$GETime,
+		[String]	$LETime
 	)
-
-  Begin 
-  {
-	#Test if connection exist
-	Test-WSAPIConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-	$Result = $null
+Begin 
+{	Test-WSAPIConnection
+}
+Process 
+{	$Result = $null
 	$dataPS = $null
 	$Action = $null
 	$Frequency = $null
 	$flg = "Yes"
 	$addQuery = "No"
-	$Query="?query=""  """
-	
-	if($VersusTime)	{	$Action = "vstime"	}	elseif($AtTime)	{	$Action = "attime"	}	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
-	
-	if($Frequency_Hires){	$Frequency = "hires"	}	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} elseif($Frequency_Daily)	{	$Frequency = "daily"	}	else{ Return "Please select Frequency it is mandatory" }
-	
+	$Query="?query=""  """	
+	if($VersusTime)	{	$Action = "vstime"	}	
+	elseif($AtTime)	{	$Action = "attime"	}	
+	else{	Return "Please Select at-list any one from Versus Time or At Time for statistics report." }
+	if($Frequency_Hires){	$Frequency = "hires"	}	
+	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
+	elseif($Frequency_Daily)	{	$Frequency = "daily"	}	
+	else{ Return "Please select Frequency it is mandatory" }
 	#Build uri
 	$uri = '/systemreporter/'+$Action+'/remotecopyvolumestatistics/'+$Frequency
-		
 	if($vvName)	{ if($AtTime) { return "We cannot pass vvName in At Time report." } $uri = $uri+";volumeName:$vvName" }
 	if($TargetName)	{ if($AtTime) { return "We cannot pass TargetName in At Time report." } $uri = $uri+";targetName:$TargetName" }
 	If ($Mode) 
-	{
-		if($AtTime) { return "We cannot pass Mode in At Time report." }
+	{	if($AtTime) { return "We cannot pass Mode in At Time report." }
 		if($Mode.ToUpper() -eq "SYNC") { $uri = $uri+";mode:1" }
 		elseif($Mode.ToUpper() -eq "PERIODIC"){	$uri = $uri+";mode:3" }
 		elseif($Mode.ToUpper() -eq "ASYNC") { $uri = $uri+";mode:4" }
 		else 
-		{ 
-			Write-DebugLog "Stop: Exiting Since -Mode $Mode in incorrect "
+		{ 	Write-DebugLog "Stop: Exiting Since -Mode $Mode in incorrect "
 			Return "FAILURE : -Mode :- $Mode is an Incorrect Mode  [ SYNC | PERIODIC | ASYNC ] can be used only . "
 		}
     }
@@ -2673,93 +2132,45 @@ Function Get-RCopyVolumeStatisticalReports_WSAPI
 	if($Groupby) {  $uri = $uri+";groupby:$Groupby"}
 	if($Summary) { $uri = $uri+";summary:$Summary"}
     if($Compareby)
-	{ 
-		$cmpVal = $Compareby.ToLower()
-		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")
-		{
-			$uri = $uri+";compareby:$cmpVal,"
-		}
-		else
-		{
-			return "Compareby should be either top or bottom"
-		}
-		if($NoOfRecords)
-		{
-			$uri = $uri+$NoOfRecords+","
-		}
-		else
-		{
-			return "NoOfRecords is mandatory with Compareby. "
-		}
-		if($ComparebyField)
-		{
-			$uri = $uri+$ComparebyField
-		}
-		else
-		{
-			return "ComparebyField is mandatory with Compareby.please see the parameter help for this"
-		}		
+	{ 	$cmpVal = $Compareby.ToLower()
+		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")	{	$uri = $uri+";compareby:$cmpVal,"	}
+		else											{	return "Compareby should be either top or bottom"	}
+		if($NoOfRecords)	{	$uri = $uri+$NoOfRecords+","	}
+		else				{	return "NoOfRecords is mandatory with Compareby. "	}
+		if($ComparebyField)	{	$uri = $uri+$ComparebyField	}
+		else				{	return "ComparebyField is mandatory with Compareby.please see the parameter help for this"	}		
 	}		
 	if($GETime)
-	{		
-		$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
-		
+	{	$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
 		if($LETime)
-		{
-			$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
+		{	$Query = $Query.Insert($Query.Length-3," AND sampleTime LE $LETime")
 			$flg = "No"
 		}
 		$addQuery = "Yes"
 	}
 	if($LETime)
-	{
-		if($flg -eq "Yes")
-		{
-			$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")
-		}
+	{	if($flg -eq "Yes")	{	$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")	}
 		$addQuery = "Yes"		
 	}
-	
-	if($addQuery -eq "Yes")
-	{
-		$uri = $uri+$Query
-	}
+	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
 	#Request
-	$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-	
+	$Result = Invoke-WSAPI -uri $uri -type 'GET'
+	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
-	{
-		$dataPS = ($Result.content | ConvertFrom-Json).members	
-	}		
-		  
-	if($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-		{
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+	{	if($dataPS.Count -gt 0)
+		{	write-host "`nCmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Command Get-RCopyVolumeStatisticalReports_WSAPI Successfully Executed" $Info
-			
 			return $dataPS
 		}
 		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option ." -foreground red
-			write-host ""
-			Write-DebugLog "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
-			
+		{	write-Error "`n FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option. `n"
+			Write-DebugLog "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info	
 			return 
 		}
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI." -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI." $Info
-		
+	{	write-host "`n FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI.`n " 
+		Write-DebugLog "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI." $Info		
 		return $Result.StatusDescription
 	}
 }	

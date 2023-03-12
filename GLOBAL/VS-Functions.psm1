@@ -693,13 +693,6 @@ Function Test-SSHSession
     Test-SSHSession
 .EXAMPLE
     Test-SSHSession -SANConnection $SANConnection
-.Notes
-    NAME:  Test-SSHSession
-    LASTEDIT: 14/03/2017
-    KEYWORDS: Test-SSHSession
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #> 
 [CmdletBinding()]
 param(	[Parameter(ValueFromPipeline = $true)]
@@ -726,14 +719,6 @@ Function Test-PARCliTest
     Specify the names of the HP3par cli path
 .EXAMPLE
     Test-PARCli path -pathFolder c:\test
-
-.Notes
-    NAME:  Test-PARCliTest
-    LASTEDIT: 06/16/2015
-    KEYWORDS: Test-PARCliTest
-.Link
-    http://www.hpe.com 
-	Requires PS -Version 3.0
 #> 
 [CmdletBinding()]
 param(	[Parameter(Position = 0, Mandatory = $false)]
@@ -783,6 +768,7 @@ process
 	Write-DebugLog "Stop : in Test-PARCli function " "INFO:"
 }
 }
+
 Function Test-CLIConnection ($SANConnection) 
 {
 <#

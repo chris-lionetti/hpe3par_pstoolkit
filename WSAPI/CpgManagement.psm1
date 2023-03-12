@@ -1,10 +1,6 @@
 ﻿####################################################################################
 ## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
-## 	See LICENSE.txt included in this package
-##
-##	Description: 	CPG Management cmdlets 
-##		
 
 Function New-Cpg_WSAPI 
 {
@@ -91,162 +87,59 @@ Function New-Cpg_WSAPI
     WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of the CPG.')]
+Param(	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
 		[String]		$CPGName,
-
-		[Parameter(HelpMessage = 'Specifies the name of the domain in which the object will reside.')]
 		[String]		$Domain = $null,
-
-		[Parameter(HelpMessage = 'Specifies the name of the template from which the CPG is created')]
 		[String]		$Template = $null,
-
-		[Parameter(HelpMessage = 'Specifies the growth increment, in MiB, the amount of logical disk storage created on each auto-grow operation')]
 		[Int]			$GrowthIncrementMiB = $null,
-
-		[Parameter(HelpMessage = 'Specifies that the autogrow operation is limited to the specified storage amount, in MiB, that sets the growth limit')]
 		[int]			$GrowthLimitMiB = $null,
-
-		[Parameter(HelpMessage = 'Specifies that the threshold of used logical disk space, in MiB, when exceeded results in a warning alert')]
 		[int]			$UsedLDWarningAlertMiB = $null,
-
-		[Parameter(HelpMessage = 'RAIDType R0,R1,R5 and R6 only.')]
+		[ValidateSet('R0','R1','R5','R6')]
 		[string]		$RAIDType = $null, 
-
-		[Parameter(HelpMessage = 'Specifies the set size in the number of chunklets.')]
 		[int]			$SetSize = $null,
-
-		[Parameter(HelpMessage = 'Specifies that the layout must support the failure of one port pair, one cage, or one magazine.')]
+		[ValidateSet('PORT','CAGE','MAG')]
 		[string]		$HA = $null,
-
-		[Parameter(HelpMessage = 'Specifies the chunklet location preference characteristics.')]
+		[ValidateSet('FIRST','LAST')]
 		[string]		$Chunklets = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more nodes. Nodes are identified by one or more integers.')]
 		[String]		$NodeList = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more nodes. Nodes are identified by one or more integers.')]
 		[String]		$SlotList = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more ports. Ports are identified by one or more integers..')]
 		[String]		$PortList = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more drive cages. Drive cages are identified by one or more integers.')]
 		[String]		$CageList = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more drive magazines. Drive magazines are identified by one or more integers..')]
-		[String]			$MagList = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more disk positions within a drive magazine. Disk positions are identified by one or more integers.')]
-		[String]			$DiskPosList = $null,
-
-		[Parameter(HelpMessage = 'Specifies one or more physical disks. Disks are identified by one or more integers.')]
-		[String]			$DiskList = $null,
-
-		[Parameter(HelpMessage = 'Specifies that physical disks with total chunklets greater than the number specified be selected.')]
+		[String]		$MagList = $null,
+		[String]		$DiskPosList = $null,
+		[String]		$DiskList = $null,
 		[int]			$TotalChunkletsGreaterThan = $null,
-
-		[Parameter(HelpMessage = 'Specifies that physical disks with total chunklets less than the number specified be selected.')]
 		[int]			$TotalChunkletsLessThan = $null,
-
-		[Parameter(HelpMessage = 'Specifies that physical disks with free chunklets less than the number specified be selected.')]
 		[int]			$FreeChunkletsGreaterThan = $null,
-
-		[Parameter(HelpMessage = 'Specifies that physical disks with free chunklets greater than the number specified be selected.')]
 		[int]			$FreeChunkletsLessThan = $null,
-
-		[Parameter(HelpMessage = 'Specifies that physical disks must have the specified device type, FC (Fibre Channel) 2 is for NL (Near Line) 3 is for SSD .')]
+		[ValidateSet('FC','NL','SSD')]
 		[string]		$DiskType = $null,
-
-		[Parameter(HelpMessage = 'Disks must be of the specified speed')]
-		[int]		$Rpm = $null,
-
-		[Parameter(Mandatory=$false, HelpMessage = 'Connection Paramater' ,ValueFromPipeline=$true)]
-							$WsapiConnection = $global:WsapiConnection 
+		[int]			$Rpm = $null
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{	Test-WSAPIConnection 
 }
 Process 
 {	# Creation of the body hash
 	Write-DebugLog "Running: Creation of the body hash" $Debug
     $body = @{}		
-    # Name parameter
     $body["name"] = "$($CPGName)"
-    # Domain parameter
-    If ($Domain) 
-		{	$body["domain"] = "$($Domain)"
-		}
-    # Template parameter
-    If ($Template) 
-		{	$body["template"] = "$($Template)"
-		}	 
-	# Template parameter
-    If ($GrowthIncrementMiB) 
-		{	$body["growthIncrementMiB"] = $GrowthIncrementMiB
-		} 
-	# Template parameter
-    If ($GrowthLimitMiB) 
-		{	$body["growthLimitMiB"] = $GrowthLimitMiB
-		}	 	
-	# Template parameter
-    If ($UsedLDWarningAlertMiB) 
-		{	$body["usedLDWarningAlertMiB"] = $UsedLDWarningAlertMiB
-		} 
+    If ($Domain) 				{	$body["domain"] = "$($Domain)"	}
+    If ($Template) 				{	$body["template"] = "$($Template)"}	 
+    If ($GrowthIncrementMiB)	{	$body["growthIncrementMiB"] = $GrowthIncrementMiB		} 
+    If ($GrowthLimitMiB) 		{	$body["growthLimitMiB"] = $GrowthLimitMiB		}	 	
+    If ($UsedLDWarningAlertMiB) {	$body["usedLDWarningAlertMiB"] = $UsedLDWarningAlertMiB		} 
 	$LDLayoutBody = @{}
-	# LDLayout
-	#Specifies the RAID type for the logical disk
-	if ($RAIDType)
-		{	if($RAIDType -eq "R0")
-				{	$LDLayoutBody["RAIDType"] = 1
-				}
-			elseif($RAIDType -eq "R1")
-				{	$LDLayoutBody["RAIDType"] = 2
-				}
-			elseif($RAIDType -eq "R5")
-				{	$LDLayoutBody["RAIDType"] = 3
-				}
-			elseif($RAIDType -eq "R6")
-				{	$LDLayoutBody["RAIDType"] = 4
-				}
-			else
-				{	Write-DebugLog "Stop: Exiting  New-Cpg_WSAPI   since RAIDType $RAIDType in incorrect "
-					Return "FAILURE : RAIDType :- $RAIDType is an Incorrect Please Use RAIDType R0,R1,R5 and R6 only. "
-				}		
-		}
-	#Specifies the set size in the number of chunklets.
-    if ($SetSize)
-		{	$LDLayoutBody["setSize"] = $SetSize				
-		}
-	#Specifies that the layout must support the failure of one port pair, one cage, or one magazine.
-	if ($HA)
-		{	if($HA -eq "PORT")
-				{	$LDLayoutBody["HA"] = 1					
-				}
-			elseif($HA -eq "CAGE")
-				{	$LDLayoutBody["HA"] = 2					
-				}
-			elseif($HA -eq "MAG")
-				{	$LDLayoutBody["HA"] = 3					
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting  New-Cpg_WSAPI since HA $HA in incorrect "
-					Return "FAILURE : HA :- $HA is an Incorrect Please Use [ PORT | CAGE | MAG ] only "
-				}
-		}
-	#Specifies the chunklet location preference characteristics
-	if ($Chunklets)
-		{	if($Chunklets -eq "FIRST")
-				{	$LDLayoutBody["chunkletPosPref"] = 1					
-				}
-			elseif($Chunklets -eq "LAST")
-				{	$LDLayoutBody["chunkletPosPref"] = 2					
-				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting  New-Cpg_WSAPI since Chunklets $Chunklets in incorrect "
-					Return "FAILURE : Chunklets :- $Chunklets is an Incorrect Please Use Chunklets FIRST and LAST only. "
-				}
-		}	
+	if ($RAIDType -eq "R0")		{	$LDLayoutBody["RAIDType"] = 1	}
+	if ($RAIDType -eq "R1")		{	$LDLayoutBody["RAIDType"] = 2	}
+	if ($RAIDType -eq "R5")		{	$LDLayoutBody["RAIDType"] = 3	}
+	if ($RAIDType -eq "R6")		{	$LDLayoutBody["RAIDType"] = 4	}
+    if ($SetSize)				{	$LDLayoutBody["setSize"] = $SetSize		}
+	if ($HA -eq "PORT")			{	$LDLayoutBody["HA"] = 1			}
+	if ($HA -eq "CAGE")			{	$LDLayoutBody["HA"] = 2			}
+	if ($HA -eq "MAG")			{	$LDLayoutBody["HA"] = 3			}
+	if ($Chunklets -eq "FIRST")	{	$LDLayoutBody["chunkletPosPref"] = 1	}
+	if($Chunklets -eq "LAST")	{	$LDLayoutBody["chunkletPosPref"] = 2	}
 	$LDLayoutDiskPatternsBody=@()	
 	if ($NodeList)
 		{	$nodList=@{}
@@ -303,66 +196,47 @@ Process
 			$fclList["freeChunkletsLessThan"] = $FreeChunkletsLessThan	
 			$LDLayoutDiskPatternsBody += $fclList 		
 		}
-	if ($DiskType)
-		{	if($DiskType -eq "FC")
+	if($DiskType -eq "FC")
 				{	$dtList=@{}
 					$dtList["diskType"] = 1	
 					$LDLayoutDiskPatternsBody += $dtList						
 				}
-			elseif($DiskType -eq "NL")
+	if($DiskType -eq "NL")
 				{	$dtList=@{}
 					$dtList["diskType"] = 2	
 					$LDLayoutDiskPatternsBody += $dtList						
 				}
-			elseif($DiskType -eq "SSD")
+	if($DiskType -eq "SSD")
 				{	$dtList=@{}
 					$dtList["diskType"] = 3	
 					$LDLayoutDiskPatternsBody += $dtList						
 				}
-			else
-				{ 	Write-DebugLog "Stop: Exiting  New-Cpg_WSAPI   since DiskType $DiskType in incorrect "
-					Return "FAILURE : DiskType :- $DiskType is an Incorrect Please Use FC (Fibre Channel), NL (Near Line) and SSD only"
-				}
-		}
 	if ($Rpm)
 		{	$rpmList=@{}
 			$rpmList["RPM"] = $Rpm	
 			$LDLayoutDiskPatternsBody += $rpmList
 		}			
-	if($LDLayoutDiskPatternsBody.Count -gt 0)
-		{	$LDLayoutBody["diskPatterns"] = $LDLayoutDiskPatternsBody	
-		}		
+	if($LDLayoutDiskPatternsBody.Count -gt 0)	{	$LDLayoutBody["diskPatterns"] = $LDLayoutDiskPatternsBody	}		
 	if($LDLayoutBody.Count -gt 0)
 		{	$body["LDLayout"] = $LDLayoutBody 
 		}	
     #init the response var
     $Result = $null		
-	#$json = $body | ConvertTo-Json  -Compress -Depth 10
-	#write-host " Body = $json"
     #Request
     $Result = Invoke-WSAPI -uri '/cpgs' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: CPG:$CPGName created successfully" $Info
-			#write-host " StatusCode = $status"
-			# Results
 			Get-Cpg_WSAPI -CPGName $CPGName
 			Write-DebugLog "End: New-Cpg_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While creating CPG:$CPGName " -foreground red
-			write-host ""
+		{	write-error "`n FAILURE : While creating CPG:$CPGName `n"
 			Write-DebugLog "FAILURE : While creating CPG:$CPGName " $Info
 			return $Result.StatusDescription
 		}	
 }
-End 
-{
-}  
 }
 
 Function Update-Cpg_WSAPI 
@@ -402,11 +276,7 @@ Function Update-Cpg_WSAPI
 .PARAMETER RmWarningAlert
 	Enables (false) or disables (true) warning limit enforcement. Defaults to false..
 .PARAMETER RAIDType
-	RAID type for the logical disk
-	R0 RAID level 0
-	R1 RAID level 1
-	R5 RAID level 5
-	R6 RAID level 6
+	RAID type for the logical disk, which can be either R0, R1, R5, R6 which represent the RAID levels.
 .PARAMETER SetSize
 	Specifies the set size in the number of chunklets.
 .PARAMETER HA
@@ -453,88 +323,39 @@ Function Update-Cpg_WSAPI
 	SSD SSD
 .PARAMETER Rpm
 	Disks must be of the specified speed.
-	
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command	
 #>
 [CmdletBinding()]
 Param(
-	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of Existing CPG.')]
+	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
 	[String]	$CPGName,
-	
-	[Parameter(HelpMessage = 'Specifies the name of CPG to Update.')]
 	[String]	$NewName,
-	
-	[Parameter(HelpMessage = 'Enables (false) or disables (true) CPG auto grow. Defaults to false.')]
 	[Boolean]	$DisableAutoGrow = $false,
-	
-	[Parameter(HelpMessage = 'Enables (false) or disables (true) auto grow limit enforcement. Defaults to false.')]
 	[Boolean]	$RmGrowthLimit = $false,
-	
-	[Parameter(HelpMessage = 'Enables (false) or disables (true) warning limit enforcement. Defaults to false.')]
 	[Boolean]	$RmWarningAlert = $false,
-	
-	[Parameter(HelpMessage = 'RAIDType enumeration 1 is for R0, 2 is for R1,3 is for R5, 4 is for R6')]
 	[ValidateSet('R0','R1','R5','R6')]
     [string]	$RAIDType = $null, 
-	
-	[Parameter(HelpMessage = 'Specifies the set size in the number of chunklets.')]
-    [int]	$SetSize = $null,
-	
-    [Parameter(HelpMessage = 'Specifies that the layout must support the failure of one port pair, one cage, or one magazine.')]
+    [int]		$SetSize = $null,
     [ValidateSet('PORT','CAGE','MAG')]
 	[string]	$HA = $null,
-	
-	[Parameter(HelpMessage = 'Specifies the chunklet location preference characteristics.')]
     [ValidateSet('FIRST','LAST')]
 	[string]	$Chunklets = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more nodes. Nodes are identified by one or more integers.')]
 	[String]	$NodeList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more nodes. Nodes are identified by one or more integers.')]
 	[String]	$SlotList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more ports. Ports are identified by one or more integers..')]
 	[String]	$PortList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more drive cages. Drive cages are identified by one or more integers.')]
 	[String]	$CageList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more drive magazines. Drive magazines are identified by one or more integers..')]
 	[String]	$MagList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more disk positions within a drive magazine. Disk positions are identified by one or more integers.')]
 	[String]	$DiskPosList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies one or more physical disks. Disks are identified by one or more integers.')]
 	[String]	$DiskList = $null,
-	
-	[Parameter(HelpMessage = 'Specifies that physical disks with total chunklets greater than the number specified be selected.')]
-	[int]	$TotalChunkletsGreaterThan = $null,
-	
-	[Parameter(HelpMessage = 'Specifies that physical disks with total chunklets less than the number specified be selected.')]
-	[int]	$TotalChunkletsLessThan = $null,
-	
-	[Parameter(HelpMessage = 'Specifies that physical disks with free chunklets less than the number specified be selected.')]
-	[int]	$FreeChunkletsGreaterThan = $null,
-	
-	[Parameter(HelpMessage = 'Specifies that physical disks with free chunklets greater than the number specified be selected.')]
-	[int]	$FreeChunkletsLessThan = $null,
-	
-	[Parameter(HelpMessage = 'Specifies that physical disks must have the specified device type .')]
+	[int]		$TotalChunkletsGreaterThan = $null,
+	[int]		$TotalChunkletsLessThan = $null,
+	[int]		$FreeChunkletsGreaterThan = $null,
+	[int]		$FreeChunkletsLessThan = $null,
 	[ValidateSet('FC','NL','SSD')]
-	[int]	$DiskType = $null,
-	
-	[Parameter(HelpMessage = 'Disks must be of the specified speed 1 is for FC (Fibre Channel) 2 is for NL (Near Line) 3 is for SSD.')]
-	[int]	$Rpm = $null,
-	
-	[Parameter(Mandatory=$false, ValueFromPipeline=$true , HelpMessage = 'Connection Paramater')]
-			$WsapiConnection = $global:WsapiConnection
+	[int]		$DiskType = $null,
+	[int]		$Rpm = $null
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	# Creation of the body hash
@@ -545,8 +366,6 @@ Process
     If($RmGrowthLimit) 		{ 	$body["rmGrowthLimit"] 		= $RmGrowthLimit 	} 
     If($RmWarningAlert) 	{ 	$body["rmWarningAlert"] 	= $RmWarningAlert	} 
 	$LDLayoutBody = @{}
-	# LDLayout
-	#Specifies the RAID type for the logical disk
 	if($RAIDType -eq "R0")	{	$LDLayoutBody["RAIDType"] 	= 1 				}
 	if($RAIDType -eq "R1")	{	$LDLayoutBody["RAIDType"] 	= 2					}
 	if($RAIDType -eq "R5")	{	$LDLayoutBody["RAIDType"] 	= 3					}
@@ -631,25 +450,18 @@ Process
 		}
 	if($LDLayoutDiskPatternsBody.Count -gt 0)	{	$LDLayoutBody["diskPatterns"] = $LDLayoutDiskPatternsBody	}		
 	if($LDLayoutBody.Count -gt 0)				{	$body["LDLayout"] = $LDLayoutBody 	}
-	#$json = $body | ConvertTo-Json  -Compress -Depth 10
-	#write-host " Body = $json"
 	Write-DebugLog "Info:Body : $body" $Info    
     $Result = $null
 	#Build uri
     $uri = '/cpgs/'+$CPGName	
     #Request
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: CPG:$CPGName successfully Updated" $Info
-			# Results
-			if($NewName)
-				{	Get-Cpg_WSAPI -CPGName $NewName
-				}
-			else
-				{	Get-Cpg_WSAPI -CPGName $CPGName
-				}
+			if($NewName)	{	Get-Cpg_WSAPI -CPGName $NewName	}
+			else			{	Get-Cpg_WSAPI -CPGName $CPGName	}
 			Write-DebugLog "End: Update-Cpg_WSAPI" $Debug
 		}
 	else
@@ -675,12 +487,11 @@ Function Remove-Cpg_WSAPI
     Specify name of the CPG.
 #>
 [CmdletBinding()]
-Param(	[Parameter(ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of CPG.')]
-	[String]$CPGName
+Param(	[Parameter(ValueFromPipelinebyPropertyName=$True)]
+		[String]$CPGName
 	)
 Begin 
-{ 	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{ 	Test-WSAPIConnection
 }
 Process 
 {   #Build uri
@@ -690,7 +501,7 @@ Process
 	$Result = $null
 	#Request
 	Write-DebugLog "Request: Request to Remove-Cpg_WSAPI : $CPGName (Invoke-WSAPI)." $Debug
-	$Result = Invoke-WSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
+	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
@@ -724,12 +535,11 @@ Function Get-Cpg_WSAPI
 	Specify name of the cpg to be listed
 #>
 [CmdletBinding()]
-Param(	[Parameter(ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'CPG Name')]
+Param(	[Parameter(ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
 		[String]	$CPGName
 		)
 Begin 
-{	#Test if connection exist
-	Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{	Test-WSAPIConnection 
 }
 Process 
 {	$Result = $null
@@ -737,15 +547,13 @@ Process
 	#Build uri
 	if($CPGName)
 	{	$uri = '/cpgs/'+$CPGName
-		#Request
-		$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
+		$Result = Invoke-WSAPI -uri $uri -type 'GET'
 		if($Result.StatusCode -eq 200)
 			{	$dataPS = $Result.content | ConvertFrom-Json
 			}
 	}
 	else
-	{	#Request
-		$Result = Invoke-WSAPI -uri '/cpgs' -type 'GET' -WsapiConnection $WsapiConnection
+	{	$Result = Invoke-WSAPI -uri '/cpgs' -type 'GET'
 		if($Result.StatusCode -eq 200)
 			{	$dataPS = ($Result.content | ConvertFrom-Json).members
 			}		

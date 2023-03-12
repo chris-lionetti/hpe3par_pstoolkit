@@ -56,15 +56,13 @@ Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeName,
 		[Parameter(ValueFromPipeline=$true)][String]	$AddToSet
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection 
+{	Test-WSAPIConnection 
 }
 Process 
 {   Write-DebugLog "Running: Creation of the body hash" $Debug
     # Creation of the body hash
     $body = @{}	
 	$ParameterBody = @{}
-    # Name parameter
     $body["action"] = "createSnapshot"
     If($snpVVName) 		{	$ParameterBody["name"] 			= "$($snpVVName)"	}
     If($ID) 			{	$ParameterBody["id"] 			= $ID				}
@@ -83,7 +81,6 @@ Process
 	if($status -eq 201)
 		{ 	write-host "`n Cmdlet executed successfully, `n" -foreground green
 			Write-DebugLog "SUCCESS: volume snapshot:$snpVVName created successfully" $Info		
-			# Results
 			return $Result
 			Write-DebugLog "End: New-VvSnapshot_WSAPI" $Debug
 		}
@@ -149,8 +146,7 @@ Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeName,
 		[Parameter(ValueFromPipeline=$true)][String]	$AddToSet
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
@@ -158,7 +154,6 @@ Process
     $body = @{}	
 	$VolumeGroupBody = @()
 	$ParameterBody = @{}
-    # Name parameter
     $body["action"] = 8	
     If ($VolumeName) 
 		{	$VName=@{}
@@ -185,7 +180,6 @@ Process
 			$rw["readWrite"] = $ReadWrite	
 			$VolumeGroupBody += $rw
 		}
-	
 	if($VolumeGroupBody.Count -gt 0)
 		{	$ParameterBody["volumeGroup"] = $VolumeGroupBody 
 		}	
@@ -203,24 +197,17 @@ Process
     $Result = Invoke-WSAPI -uri '/volumes' -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 300)
-		{	write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
+		{	write-host "`nCmdlet executed successfully.`n" -foreground green
 			Write-DebugLog "SUCCESS: Group snapshots of a virtual volumes list : $SnapshotName created successfully" $Info		
 			# Results
 			return $Result
 			Write-DebugLog "End: New-VvListGroupSnapshot_WSAPI" $Debug
 		}
 	else
-		{	write-host ""
-			write-host "FAILURE : While creating group snapshots of a virtual volumes list : $SnapshotName " -foreground red
-			write-host ""
+		{	write-Error "`n FAILURE : While creating group snapshots of a virtual volumes list : $SnapshotName `n"
 			Write-DebugLog "FAILURE : While creating group snapshots of a virtual volumes list : $SnapshotName " $Info
 			return $Result.StatusDescription
 		}
-}
-End 
-{ 
 }
 }
 
@@ -281,8 +268,6 @@ Function New-VvPhysicalCopy_WSAPI
 	HIGH : High priority.
 	MED : Medium priority.
 	LOW : Low priority.
-.PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
 #>
 [CmdletBinding()]
 Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName,
@@ -301,15 +286,13 @@ Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName,
 		[ValidateSet('HIGH','MED','LOW')] 	[String]		$Priority
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     # Creation of the body hash
     $body = @{}	
 	$ParameterBody = @{}
-    # Name parameter
     $body["action"] = "createPhysicalCopy"
     If ($DestVolume) 			{	$ParameterBody["destVolume"] = "$($DestVolume)"}    
 	If ($Online) 
@@ -342,7 +325,6 @@ Process
 	if($status -eq 201)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Physical copy of a volume: $VolumeName created successfully" $Info	
-			# Results
 			return $Result
 			Write-DebugLog "End: New-VvPhysicalCopy_WSAPI" $Debug
 		}
@@ -371,8 +353,7 @@ Function Reset-PhysicalCopy_WSAPI
 Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection 
+{	Test-WSAPIConnection 
 }
 Process 
 {  	$body = @{}	
@@ -385,7 +366,6 @@ Process
 	if($Result.StatusCode -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Resynchronize a physical copy to its parent volume : $VolumeName ." $Info		
-			# Results		
 			return $Result		
 			Write-DebugLog "End: Reset-PhysicalCopy_WSAPI" $Debug
 		}
@@ -414,8 +394,7 @@ Function Stop-PhysicalCopy_WSAPI
 Param(	[Parameter(ValueFromPipeline=$true)][String]		$VolumeName
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection 
+{	Test-WSAPIConnection 
 }
 Process 
 {  	$body = @{}	
@@ -472,8 +451,7 @@ Param(	[Parameter(ValueFromPipeline=$true)][String]	$VirtualCopyName,
 		[Parameter(ValueFromPipeline=$true)][Switch]	$AllowRemoteCopyParent
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection 
+{   Test-WSAPIConnection 
 }
 Process 
 { 	$body = @{}	
@@ -492,8 +470,7 @@ Process
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Promoted a virtual copy : $VirtualCopyName ." $Info			
-			# Results		
+			Write-DebugLog "SUCCESS: Successfully Promoted a virtual copy : $VirtualCopyName ." $Info
 			return $Result		
 			Write-DebugLog "End: Move-VirtualCopy_WSAPI" $Debug
 		}
@@ -539,8 +516,7 @@ Param(	[Parameter(ValueFromPipeline=$true)][String]	$VVSetName,
 		[Parameter(ValueFromPipeline=$true)][Switch]	$AllowRemoteCopyParent
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {  	$body = @{}	
@@ -558,7 +534,6 @@ Process
 	if($Result.StatusCode -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Promoted a VV-Set virtual copy : $VVSetName ." $Info
-			# Results		
 			return $Result		
 			Write-DebugLog "End: Move-VvSetVirtualCopy_WSAPI" $Debug
 		}
@@ -610,15 +585,13 @@ Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$VolumeSetName,
 		[Parameter(Position=7, ValueFromPipeline=$true)][String]	$AddToSet
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     # Creation of the body hash
     $body = @{}	
 	$ParameterBody = @{}
-    # Name parameter
     $body["action"] = "createSnapshot"
 	If ($SnpVVName) 	{	$ParameterBody["name"] 		= "$($SnpVVName)"	}    
 	If ($ID) 			{	$ParameterBody["id"] 		= $ID				}	
@@ -629,7 +602,6 @@ Process
 	If ($AddToSet) 		{	$ParameterBody["addToSet"] 	= "$($AddToSet)"	}
 	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody 	}
     $Result = $null	
-    #Request
 	Write-DebugLog "Request: Request to New-VvSetSnapshot_WSAPI : $SnpVVName (Invoke-WSAPI)." $Debug	
 	$uri = '/volumesets/'+$VolumeSetName	
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
@@ -637,7 +609,6 @@ Process
 	if($status -eq 201)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: VV-set snapshot : $SnpVVName created successfully" $Info
-			# Results
 			return $Result
 			Write-DebugLog "End: New-VvSetSnapshot_WSAPI" $Debug
 		}
@@ -676,15 +647,13 @@ Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$VolumeSetName,
 		[ValidateSet('HIGH','MED','LOW')]				[String]	$Priority
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     # Creation of the body hash
     $body = @{}	
 	$ParameterBody = @{}
-    # Name parameter
     $body["action"] = "createPhysicalCopy"
 	If ($DestVolume) 			{	$ParameterBody["destVolume"] = "$($DestVolume)"}    
 	If ($SaveSnapshot) 			{	$ParameterBody["saveSnapshot"] = $SaveSnapshot }
@@ -701,7 +670,6 @@ Process
 	if($status -eq 201)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Physical copy of a VV set : $VolumeSetName created successfully" $Info		
-			# Results
 			return $Result
 			Write-DebugLog "End: New-VvSetPhysicalCopy_WSAPI" $Debug
 		}
@@ -735,8 +703,7 @@ Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeSetName,
 		[ValidateSet('HIGH','MED','LOW')]	[String]	$Priority
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {  	$body = @{}	
@@ -752,7 +719,6 @@ Process
 	if($Result.StatusCode -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Resynchronize a VV set physical copy : $VolumeSetName ." $Info		
-			# Results		
 			return $Result		
 			Write-DebugLog "End: Reset-VvSetPhysicalCopy_WSAPI" $Debug
 		}
@@ -781,12 +747,11 @@ Function Stop-VvSetPhysicalCopy_WSAPI
 	Task priority which can be set to either HIGH, MED, or LOW.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$VolumeSetName,
-		[Parameter(Position=1, ValueFromPipeline=$true)][String]	$Priority
+Param(	[Parameter(ValueFromPipeline=$true)][String]	$VolumeSetName,
+		[Parameter(ValueFromPipeline=$true)][String]	$Priority
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	$body = @{}	
@@ -802,7 +767,6 @@ Process
 	if($Result.StatusCode -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 			Write-DebugLog "SUCCESS: Successfully Stop a VV set physical copy : $VolumeSetName ." $Info	
-			# Results		
 			return $Result		
 			Write-DebugLog "End: Stop-VvSetPhysicalCopy_WSAPI" $Debug
 		}
@@ -834,25 +798,22 @@ Function Update-VvOrVvSets_WSAPI
 	Specifies that if the virtual copy is read-write, the command updates the read-only parent volume also.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String[]]	$VolumeSnapshotList,
-		[Parameter(Position=1, ValueFromPipeline=$true)][boolean]	$ReadOnly
+Param(	[Parameter(ValueFromPipeline=$true)][String[]]	$VolumeSnapshotList,
+		[Parameter(ValueFromPipeline=$true)][boolean]	$ReadOnly
 	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     # Creation of the body hash
     $body = @{}
 	$ParameterBody = @{}
-    # Name parameter
     $body["action"] = 7
     If ($VolumeSnapshotList) 	{	$ParameterBody["volumeSnapshotList"] = $VolumeSnapshotList}
 	If ($ReadOnly) 				{	$ParameterBody["readOnly"] = $ReadOnly			}
 	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody }
     $Result = $null	
-    #Request
 	Write-DebugLog "Request: Request to Update-VvOrVvSets_WSAPI : $VolumeSnapshotList (Invoke-WSAPI)." $Debug	
     $Result = Invoke-WSAPI -uri '/volumes/' -type 'POST' -body $body
 	$status = $Result.StatusCode

@@ -1,26 +1,6 @@
 ﻿####################################################################################
-##***** 	© 2020,2021 Hewlett Packard Enterprise Development LP
+## 	© 2020,2021,2023 Hewlett Packard Enterprise Development LP
 ##
-## 	Permission is hereby granted, free of charge, to any person obtaining a
-## 	copy of this software and associated documentation files (the "Software"),
-## 	to deal in the Software without restriction, including without limitation
-## 	the rights to use, copy, modify, merge, publish, distribute, sublicense,
-## 	and/or sell copies of the Software, and to permit persons to whom the
-## 	Software is furnished to do so, subject to the following conditions:
-##
-## 	The above copyright notice and this permission notice shall be included
-## 	in all copies or substantial portions of the Software.
-##
-## 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-## 	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-## 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-## 	THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-## 	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-## 	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-## 	OTHER DEALINGS IN THE SOFTWARE.
-##
-## 
-##	File Name:		HPE3PARPSToolkit-WSAPI.psm1
 ##	Description: 	Module functions to automate management of HPE 3PAR StoreServ Storage System
 ##		
 ##	Pre-requisites: WSAPI uses HPE 3PAR CLI commands to start, configure, and modify the WSAPI server.
@@ -53,861 +33,460 @@ $global:ArrayT = $null
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 add-type @" 
-
-public struct WSAPIconObject{
-public string Id;
-public string Name;
-public string SystemVersion;
-public string Patches;
-public string IPAddress;
-public string Model;
-public string SerialNumber;
-public string TotalCapacityMiB;
-public string AllocatedCapacityMiB;
-public string FreeCapacityMiB;
-public string Key;
+	public struct WSAPIconObject{	public string Id;
+									public string Name;
+									public string SystemVersion;
+									public string Patches;
+									public string IPAddress;
+									public string Model;
+									public string SerialNumber;
+									public string TotalCapacityMiB;
+									public string AllocatedCapacityMiB;
+									public string FreeCapacityMiB;
+									public string Key;
 }
 
 "@
 
-############################################################################################################################################
-## New-3PARWSAPIConnection
-############################################################################################################################################
 Function New-3PARWSAPIConnection {
 <#	
-  .SYNOPSIS
+.SYNOPSIS
 	Create a WSAPI session key
-  
-  .DESCRIPTION
+.DESCRIPTION
     This cmdlet (New-3PARWSAPIConnection) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (New-WSAPIConnection) instead.
-  
+
 	To use Web Services, you must create a session key. Use the same username and password that you use to
 	access the 3PAR storage server through the 3PAR CLI or the 3PAR MC. Creating this authorization allows
 	you to complete the same operations using WSAPI as you would the CLI or MC.
-        
-  .EXAMPLE
+.EXAMPLE
     New-3PARWSAPIConnection -ArrayFQDNorIPAddress 10.10.10.10 -SANUserName XYZ -SANPassword XYZ@123 -ArrayType 3par
 	create a session key with 3par array.
-	
-  .EXAMPLE
+.EXAMPLE
     New-3PARWSAPIConnection -ArrayFQDNorIPAddress 10.10.10.10 -SANUserName XYZ -SANPassword XYZ@123 -ArrayType primera
 	create a session key with 3par array.
-	
-  .PARAMETER UserName 
+.PARAMETER UserName 
     Specify user name. 
-	
-  .PARAMETER Password 
+.PARAMETER Password 
     Specify password 
-	
-  .PARAMETER ArrayFQDNorIPAddress 
+.PARAMETER ArrayFQDNorIPAddress 
     Specify the Array FQDN or IP address.
-	
-  .PARAMETER ArrayType
+.PARAMETER ArrayType
 	A type of array either 3Par or Primera. 
-              
-  .Notes
-    NAME    : New-3PARWSAPIConnection    
-    LASTEDIT: 06/01/2018
-    KEYWORDS: New-3PARWSAPIConnection
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
 #>
 [CmdletBinding()]
-	param(
-			[Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-			[System.String]
+param(
+			[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+			[String]
 			$ArrayFQDNorIPAddress,
 
-			[Parameter(Position=1, Mandatory=$true, ValueFromPipeline=$true)]
-			[System.String]
+			[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+			[String]
 			$SANUserName=$null,
 
-			[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-			[System.String]
+			[Parameter(Mandatory=$false, ValueFromPipeline=$true)]
+			[String]
 			$SANPassword=$null ,
 
-			[Parameter(Position=3, Mandatory=$true, ValueFromPipeline=$true)]
-			[System.String]
+			[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+			[ValidateSet('3par','Primera')]
+			[String]
 			$ArrayType
 		)	
 #(self-signed) certificate,
-if ($PSEdition -eq 'Core')
-{
-    
-} 
-else 
-{
-
-add-type @" 
-using System.Net; 
-using System.Security.Cryptography.X509Certificates; 
-public class TrustAllCertsPolicy : ICertificatePolicy { 
-	public bool CheckValidationResult( 
-		ServicePoint srvPoint, X509Certificate certificate, 
-		WebRequest request, int certificateProblem) { 
-		return true; 
-	} 
-} 
+	if ($PSEdition -eq 'Core')	{} 
+	else 
+		{	add-type @" 
+			using System.Net; 
+			using System.Security.Cryptography.X509Certificates; 
+			public class TrustAllCertsPolicy : ICertificatePolicy 	{ public bool CheckValidationResult( ServicePoint srvPoint, X509Certificate certificate, 
+																		WebRequest request, int certificateProblem) { return true; 
+																													} 
+																	} 
 "@  
 		[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-}
-
-#END of (self-signed) certificate,
-		if(!($SANPassword))
-		{
-			$SANPassword1 = Read-host "SANPassword" -assecurestring
+		}
+	#END of (self-signed) certificate,
+	if(!($SANPassword))
+		{	$SANPassword1 = Read-host "SANPassword" -assecurestring
 			#$globalpwd = $SANPassword1
 			$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SANPassword1)
 			$SANPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 		}
-		
-		#Write-DebugLog "start: Entering function New-3PARWSAPIConnection. Validating IP Address format." $Debug	
-		#if(-not (Test-IPFormat $ArrayFQDNorIPAddress))		
-		#{
-		#	Write-DebugLog "Stop: Invalid IP Address $ArrayFQDNorIPAddress" "ERR:"
-		#	return "FAILURE : Invalid IP Address $ArrayFQDNorIPAddress"
-		#}
-		
-		Write-DebugLog "Running: Completed validating IP address format." $Debug		
-		Write-DebugLog "Running: Authenticating credentials - Invoke-WSAPI for user $SANUserName and SANIP= $ArrayFQDNorIPAddress" $Debug
-		
-		#URL
-		$APIurl = $null
-		if($ArrayType.ToLower() -eq "3par")
-		{
-			$global:ArrayT = "3par" 
-			$APIurl = "https://$($ArrayFQDNorIPAddress):8080/api/v1" 	
-		}
-		elseif($ArrayType.ToLower() -eq "primera")
-		{
-			$global:ArrayT = "Primera" 
-			$APIurl = "https://$($ArrayFQDNorIPAddress):443/api/v1" 	
-		}
-		else
-		{
-			write-host " You have entered unsupported Array type : $ArrayType . Please enter the array type as 3par or Primera." -foreground yello
-			Return
-		}
-		
-		#connect to 3PAR WSAPI
-		$postParams = @{user=$SANUserName;password=$SANPassword} | ConvertTo-Json 
-		$headers = @{}  
-		$headers["Accept"] = "application/json" 
-		
-		Try
-		{
-			Write-DebugLog "Running: Invoke-WebRequest for credential data." $Debug			
+	#Write-DebugLog "start: Entering function New-3PARWSAPIConnection. Validating IP Address format." $Debug	
+	#if(-not (Test-IPFormat $ArrayFQDNorIPAddress))		
+	#{
+	#	Write-DebugLog "Stop: Invalid IP Address $ArrayFQDNorIPAddress" "ERR:"
+	#	return "FAILURE : Invalid IP Address $ArrayFQDNorIPAddress"
+	#}
+	Write-DebugLog "Running: Completed validating IP address format." $Debug		
+	Write-DebugLog "Running: Authenticating credentials - Invoke-WSAPI for user $SANUserName and SANIP= $ArrayFQDNorIPAddress" $Debug
+	#URL
+	$APIurl = $null
+	$global:ArrayT = $ArrayType
+	if($ArrayType -eq "3Par")		{	$APIurl = "https://$($ArrayFQDNorIPAddress):8080/api/v1" 	}
+	if($ArrayType -eq "Primera")	{	$APIurl = "https://$($ArrayFQDNorIPAddress):443/api/v1" 	}
+	#connect to 3PAR WSAPI
+	$postParams = @{user=$SANUserName;password=$SANPassword} | ConvertTo-Json 
+	$headers = @{}  
+	$headers["Accept"] = "application/json" 
+	Try
+		{	Write-DebugLog "Running: Invoke-WebRequest for credential data." $Debug			
 			if ($PSEdition -eq 'Core')
-			{				
-				$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing -SkipCertificateCheck
+			{	$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing -SkipCertificateCheck
 			} 
 			else 
-			{				
-				$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing 
+			{	$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing 
 			}
 		}
-		catch
-		{
-			Write-DebugLog "Stop: Exception Occurs" $Debug
+	catch
+		{	Write-DebugLog "Stop: Exception Occurs" $Debug
 			Show-RequestException -Exception $_
-			write-host ""
-			write-host "FAILURE : While Establishing connection " -foreground red
-			write-host ""
+			write-error "`n FAILURE : While Establishing connection. `n "
 			Write-DebugLog "FAILURE : While Establishing connection " $Info
 			throw
 		}
-		
 		#$global:3parArray = $ArrayFQDNorIPAddress
 		$key = ($credentialdata.Content | ConvertFrom-Json).key
 		#$global:3parKey = $key
 		if(!$key)
-		{
-			Write-DebugLog "Stop: No key Generated"
+		{	Write-DebugLog "Stop: No key Generated"
 			return "Error: No key Generated"
 		}
-		
-		$SANC1 = New-Object "WSAPIconObject"
-		
-		$SANC1.IPAddress = $ArrayFQDNorIPAddress					
-		$SANC1.Key = $key
-				
-		$Result = Get-3PARSystem_WSAPI -WsapiConnection $SANC1
-		
-		$SANC = New-Object "WSAPIconObject"
-		
-		$SANC.Id = $Result.id
-		$SANC.Name = $Result.name
+		$SANC1 				= New-Object "WSAPIconObject"
+		$SANC1.IPAddress 	= $ArrayFQDNorIPAddress					
+		$SANC1.Key 			= $key
+		$Result 			= Get-3PARSystem_WSAPI -WsapiConnection $SANC1
+		$SANC 				= New-Object "WSAPIconObject"
+		$SANC.Id 			= $Result.id
+		$SANC.Name 			= $Result.name
 		$SANC.SystemVersion = $Result.systemVersion
-		$SANC.Patches = $Result.patches
-		$SANC.IPAddress = $ArrayFQDNorIPAddress
-		$SANC.Model = $Result.model
-		$SANC.SerialNumber = $Result.serialNumber
+		$SANC.Patches 		= $Result.patches
+		$SANC.IPAddress 	= $ArrayFQDNorIPAddress
+		$SANC.Model 		= $Result.model
+		$SANC.SerialNumber 	= $Result.serialNumber
 		$SANC.TotalCapacityMiB = $Result.totalCapacityMiB
 		$SANC.AllocatedCapacityMiB = $Result.allocatedCapacityMiB
 		$SANC.FreeCapacityMiB = $Result.freeCapacityMiB					
-		$SANC.Key = $key
-		
+		$SANC.Key 			= $key		
 		$global:WsapiConnection = $SANC
-		
-		
 		Write-DebugLog "End: If there are no errors reported on the console then the SAN connection object is set and ready to be used" $Info		
 		#Write-Verbose -Message "Acquired token: $global:3parKey"
 		Write-Verbose -Message 'You are now connected to the HP 3PAR StoreServ Array.'
 		Write-Verbose -Message 'Show array informations:'	
-		
 		return $SANC
 }
-#End of New-3PARWSAPIConnection
 
-############################################################################################################################################
-## FUNCTION Close-3PARWSAPIConnection
-############################################################################################################################################
 Function Close-3PARWSAPIConnection
- {
-  <#
-
-  .SYNOPSIS
+{
+<#
+.SYNOPSIS
 	Delete a session key.
-  
-  .DESCRIPTION
+.DESCRIPTION
     This cmdlet (Close-3PARWSAPIConnection ) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Close-WSAPIConnection) instead.
-  
 	When finishes making requests to the server it should delete the session keys it created .
 	Unused session keys expire automatically after the configured session times out.
-	
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .EXAMPLE
+.EXAMPLE
     Close-3PARWSAPIConnection
 	Delete a session key.
-              
-  .Notes
-    NAME    : Close-3PARWSAPIConnection    
-    LASTEDIT: 06/01/2018
-    KEYWORDS: Close-3PARWSAPIConnection
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-  
-  #>
-  [CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
-  Param(
-	[Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-	$WsapiConnection = $global:WsapiConnection 
-  )
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    if ($pscmdlet.ShouldProcess($h.name,"Disconnect from array")) 
-	{
-      #Build uri
-	  
-	  #$ip = $WsapiConnection.IPAddress
-	  $key = $WsapiConnection.Key
-	  
-	  Write-DebugLog "Running: Building uri to close wsapi connection ." $Debug
-      $uri = '/credentials/'+$key
-
-      #init the response var
-      $data = $null
-
-      #Request
-	  Write-DebugLog "Request: Request to close wsapi connection (Invoke-3parWSAPI)." $Debug
-      $data = Invoke-3parWSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
-
-	  $global:WsapiConnection = $null
-	  
-	  return $data
-	  <#
-      If ($global:3parkey) 
-	  {
-        Write-Verbose -Message "Delete key session: $global:3parkey"
-        Remove-Variable -name 3parKey -scope global
-		Write-DebugLog "End: Key Deleted" $Debug
-      }
-	  If ($global:3parArray) 
-	  {
-        Write-Verbose -Message "Delete Array: $global:3parArray"
-        Remove-Variable -name 3parArray -scope global
-		Write-DebugLog "End: Delete Array: $global:3parArray" $Debug
-      }
-	  #>
+#>
+[CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
+Param( )
+Begin 
+{	Test-3PARConnection
+}
+Process 
+{	if ($pscmdlet.ShouldProcess($h.name,"Disconnect from array")) 
+	{	#Build uri
+		#$ip = $WsapiConnection.IPAddress
+		$key = $WsapiConnection.Key
+		Write-DebugLog "Running: Building uri to close wsapi connection ." $Debug
+		$uri = '/credentials/'+$key
+		#init the response var
+		$data = $null
+		#Request
+		Write-DebugLog "Request: Request to close wsapi connection (Invoke-3parWSAPI)." $Debug
+		$data = Invoke-3parWSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
+		$global:WsapiConnection = $null
+		return $data
+		<#	If ($global:3parkey) 
+			{	Write-Verbose -Message "Delete key session: $global:3parkey"
+				Remove-Variable -name 3parKey -scope global
+				Write-DebugLog "End: Key Deleted" $Debug
+			}
+			If ($global:3parArray) 
+			{	Write-Verbose -Message "Delete Array: $global:3parArray"
+				Remove-Variable -name 3parArray -scope global
+				Write-DebugLog "End: Delete Array: $global:3parArray" $Debug
+			}
+		#>
     }
 	Write-DebugLog "End: Close-3PARWSAPIConnection" $Debug
-  }
-  End {}  
 }
-#END Close-3PARWSAPIConnection
+}
 
-############################################################################################################################################
-## FUNCTION Get-3PARCapacity_WSAPI
-############################################################################################################################################
 Function Get-3PARCapacity_WSAPI 
 {
-  <#
-  
-  .SYNOPSIS
+<#
+.SYNOPSIS
 	Overall system capacity.
-  
-  .DESCRIPTION
+.DESCRIPTION
     This cmdlet (Get-3PARCapacity_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Get-CapacityInfo_WSAPI) instead.
-  
+
 	Overall system capacity.
-	
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .EXAMPLE
+.EXAMPLE
     Get-3PARCapacity_WSAPI
 	Display Overall system capacity.
-              
-  .Notes
-    NAME    : Get-3PARCapacity_WSAPI   
-    LASTEDIT: 01/08/2018
-    KEYWORDS: Get-3PARCapacity_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-  #>
-
-  [CmdletBinding()]
-  Param(
-  [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-  $WsapiConnection = $global:WsapiConnection
-  )
-
-  # Test if connection exist    
-  Test-3PARConnection -WsapiConnection $WsapiConnection
-
-  #Request 
-  $Result = Invoke-3parWSAPI -uri '/capacity' -type 'GET' -WsapiConnection $WsapiConnection
-
-  if($Result.StatusCode -eq 200)
-  {
-	  # Results
-	  $dataPS = ($Result.content | ConvertFrom-Json)
-  }
-  else
-  {
-	return $Result.StatusDescription
-  }
-  # Add custom type to the resulting oject for formating purpose
-  Write-DebugLog "Running: Add custom type to the resulting object for formatting purpose" $Debug
-  #$AlldataPS = Format-Result -dataPS $dataPS -TypeName '3PAR.Capacity'
-  
-  Write-Verbose "Return result(s) without any filter"
-  Write-DebugLog "End: Get-3PARCapacity_WSAPI(WSAPI)" $Debug
-  return $dataPS
+#>
+[CmdletBinding()]
+Param()
+Begin{	Test-3PARConnection -WsapiConnection $WsapiConnection
 }
-#END Get-3PARCapacity_WSAPI
+Process
+{	#Request 
+	$Result = Invoke-3parWSAPI -uri '/capacity' -type 'GET' -WsapiConnection $WsapiConnection
+	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json)	}
+	else							{	return $Result.StatusDescription	}
+	# Add custom type to the resulting oject for formating purpose
+	Write-DebugLog "Running: Add custom type to the resulting object for formatting purpose" $Debug
+	#$AlldataPS = Format-Result -dataPS $dataPS -TypeName '3PAR.Capacity'
+	Write-Verbose "Return result(s) without any filter"
+	Write-DebugLog "End: Get-3PARCapacity_WSAPI(WSAPI)" $Debug
+	return $dataPS
+}
+}
 
-############################################################################################################################################
-## FUNCTION New-3PARCpg_WSAPI
-############################################################################################################################################
 Function New-3PARCpg_WSAPI 
 {
-  <#
-  
-  .SYNOPSIS
+<#
+.SYNOPSIS
 	The New-3PARCpg_WSAPI command creates a Common Provisioning Group (CPG).
-  
-  .DESCRIPTION
+.DESCRIPTION
     This cmdlet (New-3PARCpg_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (New-Cpg_WSAPI) instead.
-  
 	The New-3PARCpg_WSAPI command creates a Common Provisioning Group (CPG).
-        
-  .EXAMPLE    
+.EXAMPLE    
 	New-3PARCpg_WSAPI -CPGName XYZ 
-        
-  .EXAMPLE	
+.EXAMPLE	
 	New-3PARCpg_WSAPI -CPGName "MyCPG" -Domain Chef_Test
-        
-  .EXAMPLE	
+.EXAMPLE	
 	New-3PARCpg_WSAPI -CPGName "MyCPG" -Domain Chef_Test -Template Test_Temp
-        
-  .EXAMPLE	
+.EXAMPLE	
 	New-3PARCpg_WSAPI -CPGName "MyCPG" -Domain Chef_Test -Template Test_Temp -GrowthIncrementMiB 100
-        
-  .EXAMPLE	
+.EXAMPLE	
 	New-3PARCpg_WSAPI -CPGName "MyCPG" -Domain Chef_Test -RAIDType R0
-
-  .PARAMETER CPGName
+.PARAMETER CPGName
 	Specifies the name of the CPG.  
-
-  .PARAMETER Domain
+.PARAMETER Domain
 	Specifies the name of the domain in which the object will reside.  
-
-  .PARAMETER Template
+.PARAMETER Template
 	Specifies the name of the template from which the CPG is created.
-	
-  .PARAMETER GrowthIncrementMiB
+.PARAMETER GrowthIncrementMiB
 	Specifies the growth increment, in MiB, the amount of logical disk storage created on each auto-grow operation.  
-	
-  .PARAMETER GrowthLimitMiB
+.PARAMETER GrowthLimitMiB
 	Specifies that the autogrow operation is limited to the specified storage amount, in MiB, that sets the growth limit.
-	
-  .PARAMETER UsedLDWarningAlertMiB
+.PARAMETER UsedLDWarningAlertMiB
 	Specifies that the threshold of used logical disk space, in MiB, when exceeded results in a warning alert.
-	  
-  .PARAMETER RAIDType
+.PARAMETER RAIDType
 	RAID type for the logical disk
 	R0 RAID level 0
 	R1 RAID level 1
 	R5 RAID level 5
 	R6 RAID level 6
-	  
-  .PARAMETER SetSize
+.PARAMETER SetSize
 	Specifies the set size in the number of chunklets.
-	  
-  .PARAMETER HA
+.PARAMETER HA
 	Specifies that the layout must support the failure of one port pair, one cage, or one magazine.
 	PORT Support failure of a port.
 	CAGE Support failure of a drive cage.
 	MAG Support failure of a drive magazine.
-	
-  .PARAMETER Chunklets
+.PARAMETER Chunklets
 	FIRST Lowest numbered available chunklets, where transfer rate is the fastest.
 	LAST  Highest numbered available chunklets, where transfer rate is the slowest.
-	
-  .PARAMETER NodeList
+.PARAMETER NodeList
 	Specifies one or more nodes. Nodes are identified by one or more integers. Multiple nodes are separated with a single comma (1,2,3). 
 	A range of nodes is separated with a hyphen (0–7). The primary path of the disks must be on the specified node number.
-	
-  .PARAMETER SlotList
+.PARAMETER SlotList
 	Specifies one or more PCI slots. Slots are identified by one or more integers. Multiple slots are separated with a single comma (1,2,3). 
 	A range of slots is separated with a hyphen (0–7). The primary path of the disks must be on the specified PCI slot number(s).
-	
-  .PARAMETER PortList
+.PARAMETER PortList
 	Specifies one or more ports. Ports are identified by one or more integers. Multiple ports are separated with a single comma (1,2,3). 
 	A range of ports is separated with a hyphen (0–4). The primary path of the disks must be on the specified port number(s).
-	
-  .PARAMETER CageList
+.PARAMETER CageList
 	Specifies one or more drive cages. Drive cages are identified by one or more integers. Multiple drive cages are separated with a single comma (1,2,3). 
 	A range of drive cages is separated with a hyphen (0– 3). The specified drive cage(s) must contain disks.
-	
-  .PARAMETER MagList 
+.PARAMETER MagList 
 	Specifies one or more drive magazines. Drive magazines are identified by one or more integers. Multiple drive magazines are separated with a single comma (1,2,3). 
 	A range of drive magazines is separated with a hyphen (0–7). The specified magazine(s) must contain disks.  
-	
-  .PARAMETER DiskPosList
+.PARAMETER DiskPosList
 	Specifies one or more disk positions within a drive magazine. Disk positions are identified by one or more integers. Multiple disk positions are separated with a single comma (1,2,3). 
 	A range of disk positions is separated with a hyphen (0–3). The specified portion(s) must contain disks.
-	
-  .PARAMETER DiskList
+.PARAMETER DiskList
 	Specifies one or more physical disks. Disks are identified by one or more integers. Multiple disks are separated with a single comma (1,2,3). 
 	A range of disks is separated with a hyphen (0–3). Disks must match the specified ID(s). 
-	
-  .PARAMETER TotalChunkletsGreaterThan
+.PARAMETER TotalChunkletsGreaterThan
 	Specifies that physical disks with total chunklets greater than the number specified be selected.  
-	
-  .PARAMETER TotalChunkletsLessThan
+.PARAMETER TotalChunkletsLessThan
 	Specifies that physical disks with total chunklets less than the number specified be selected. 
-	
-  .PARAMETER FreeChunkletsGreaterThan
+.PARAMETER FreeChunkletsGreaterThan
 	Specifies that physical disks with free chunklets less than the number specified be selected.  
-	
-  .PARAMETER FreeChunkletsLessThan
-	 Specifies that physical disks with free chunklets greater than the number specified be selected. 
-	 
-  .PARAMETER DiskType
+.PARAMETER FreeChunkletsLessThan
+	Specifies that physical disks with free chunklets greater than the number specified be selected. 
+.PARAMETER DiskType
 	Specifies that physical disks must have the specified device type.
 	FC Fibre Channel
 	NL Near Line
 	SSD SSD
-	  
-  .PARAMETER Rpm
+.PARAMETER Rpm
 	Disks must be of the specified speed.
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : New-3PARCpg_WSAPI    
-    LASTEDIT: 01/08/2018
-    KEYWORDS: New-3PARCpg_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-  
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of the CPG.')]
-      [String]
-	  $CPGName,
-	  
-      [Parameter(Mandatory = $false,HelpMessage = 'Specifies the name of the domain in which the object will reside.')]
-      [String]
-	  $Domain = $null,
-	  
-      [Parameter(Mandatory = $false,HelpMessage = 'Specifies the name of the template from which the CPG is created')]
-      [String]
-	  $Template = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies the growth increment, in MiB, the amount of logical disk storage created on each auto-grow operation')]
-      [Int]
-	  $GrowthIncrementMiB = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that the autogrow operation is limited to the specified storage amount, in MiB, that sets the growth limit')]
-      [int]
-	  $GrowthLimitMiB = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that the threshold of used logical disk space, in MiB, when exceeded results in a warning alert')]
-      [int]
-	  $UsedLDWarningAlertMiB = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'RAIDType R0,R1,R5 and R6 only.')]
-      [string]
-	  $RAIDType = $null, 
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies the set size in the number of chunklets.')]
-      [int]
-	  $SetSize = $null,
-	  
-      [Parameter(Mandatory = $false,HelpMessage = 'Specifies that the layout must support the failure of one port pair, one cage, or one magazine.')]
-      [string]
-	  $HA = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies the chunklet location preference characteristics.')]
-      [string]
-	  $Chunklets = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more nodes. Nodes are identified by one or more integers.')]
-      [String]
-	  $NodeList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more nodes. Nodes are identified by one or more integers.')]
-      [String]
-	  $SlotList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more ports. Ports are identified by one or more integers..')]
-      [String]
-	  $PortList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more drive cages. Drive cages are identified by one or more integers.')]
-      [String]
-	  $CageList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more drive magazines. Drive magazines are identified by one or more integers..')]
-      [String]
-	  $MagList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more disk positions within a drive magazine. Disk positions are identified by one or more integers.')]
-      [String]
-	  $DiskPosList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies one or more physical disks. Disks are identified by one or more integers.')]
-      [String]
-	  $DiskList = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that physical disks with total chunklets greater than the number specified be selected.')]
-      [int]
-	  $TotalChunkletsGreaterThan = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that physical disks with total chunklets less than the number specified be selected.')]
-      [int]
-	  $TotalChunkletsLessThan = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that physical disks with free chunklets less than the number specified be selected.')]
-      [int]
-	  $FreeChunkletsGreaterThan = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that physical disks with free chunklets greater than the number specified be selected.')]
-      [int]
-	  $FreeChunkletsLessThan = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Specifies that physical disks must have the specified device type, FC (Fibre Channel) 2 is for NL (Near Line) 3 is for SSD .')]
-      [string]
-	  $DiskType = $null,
-	  
-	  [Parameter(Mandatory = $false,HelpMessage = 'Disks must be of the specified speed')]
-      [int]
-	  $Rpm = $null,
-	  
-	  [Parameter(Mandatory=$false, HelpMessage = 'Connection Paramater' ,ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection 
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    # Creation of the body hash
+#>
+[CmdletBinding()]
+Param(	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of the CPG.')]
+		[String]	$CPGName,
+		[String]	$Domain = $null,
+		[String]	$Template = $null,
+		[Int]		$GrowthIncrementMiB = $null,
+		[int]		$GrowthLimitMiB = $null,
+		[int]		$UsedLDWarningAlertMiB = $null,
+		[ValidateSet('R0','R1','R5','R6')]
+		[string]	$RAIDType = $null, 
+		[int]		$SetSize = $null,
+		[ValidateSet('PORT','CAGE','MAG')]
+		[string]	$HA = $null,
+		[ValidateSet('FIRST','LAST')]
+		[string]	$Chunklets = $null,
+		[String]	$NodeList = $null,
+		[String]	$SlotList = $null,
+		[String]	$PortList = $null,
+		[String]	$CageList = $null,
+		[String]	$MagList = $null,
+		[String]	$DiskPosList = $null,
+		[String]	$DiskList = $null,
+		[int]		$TotalChunkletsGreaterThan = $null,
+		[int]		$TotalChunkletsLessThan = $null,
+		[int]		$FreeChunkletsGreaterThan = $null,
+		[int]		$FreeChunkletsLessThan = $null,
+		[string]	$DiskType = $null,
+		[int]		$Rpm = $null
+)
+Begin 
+{	Test-3PARConnection -WsapiConnection $WsapiConnection
+}
+Process 
+{	# Creation of the body hash
 	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}	
-		
-    # Name parameter
+    $body = @{}		
     $body["name"] = "$($CPGName)"
-
-    # Domain parameter
-    If ($Domain) 
-    {
-		$body["domain"] = "$($Domain)"
-    }
-
-    # Template parameter
-    If ($Template) 
-    {
-		$body["template"] = "$($Template)"
-    } 
-
-	# Template parameter
-    If ($GrowthIncrementMiB) 
-    {
-		$body["growthIncrementMiB"] = $GrowthIncrementMiB
-    } 
-	
-	# Template parameter
-    If ($GrowthLimitMiB) 
-    {
-		$body["growthLimitMiB"] = $GrowthLimitMiB
-    } 
-	
-	# Template parameter
-    If ($UsedLDWarningAlertMiB) 
-    {
-		$body["usedLDWarningAlertMiB"] = $UsedLDWarningAlertMiB
-    } 
-	
+    If ($Domain) 	{	$body["domain"] = "$($Domain)"	}
+    If ($Template)	{	$body["template"] = "$($Template)"} 
+	If ($GrowthIncrementMiB) {	$body["growthIncrementMiB"] = $GrowthIncrementMiB	} 
+    If ($GrowthLimitMiB) {	$body["growthLimitMiB"] = $GrowthLimitMiB } 
+    If ($UsedLDWarningAlertMiB) {	$body["usedLDWarningAlertMiB"] = $UsedLDWarningAlertMiB } 	
 	$LDLayoutBody = @{}
-	# LDLayout
-	#Specifies the RAID type for the logical disk
-	if ($RAIDType)
-	{		
-		if($RAIDType -eq "R0")
-		{
-			$LDLayoutBody["RAIDType"] = 1
-		}
-		elseif($RAIDType -eq "R1")
-		{
-			$LDLayoutBody["RAIDType"] = 2
-		}
-		elseif($RAIDType -eq "R5")
-		{
-			$LDLayoutBody["RAIDType"] = 3
-		}
-		elseif($RAIDType -eq "R6")
-		{
-			$LDLayoutBody["RAIDType"] = 4
-		}
-		else
-		{
-			Write-DebugLog "Stop: Exiting  New-3PARCpg_WSAPI   since RAIDType $RAIDType in incorrect "
-			Return "FAILURE : RAIDType :- $RAIDType is an Incorrect Please Use RAIDType R0,R1,R5 and R6 only. "
-		}		
-	}
-	#Specifies the set size in the number of chunklets.
-    if ($SetSize)
-	{	
-		$LDLayoutBody["setSize"] = $SetSize				
-	}
-	#Specifies that the layout must support the failure of one port pair, one cage, or one magazine.
-	if ($HA)
-	{
-		if($HA -eq "PORT")
-		{
-			$LDLayoutBody["HA"] = 1					
-		}
-		elseif($HA -eq "CAGE")
-		{
-			$LDLayoutBody["HA"] = 2					
-		}
-		elseif($HA -eq "MAG")
-		{
-			$LDLayoutBody["HA"] = 3					
-		}
-		else
-		{ 
-			Write-DebugLog "Stop: Exiting  New-3PARCpg_WSAPI since HA $HA in incorrect "
-			Return "FAILURE : HA :- $HA is an Incorrect Please Use [ PORT | CAGE | MAG ] only "
-		}
-	}
-	#Specifies the chunklet location preference characteristics
-	if ($Chunklets)
-	{		
-		if($Chunklets -eq "FIRST")
-		{
-			$LDLayoutBody["chunkletPosPref"] = 1					
-		}
-		elseif($Chunklets -eq "LAST")
-		{
-			$LDLayoutBody["chunkletPosPref"] = 2					
-		}
-		else
-		{ 
-			Write-DebugLog "Stop: Exiting  New-3PARCpg_WSAPI since Chunklets $Chunklets in incorrect "
-			Return "FAILURE : Chunklets :- $Chunklets is an Incorrect Please Use Chunklets FIRST and LAST only. "
-		}
-	}
-	
+	if($RAIDType -eq "R0")	{	$LDLayoutBody["RAIDType"] = 1	}
+	if($RAIDType -eq "R1")	{	$LDLayoutBody["RAIDType"] = 2	}
+	if($RAIDType -eq "R5")	{	$LDLayoutBody["RAIDType"] = 3	}
+	if($RAIDType -eq "R6")	{	$LDLayoutBody["RAIDType"] = 4	}
+    if ($SetSize)			{	$LDLayoutBody["setSize"] = $SetSize	}
+	if($HA -eq "PORT")		{	$LDLayoutBody["HA"] = 1		}
+	if($HA -eq "CAGE")		{	$LDLayoutBody["HA"] = 2		}
+	if($HA -eq "MAG")		{	$LDLayoutBody["HA"] = 3		}
+	if($Chunklets -eq "FIRST"){	$LDLayoutBody["chunkletPosPref"] = 1	}
+	if($Chunklets -eq "LAST") {	$LDLayoutBody["chunkletPosPref"] = 2	}	
 	$LDLayoutDiskPatternsBody=@()	
-	
 	if ($NodeList)
-	{
-		$nodList=@{}
+	{	$nodList=@{}
 		$nodList["nodeList"] = "$($NodeList)"	
 		$LDLayoutDiskPatternsBody += $nodList 			
 	}
-	
 	if ($SlotList)
-	{
-		$sList=@{}
+	{	$sList=@{}
 		$sList["slotList"] = "$($SlotList)"	
 		$LDLayoutDiskPatternsBody += $sList 		
 	}
-	
 	if ($PortList)
-	{
-		$pList=@{}
+	{	$pList=@{}
 		$pList["portList"] = "$($PortList)"	
 		$LDLayoutDiskPatternsBody += $pList 		
-	}
-	
+	}	
 	if ($CageList)
-	{
-		$cagList=@{}
+	{	$cagList=@{}
 		$cagList["cageList"] = "$($CageList)"	
 		$LDLayoutDiskPatternsBody += $cagList 		
 	}
-	
 	if ($MagList)
-	{
-		$mList=@{}
+	{	$mList=@{}
 		$mList["magList"] = "$($MagList)"	
 		$LDLayoutDiskPatternsBody += $mList 		
 	}
-	
 	if ($DiskPosList)
-	{
-		$dpList=@{}
+	{	$dpList=@{}
 		$dpList["diskPosList"] = "$($DiskPosList)"	
 		$LDLayoutDiskPatternsBody += $dpList 		
 	}
-
 	if ($DiskList)
-	{
-		$dskList=@{}
+	{	$dskList=@{}
 		$dskList["diskList"] = "$($DiskList)"	
 		$LDLayoutDiskPatternsBody += $dskList 		
 	}
-	
 	if ($TotalChunkletsGreaterThan)
-	{
-		$tcgList=@{}
+	{	$tcgList=@{}
 		$tcgList["totalChunkletsGreaterThan"] = $TotalChunkletsGreaterThan	
 		$LDLayoutDiskPatternsBody += $tcgList 		
 	}
-	
 	if ($TotalChunkletsLessThan)
-	{
-		$tclList=@{}
+	{	$tclList=@{}
 		$tclList["totalChunkletsLessThan"] = $TotalChunkletsLessThan	
 		$LDLayoutDiskPatternsBody += $tclList 		
 	}
-	
 	if ($FreeChunkletsGreaterThan)
-	{
-		$fcgList=@{}
+	{	$fcgList=@{}
 		$fcgList["freeChunkletsGreaterThan"] = $FreeChunkletsGreaterThan	
 		$LDLayoutDiskPatternsBody += $fcgList 		
 	}
-	
 	if ($FreeChunkletsLessThan)
-	{
-		$fclList=@{}
+	{	$fclList=@{}
 		$fclList["freeChunkletsLessThan"] = $FreeChunkletsLessThan	
 		$LDLayoutDiskPatternsBody += $fclList 		
 	}
-	
-	if ($DiskType)
-	{		
-		if($DiskType -eq "FC")
+	if($DiskType -eq "FC")
 		{			
 			$dtList=@{}
 			$dtList["diskType"] = 1	
 			$LDLayoutDiskPatternsBody += $dtList						
 		}
-		elseif($DiskType -eq "NL")
-		{			
-			$dtList=@{}
+	if($DiskType -eq "NL")
+		{	$dtList=@{}
 			$dtList["diskType"] = 2	
 			$LDLayoutDiskPatternsBody += $dtList						
 		}
-		elseif($DiskType -eq "SSD")
-		{			
-			$dtList=@{}
+	if($DiskType -eq "SSD")
+		{	$dtList=@{}
 			$dtList["diskType"] = 3	
 			$LDLayoutDiskPatternsBody += $dtList						
 		}
-		else
-		{ 
-			Write-DebugLog "Stop: Exiting  New-3PARCpg_WSAPI   since DiskType $DiskType in incorrect "
-			Return "FAILURE : DiskType :- $DiskType is an Incorrect Please Use FC (Fibre Channel), NL (Near Line) and SSD only"
-		}
-	}
-	
 	if ($Rpm)
-	{
-		$rpmList=@{}
+	{	$rpmList=@{}
 		$rpmList["RPM"] = $Rpm	
 		$LDLayoutDiskPatternsBody += $rpmList
 	}	
-		
-	
-	if($LDLayoutDiskPatternsBody.Count -gt 0)
-	{
-		$LDLayoutBody["diskPatterns"] = $LDLayoutDiskPatternsBody	
-	}		
-	if($LDLayoutBody.Count -gt 0)
-	{
-		$body["LDLayout"] = $LDLayoutBody 
-	}	
-	
+	if($LDLayoutDiskPatternsBody.Count -gt 0)	{	$LDLayoutBody["diskPatterns"] = $LDLayoutDiskPatternsBody	}		
+	if($LDLayoutBody.Count -gt 0)	{	$body["LDLayout"] = $LDLayoutBody }	
     #init the response var
     $Result = $null	
-	
 	#$json = $body | ConvertTo-Json  -Compress -Depth 10
-	#write-host " Body = $json"
-	
+	#write-host " Body = $json"	
     #Request
     $Result = Invoke-3parWSAPI -uri '/cpgs' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 201)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
+	{	write-host "`n Cmdlet executed successfully. `n" -foreground green
 		Write-DebugLog "SUCCESS: CPG:$CPGName created successfully" $Info
-		
 		#write-host " StatusCode = $status"
 		# Results
 		Get-3PARCpg_WSAPI -CPGName $CPGName
 		Write-DebugLog "End: New-3PARCpg_WSAPI" $Debug
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While creating CPG:$CPGName " -foreground red
-		write-host ""
+	{	write-error "`n FAILURE : While creating CPG:$CPGName `n"
 		Write-DebugLog "FAILURE : While creating CPG:$CPGName " $Info
 		return $Result.StatusDescription
 	}	
@@ -4708,1467 +4287,8 @@ Function Get-3PARHostPersona_WSAPI
 	
   }
 	End {}
-}#END Get-3PARHostPersona_WSAPI
-
-############################################################################################################################################
-## FUNCTION New-3PARHostSet_WSAPI
-############################################################################################################################################
-Function New-3PARHostSet_WSAPI 
-{
-  <#
-  
-  .SYNOPSIS
-	Creates a new host Set.
-	
-  .DESCRIPTION
-    This cmdlet (New-3PARHostSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (New-HostSet_WSAPI) instead.
-  
-	Creates a new host Set.
-    Any user with the Super or Edit role can create a host set. Any role granted hostset_set permission can add hosts to a host set.
-	You can add hosts to a host set using a glob-style pattern. A glob-style pattern is not supported when removing hosts from sets.
-	For additional information about glob-style patterns, see “Glob-Style Patterns” in the HPE 3PAR Command Line Interface Reference.
-	  
-  .PARAMETER HostSetName
-	Name of the host set to be created.
-  
-  .PARAMETER Comment
-	Comment for the host set.
-	
-  .PARAMETER Domain
-	The domain in which the host set will be created.
-	
-  .PARAMETER SetMembers
-	The host to be added to the set. The existence of the hist will not be checked.
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-
-  .EXAMPLE
-	New-3PARHostSet_WSAPI -HostSetName MyHostSet
-    Creates a new host Set with name MyHostSet.
-	
-  .EXAMPLE
-	New-3PARHostSet_WSAPI -HostSetName MyHostSet -Comment "this Is Test Set" -Domain MyDomain
-    Creates a new host Set with name MyHostSet.
-	
-  .EXAMPLE
-	New-3PARHostSet_WSAPI -HostSetName MyHostSet -Comment "this Is Test Set" -Domain MyDomain -SetMembers MyHost
-	Creates a new host Set with name MyHostSet with Set Members MyHost.
-	
-  .EXAMPLE	
-	New-3PARHostSet_WSAPI -HostSetName MyHostSet -Comment "this Is Test Set" -Domain MyDomain -SetMembers "MyHost,MyHost1,MyHost2"
-    Creates a new host Set with name MyHostSet with Set Members MyHost.	
-
-  .Notes
-    NAME    : New-3PARHostSet_WSAPI    
-    LASTEDIT: 22/01/2018
-    KEYWORDS: New-3PARHostSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-  
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $HostSetName,	  
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Comment,	
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Domain, 
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [String[]]
-	  $SetMembers,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    # Creation of the body hash
-	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}    
-    $body["name"] = "$($HostSetName)"
-   
-    If ($Comment) 
-    {
-		$body["comment"] = "$($Comment)"
-    }  
-
-	If ($Domain) 
-    {
-		$body["domain"] = "$($Domain)"
-    }
-	
-	If ($SetMembers) 
-    {
-		$body["setmembers"] = $SetMembers
-    }
-    
-    $Result = $null
-	
-    #Request
-    $Result = Invoke-3parWSAPI -uri '/hostsets' -type 'POST' -body $body -WsapiConnection $WsapiConnection
-	$status = $Result.StatusCode	
-	if($status -eq 201)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: Host Set:$HostSetName created successfully" $Info
-		
-		Get-3PARHostSet_WSAPI -HostSetName $HostSetName
-		Write-DebugLog "End: New-3PARHostSet_WSAPI" $Debug
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While creating Host Set:$HostSetName " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While creating Host Set:$HostSetName " $Info
-		
-		return $Result.StatusDescription
-	}	
-  }
-  End 
-  {
-  }  
 }
-#ENG New-3PARHostSet_WSAPI
 
-############################################################################################################################################
-## FUNCTION Update-3PARHostSet_WSAPI
-############################################################################################################################################
-Function Update-3PARHostSet_WSAPI 
-{
-  <#
-  .SYNOPSIS
-	Update an existing Host Set.
-  
-  .DESCRIPTION
-    This cmdlet (Update-3PARHostSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Update-HostSet_WSAPI) instead.
-  
-	Update an existing Host Set.
-    Any user with the Super or Edit role can modify a host set. Any role granted hostset_set permission can add a host to the host set or remove a host from the host set.   
-	
-  .EXAMPLE    
-	Update-3PARHostSet_WSAPI -HostSetName xxx -RemoveMember -Members as-Host4
-		
-  .EXAMPLE
-	Update-3PARHostSet_WSAPI -HostSetName xxx -AddMember -Members as-Host4
-	
-  .EXAMPLE	
-	Update-3PARHostSet_WSAPI -HostSetName xxx -ResyncPhysicalCopy
-	
-  .EXAMPLE	
-	Update-3PARHostSet_WSAPI -HostSetName xxx -StopPhysicalCopy 
-		
-  .EXAMPLE
-	Update-3PARHostSet_WSAPI -HostSetName xxx -PromoteVirtualCopy
-		
-  .EXAMPLE
-	Update-3PARHostSet_WSAPI -HostSetName xxx -StopPromoteVirtualCopy
-		
-  .EXAMPLE
-	Update-3PARHostSet_WSAPI -HostSetName xxx -ResyncPhysicalCopy -Priority high
-		
-  .PARAMETER HostSetName
-	Existing Host Name
-	
-  .PARAMETER AddMember
-	Adds a member to the VV set.
-	
-  .PARAMETER RemoveMember
-	Removes a member from the VV set.
-	
-  .PARAMETER ResyncPhysicalCopy
-	Resynchronize the physical copy to its VV set.
-  
-  .PARAMETER StopPhysicalCopy
-	Stops the physical copy.
-  
-  .PARAMETER PromoteVirtualCopy
-	Promote virtual copies in a VV set.
-	
-  .PARAMETER StopPromoteVirtualCopy
-	Stops the promote virtual copy operations in a VV set.
-	
-  .PARAMETER NewName
-	New name of the set.
-	
-  .PARAMETER Comment
-	New comment for the VV set or host set.
-	To remove the comment, use “”.
-
-  .PARAMETER Members
-	The volume or host to be added to or removed from the set.
-  
-  .PARAMETER Priority
-	1: high
-	2: medium
-	3: low
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Update-3PARHostSet_WSAPI    
-    LASTEDIT: 22/01/2018
-    KEYWORDS: Update-3PARHostSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0      
-  #>
-
-  [CmdletBinding()]
-  Param(
-	[Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-	[System.String]
-	$HostSetName,
-	
-	[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$AddMember,	
-	
-	[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$RemoveMember,
-	
-	[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$ResyncPhysicalCopy,
-	
-	[Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$StopPhysicalCopy,
-	
-	[Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$PromoteVirtualCopy,
-	
-	[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$StopPromoteVirtualCopy,
-	
-	[Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-	[System.String]
-	$NewName,
-	
-	[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-	[System.String]
-	$Comment,
-	
-	[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-	[String[]]
-	$Members,
-	
-	[Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-	[System.String]
-	$Priority,
-
-	[Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-	$WsapiConnection = $global:WsapiConnection	
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}
-	$counter
-	
-    If ($AddMember) 
-	{
-          $body["action"] = 1
-		  $counter = $counter + 1
-    }
-	If ($RemoveMember) 
-	{
-          $body["action"] = 2
-		  $counter = $counter + 1
-    }
-	If ($ResyncPhysicalCopy) 
-	{
-          $body["action"] = 3
-		  $counter = $counter + 1
-    }
-	If ($StopPhysicalCopy) 
-	{
-          $body["action"] = 4
-		  $counter = $counter + 1
-    }
-	If ($PromoteVirtualCopy) 
-	{
-          $body["action"] = 5
-		  $counter = $counter + 1
-    }
-	If ($StopPromoteVirtualCopy) 
-	{
-          $body["action"] = 6
-		  $counter = $counter + 1
-    }
-	if($counter -gt 1)
-	{
-		return "Please Select Only One from [ AddMember | RemoveMember | ResyncPhysicalCopy | StopPhysicalCopy | PromoteVirtualCopy | StopPromoteVirtualCopy]. "
-	}
-	
-	If ($NewName) 
-	{
-          $body["newName"] = "$($NewName)"
-    }
-	
-	If ($Comment) 
-	{
-          $body["comment"] = "$($Comment)"
-    }
-	
-	If ($Members) 
-	{
-          $body["setmembers"] = $Members
-    }
-	
-	If ($Priority) 
-	{	
-		$a = "high","medium","low"
-		$l=$Priority
-		if($a -eq $l)
-		{
-			if($Priority -eq "high")
-			{
-				$body["priority"] = 1
-			}	
-			if($Priority -eq "medium")
-			{
-				$body["priority"] = 2
-			}
-			if($Priority -eq "low")
-			{
-				$body["priority"] = 3
-			}
-		}
-		else
-		{ 
-			Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-			Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | medium | low]  can be used only . "
-		} 
-    }
-	
-    $Result = $null	
-	$uri = '/hostsets/'+$HostSetName 
-	
-    #Request
-	Write-DebugLog "Request: Request to Update-3PARHostSet_WSAPI : $HostSetName (Invoke-3parWSAPI)." $Debug
-    $Result = Invoke-3parWSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
-	
-	if($Result.StatusCode -eq 200)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: Host Set:$HostSetName successfully Updated" $Info
-				
-		# Results
-		if($NewName)
-		{
-			Get-3PARHostSet_WSAPI -HostSetName $NewName
-		}
-		else
-		{
-			Get-3PARHostSet_WSAPI -HostSetName $HostSetName
-		}
-		Write-DebugLog "End: Update-3PARHostSet_WSAPI" $Debug
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While Updating Host Set: $HostSetName " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Updating Host Set: $HostSetName " $Info
-		
-		return $Result.StatusDescription
-	}
-  }
-
-  End {  }
-
-}#END Update-3PARHostSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION Remove-3PARHostSet_WSAPI
-############################################################################################################################################
-Function Remove-3PARHostSet_WSAPI
- {
-  <#
-  .SYNOPSIS
-	Remove a Host Set.
-  
-  .DESCRIPTION
-    This cmdlet (Remove-3PARHostSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Remove-HostSet_WSAPI) instead.
-  
-	Remove a Host Set.
-	Any user with Super or Edit role, or any role granted host_remove permission, can perform this operation. Requires access to all domains.
-        
-  .EXAMPLE    
-	Remove-3PARHostSet_WSAPI -HostSetName MyHostSet
-	
-  .PARAMETER HostSetName 
-	Specify the name of Host Set to be removed.
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Remove-3PARHostSet_WSAPI     
-    LASTEDIT: 25/01/2018
-    KEYWORDS: Remove-3PARHostSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0	
-  #>
-  [CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
-  Param(
-	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of Host Set.')]
-	[String]$HostSetName,
-	
-	[Parameter(Mandatory=$false, ValueFromPipeline=$true , HelpMessage = 'Connection Paramater')]
-	$WsapiConnection = $global:WsapiConnection
-	)
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {    
-	#Build uri
-	Write-DebugLog "Running: Building uri to Remove-3PARHostSet_WSAPI." $Debug
-	$uri = '/hostsets/'+$HostSetName
-	
-	$Result = $null
-
-	#Request
-	Write-DebugLog "Request: Request to Remove-3PARHostSet_WSAPI : $HostSetName (Invoke-3parWSAPI)." $Debug
-	$Result = Invoke-3parWSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
-	
-	$status = $Result.StatusCode
-	if($status -eq 200)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: Host Set:$HostSetName successfully remove" $Info
-		Write-DebugLog "End: Remove-3PARHostSet_WSAPI" $Debug
-		
-		return ""
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While Removing Host Set:$HostSetName " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While creating Host Set:$HostSetName " $Info
-		Write-DebugLog "End: Remove-3PARHostSet_WSAPI" $Debug
-		
-		return $Result.StatusDescription
-	}    
-	
-  }
-  End {}  
-}
-#END Remove-3PARHostSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION Get-3PARHostSet_WSAPI
-############################################################################################################################################
-Function Get-3PARHostSet_WSAPI 
-{
-  <#
-  .SYNOPSIS
-	Get Single or list of Hotes Set.
-  
-  .DESCRIPTION
-    This cmdlet (Get-3PARHostSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Get-HostSet_WSAPI) instead.
-  
-	Get Single or list of Hotes Set.
-        
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI
-	Display a list of Hotes Set.
-	
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI -HostSetName MyHostSet
-	Get the information of given Hotes Set.
-	
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI -Members MyHost
-	Get the information of Hotes Set that contain MyHost as Member.
-	
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI -Members "MyHost,MyHost1,MyHost2"
-	Multiple Members.
-	
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI -Id 10
-	Filter Host Set with Id
-	
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI -Uuid 10
-	Filter Host Set with uuid
-	
-  .EXAMPLE
-	Get-3PARHostSet_WSAPI -Members "MyHost,MyHost1,MyHost2" -Id 10 -Uuid 10
-	Multiple Filter
-	
-  .PARAMETER HostSetName
-	Specify name of the Hotes Set.
-	
-  .PARAMETER Members
-	Specify name of the Hotes.
-
-  .PARAMETER Id
-	Specify id of the Hotes Set.
-	
-  .PARAMETER Uuid
-	Specify uuid of the Hotes Set.
- 
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
- 
-  .Notes
-    NAME    : Get-3PARHostSet_WSAPI    
-    LASTEDIT: 25/01/2018
-    KEYWORDS: Get-3PARHostSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0     
-  #>
-
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $HostSetName,
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Members,
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Id,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Uuid,
-	  
-	  [Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection	 
-  }
-
-  Process 
-  {
-	Write-DebugLog "Request: Request to Get-3PARHostSet_WSAPI HostSetName : $HostSetName (Invoke-3parWSAPI)." $Debug
-    #Request
-    
-	$Result = $null
-	$dataPS = $null		
-	$Query="?query=""  """
-	
-	# Results
-	if($HostSetName)
-	{
-		#Build uri
-		$uri = '/hostsets/'+$HostSetName
-		#Request
-		$Result = Invoke-3parWSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-		If($Result.StatusCode -eq 200)
-		{
-			$dataPS = $Result.content | ConvertFrom-Json
-			
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
-			Write-DebugLog "SUCCESS: Get-3PARHostSet_WSAPI successfully Executed." $Info
-			
-			return $dataPS
-		}
-		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-3PARHostSet_WSAPI." -foreground red
-			write-host ""
-			Write-DebugLog "FAILURE : While Executing Get-3PARHostSet_WSAPI. " $Info
-			
-			return $Result.StatusDescription
-		}
-	}
-	if($Members)
-	{		
-		$count = 1
-		$lista = $Members.split(",")
-		foreach($sub in $lista)
-		{			
-			$Query = $Query.Insert($Query.Length-3," setmembers EQ $sub")			
-			if($lista.Count -gt 1)
-			{
-				if($lista.Count -ne $count)
-				{
-					$Query = $Query.Insert($Query.Length-3," OR ")
-					$count = $count + 1
-				}				
-			}
-		}		
-	}
-	if($Id)
-	{
-		if($Members)
-		{
-			$Query = $Query.Insert($Query.Length-3," OR id EQ $Id")
-		}
-		else
-		{
-			$Query = $Query.Insert($Query.Length-3," id EQ $Id")
-		}
-	}
-	if($Uuid)
-	{
-		if($Members -or $Id)
-		{
-			$Query = $Query.Insert($Query.Length-3," OR uuid EQ $Uuid")
-		}
-		else
-		{
-			$Query = $Query.Insert($Query.Length-3," uuid EQ $Uuid")
-		}
-	}
-	
-	if($Members -Or $Id -Or $Uuid)
-	{
-		#Build uri
-		$uri = '/hostsets/'+$Query
-		
-		#Request
-		$Result = Invoke-3parWSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-		If($Result.StatusCode -eq 200)
-		{			
-			$dataPS = ($Result.content | ConvertFrom-Json).members			
-		}
-	}	
-	else
-	{
-		#Request
-		$Result = Invoke-3parWSAPI -uri '/hostsets' -type 'GET' -WsapiConnection $WsapiConnection
-		If($Result.StatusCode -eq 200)
-		{			
-			$dataPS = ($Result.content | ConvertFrom-Json).members			
-		}		
-	}
-
-	If($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-		{
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
-			Write-DebugLog "SUCCESS: Get-3PARHostSet_WSAPI successfully Executed." $Info
-			
-			return $dataPS
-		}
-		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-3PARHostSet_WSAPI. Expected Result Not Found with Given Filter Option : Members/$Members Id/$Id Uuid/$Uuid." -foreground red
-			write-host ""
-			Write-DebugLog "FAILURE : While Executing Get-3PARHostSet_WSAPI. Expected Result Not Found with Given Filter Option : Members/$Members Id/$Id Uuid/$Uuid." $Info
-			
-			return 
-		}		
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-3PARHostSet_WSAPI." -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Executing Get-3PARHostSet_WSAPI. " $Info
-		
-		return $Result.StatusDescription
-	}
-  }
-	End {}
-}#END Get-3PARHostSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION New-3PARVVSet_WSAPI
-############################################################################################################################################
-Function New-3PARVVSet_WSAPI 
-{
-  <#
-  
-  .SYNOPSIS
-	Creates a new virtual volume Set.
-	
-  .DESCRIPTION
-    This cmdlet (New-3PARVVSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (New-VvSet_WSAPI) instead.
-  
-	Creates a new virtual volume Set.
-    Any user with the Super or Edit role can create a host set. Any role granted hostset_set permission can add hosts to a host set.
-	You can add hosts to a host set using a glob-style pattern. A glob-style pattern is not supported when removing hosts from sets.
-	For additional information about glob-style patterns, see “Glob-Style Patterns” in the HPE 3PAR Command Line Interface Reference.
-	
-  .EXAMPLE
-	New-3PARVVSet_WSAPI -VVSetName MyVVSet
-    Creates a new virtual volume Set with name MyVVSet.
-	
-  .EXAMPLE
-	New-3PARVVSet_WSAPI -VVSetName MyVVSet -Comment "this Is Test Set" -Domain MyDomain
-    Creates a new virtual volume Set with name MyVVSet.
-	
-  .EXAMPLE
-	New-3PARVVSet_WSAPI -VVSetName MyVVSet -Comment "this Is Test Set" -Domain MyDomain -SetMembers xxx
-	 Creates a new virtual volume Set with name MyVVSet with Set Members xxx.
-	
-  .EXAMPLE	
-	New-3PARVVSet_WSAPI -VVSetName MyVVSet -Comment "this Is Test Set" -Domain MyDomain -SetMembers "xxx1,xxx2,xxx3"
-    Creates a new virtual volume Set with name MyVVSet with Set Members xxx.
-	
-  .PARAMETER VVSetName
-	Name of the virtual volume set to be created.
-  
-  .PARAMETER Comment
-	Comment for the virtual volume set.
-	
-  .PARAMETER Domain
-	The domain in which the virtual volume set will be created.
-	
-  .PARAMETER SetMembers
-	The virtual volume to be added to the set. The existence of the hist will not be checked.
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : New-3PARVVSet_WSAPI    
-    LASTEDIT: 25/01/2018
-    KEYWORDS: New-3PARVVSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0
-  
-  #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $VVSetName,	  
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Comment,	
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Domain, 
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [String[]]
-	  $SetMembers,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    # Creation of the body hash
-	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}    
-    $body["name"] = "$($VVSetName)"
-   
-    If ($Comment) 
-    {
-		$body["comment"] = "$($Comment)"
-    }  
-
-	If ($Domain) 
-    {
-		$body["domain"] = "$($Domain)"
-    }
-	
-	If ($SetMembers) 
-    {
-		$body["setmembers"] = $SetMembers
-    }
-    
-    $Result = $null
-	
-    #Request
-    $Result = Invoke-3parWSAPI -uri '/volumesets' -type 'POST' -body $body -WsapiConnection $WsapiConnection
-	$status = $Result.StatusCode	
-	if($status -eq 201)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: virtual volume Set:$VVSetName created successfully" $Info
-		
-		Get-3PARVVSet_WSAPI -VVSetName $VVSetName
-		Write-DebugLog "End: New-3PARVVSet_WSAPI" $Debug
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While creating virtual volume Set:$VVSetName " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While creating virtual volume Set:$VVSetName " $Info
-		
-		return $Result.StatusDescription
-	}	
-  }
-  End 
-  {
-  }  
-}
-#ENG New-3PARVVSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION Update-3PARVVSet_WSAPI
-############################################################################################################################################
-Function Update-3PARVVSet_WSAPI 
-{
-  <#
-  .SYNOPSIS
-	Update an existing virtual volume Set.
-  
-  .DESCRIPTION
-    This cmdlet (Update-3PARVVSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Update-VvSet_WSAPI) instead.
-  
-	Update an existing virtual volume Set.
-    Any user with the Super or Edit role can modify a host set. Any role granted hostset_set permission can add a host to the host set or remove a host from the host set.   
-	
-  .EXAMPLE
-	Update-3PARVVSet_WSAPI -VVSetName xxx -RemoveMember -Members testvv3.0
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -AddMember -Members testvv3.0
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -ResyncPhysicalCopy 
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -StopPhysicalCopy 
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -PromoteVirtualCopy
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -StopPromoteVirtualCopy
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -Priority xyz
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -ResyncPhysicalCopy -Priority high
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -ResyncPhysicalCopy -Priority medium
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -ResyncPhysicalCopy -Priority low
-	
-  .EXAMPLE 
-	Update-3PARVVSet_WSAPI -VVSetName xxx -NewName as-vvSet1 -Comment "Updateing new name"
-
-  .PARAMETER VVSetName
-	Existing virtual volume Name
-	
-  .PARAMETER AddMember
-	Adds a member to the virtual volume set.
-	
-  .PARAMETER RemoveMember
-	Removes a member from the virtual volume set.
-	
-  .PARAMETER ResyncPhysicalCopy
-	Resynchronize the physical copy to its virtual volume set.
-  
-  .PARAMETER StopPhysicalCopy
-	Stops the physical copy.
-  
-  .PARAMETER PromoteVirtualCopy
-	Promote virtual copies in a virtual volume set.
-	
-  .PARAMETER StopPromoteVirtualCopy
-	Stops the promote virtual copy operations in a virtual volume set.
-	
-  .PARAMETER NewName
-	New name of the virtual volume set.
-	
-  .PARAMETER Comment
-	New comment for the virtual volume set or host set.
-	To remove the comment, use “”.
-
-  .PARAMETER Members
-	The volume to be added to or removed from the virtual volume set.
-  
-  .PARAMETER Priority
-	1: high
-	2: medium
-	3: low
- 
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
- 
-  .Notes
-    NAME    : Update-3PARVVSet_WSAPI    
-    LASTEDIT: 22/01/2018
-    KEYWORDS: Update-3PARVVSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0      
-  #>
-
-  [CmdletBinding()]
-  Param(
-	[Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-	[System.String]
-	$VVSetName,
-	
-	[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$AddMember,	
-	
-	[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$RemoveMember,
-	
-	[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$ResyncPhysicalCopy,
-	
-	[Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$StopPhysicalCopy,
-	
-	[Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$PromoteVirtualCopy,
-	
-	[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-	[switch]
-	$StopPromoteVirtualCopy,
-	
-	[Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-	[System.String]
-	$NewName,
-	
-	[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-	[System.String]
-	$Comment,
-	
-	[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-	[String[]]
-	$Members,
-	
-	[Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-	[System.String]
-	$Priority,
-
-	[Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-	$WsapiConnection = $global:WsapiConnection
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {
-    Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}
-	$counter
-	
-    If ($AddMember) 
-	{
-          $body["action"] = 1
-		  $counter = $counter + 1
-    }
-	If ($RemoveMember) 
-	{
-          $body["action"] = 2
-		  $counter = $counter + 1
-    }
-	If ($ResyncPhysicalCopy) 
-	{
-          $body["action"] = 3
-		  $counter = $counter + 1
-    }
-	If ($StopPhysicalCopy) 
-	{
-          $body["action"] = 4
-		  $counter = $counter + 1
-    }
-	If ($PromoteVirtualCopy) 
-	{
-          $body["action"] = 5
-		  $counter = $counter + 1
-    }
-	If ($StopPromoteVirtualCopy) 
-	{
-          $body["action"] = 6
-		  $counter = $counter + 1
-    }
-	if($counter -gt 1)
-	{
-		return "Please Select Only One from [ AddMember | RemoveMember | ResyncPhysicalCopy | StopPhysicalCopy | PromoteVirtualCopy | StopPromoteVirtualCopy]. "
-	}
-	
-	If ($NewName) 
-	{
-          $body["newName"] = "$($NewName)"
-    }
-	
-	If ($Comment) 
-	{
-          $body["comment"] = "$($Comment)"
-    }
-	
-	If ($Members) 
-	{
-          $body["setmembers"] = $Members
-    }
-	
-	If ($Priority) 
-	{	
-		$a = "high","medium","low"
-		$l=$Priority
-		if($a -eq $l)
-		{
-			if($Priority -eq "high")
-			{
-				$body["priority"] = 1
-			}	
-			if($Priority -eq "medium")
-			{
-				$body["priority"] = 2
-			}
-			if($Priority -eq "low")
-			{
-				$body["priority"] = 3
-			}
-		}
-		else
-		{ 
-			Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-			Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | medium | low]  can be used only . "
-		} 
-    }
-	
-    $Result = $null	
-	$uri = '/volumesets/'+$VVSetName 
-	
-    #Request
-	Write-DebugLog "Request: Request to Update-3PARVVSet_WSAPI : $VVSetName (Invoke-3parWSAPI)." $Debug
-    $Result = Invoke-3parWSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
-	
-	if($Result.StatusCode -eq 200)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: virtual volume Set:$VVSetName successfully Updated" $Info
-				
-		# Results
-		if($NewName)
-		{
-			Get-3PARVVSet_WSAPI -VVSetName $NewName
-		}
-		else
-		{
-			Get-3PARVVSet_WSAPI -VVSetName $VVSetName
-		}
-		Write-DebugLog "End: Update-3PARVVSet_WSAPI" $Debug
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While Updating virtual volume Set: $VVSetName " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Updating virtual volume Set: $VVSetName " $Info
-		
-		return $Result.StatusDescription
-	}
-  }
-
-  End {  }
-
-}#END Update-3PARVVSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION Remove-3PARVVSet_WSAPI
-############################################################################################################################################
-Function Remove-3PARVVSet_WSAPI
- {
-  <#
-  .SYNOPSIS
-	Remove a virtual volume Set.
-  
-  .DESCRIPTION
-    This cmdlet (Remove-3PARVVSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Remove-VvSet_WSAPI) instead.
-  
-	Remove a virtual volume Set.
-	Any user with Super or Edit role, or any role granted host_remove permission, can perform this operation. Requires access to all domains.
-        
-  .EXAMPLE    
-	Remove-3PARVVSet_WSAPI -VVSetName MyvvSet
-	
-  .PARAMETER VVSetName 
-	Specify the name of virtual volume Set to be removed.
-
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
-	
-  .Notes
-    NAME    : Remove-3PARVVSet_WSAPI     
-    LASTEDIT: 25/01/2018
-    KEYWORDS: Remove-3PARVVSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0	
-  #>
-  [CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
-  Param(
-	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True,HelpMessage = 'Specifies the name of virtual volume Set.')]
-	[String]$VVSetName,
-	
-	[Parameter(Mandatory=$false, ValueFromPipeline=$true , HelpMessage = 'Connection Paramater')]
-	$WsapiConnection = $global:WsapiConnection
-	)
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection
-  }
-
-  Process 
-  {    
-	#Build uri
-	Write-DebugLog "Running: Building uri to Remove-3PARVVSet_WSAPI." $Debug
-	$uri = '/volumesets/'+$VVSetName
-	
-	$Result = $null
-
-	#Request
-	Write-DebugLog "Request: Request to Remove-3PARVVSet_WSAPI : $VVSetName (Invoke-3parWSAPI)." $Debug
-	$Result = Invoke-3parWSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
-	
-	$status = $Result.StatusCode
-	if($status -eq 200)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
-		Write-DebugLog "SUCCESS: virtual volume Set:$VVSetName successfully remove" $Info
-		Write-DebugLog "End: Remove-3PARVVSet_WSAPI" $Debug
-		
-		return ""
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While Removing virtual volume Set:$VVSetName " -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While creating virtual volume Set:$VVSetName " $Info
-		Write-DebugLog "End: Remove-3PARVVSet_WSAPI" $Debug
-		
-		return $Result.StatusDescription
-	}    
-	
-  }
-  End {}  
-}
-#END Remove-3PARVVSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION Get-3PARVVSet_WSAPI
-############################################################################################################################################
-Function Get-3PARVVSet_WSAPI 
-{
-  <#
-  .SYNOPSIS
-	Get Single or list of virtual volume Set.
-  
-  .DESCRIPTION
-    This cmdlet (Get-3PARVVSet_WSAPI) will be deprecated in a later version of PowerShell Toolkit. Consider using the cmdlet  (Get-VvSet_WSAPI) instead.
-  
-	Get Single or list of virtual volume Set.
-        
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI
-	Display a list of virtual volume Set.
-	
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI -VVSetName MyvvSet
-	Get the information of given virtual volume Set.
-	
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI -Members Myvv
-	Get the information of virtual volume Set that contain MyHost as Member.
-	
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI -Members "Myvv,Myvv1,Myvv2"
-	Multiple Members.
-	
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI -Id 10
-	Filter virtual volume Set with Id
-	
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI -Uuid 10
-	Filter virtual volume Set with uuid
-	
-  .EXAMPLE
-	Get-3PARVVSet_WSAPI -Members "Myvv,Myvv1,Myvv2" -Id 10 -Uuid 10
-	Multiple Filter
-	
-  .PARAMETER VVSetName
-	Specify name of the virtual volume Set.
-	
-  .PARAMETER Members
-	Specify name of the virtual volume.
-
-  .PARAMETER Id
-	Specify id of the virtual volume Set.
-	
-  .PARAMETER Uuid
-	Specify uuid of the virtual volume Set.
- 
-  .PARAMETER WsapiConnection 
-    WSAPI Connection object created with Connection command
- 
-  .Notes
-    NAME    : Get-3PARVVSet_WSAPI    
-    LASTEDIT: 25/01/2018
-    KEYWORDS: Get-3PARVVSet_WSAPI
-   
-  .Link
-     http://www.hpe.com
- 
-  #Requires PS -Version 3.0     
-  #>
-
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $VVSetName,
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Members,
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Id,
-	  
-	  [Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Uuid,
-	  
-	  [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-	  $WsapiConnection = $global:WsapiConnection
-  )
-
-  Begin 
-  {
-    # Test if connection exist
-    Test-3PARConnection -WsapiConnection $WsapiConnection	 
-  }
-
-  Process 
-  {
-	Write-DebugLog "Request: Request to Get-3PARVVSet_WSAPI VVSetName : $VVSetName (Invoke-3parWSAPI)." $Debug
-    #Request
-    
-	$Result = $null
-	$dataPS = $null		
-	$Query="?query=""  """
-	
-	# Results
-	if($VVSetName)
-	{
-		#Build uri
-		$uri = '/volumesets/'+$VVSetName
-		#Request
-		$Result = Invoke-3parWSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection		 
-		If($Result.StatusCode -eq 200)
-		{
-			$dataPS = $Result.content | ConvertFrom-Json
-			
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
-			Write-DebugLog "SUCCESS: Get-3PARVVSet_WSAPI successfully Executed." $Info
-			
-			return $dataPS
-		}
-		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-3PARVVSet_WSAPI." -foreground red
-			write-host ""
-			Write-DebugLog "FAILURE : While Executing Get-3PARVVSet_WSAPI. " $Info
-			
-			return $Result.StatusDescription
-		}
-	}
-	if($Members)
-	{		
-		$count = 1
-		$lista = $Members.split(",")
-		foreach($sub in $lista)
-		{			
-			$Query = $Query.Insert($Query.Length-3," setmembers EQ $sub")			
-			if($lista.Count -gt 1)
-			{
-				if($lista.Count -ne $count)
-				{
-					$Query = $Query.Insert($Query.Length-3," OR ")
-					$count = $count + 1
-				}				
-			}
-		}		
-	}
-	if($Id)
-	{
-		if($Members)
-		{
-			$Query = $Query.Insert($Query.Length-3," OR id EQ $Id")
-		}
-		else
-		{
-			$Query = $Query.Insert($Query.Length-3," id EQ $Id")
-		}
-	}
-	if($Uuid)
-	{
-		if($Members -or $Id)
-		{
-			$Query = $Query.Insert($Query.Length-3," OR uuid EQ $Uuid")
-		}
-		else
-		{
-			$Query = $Query.Insert($Query.Length-3," uuid EQ $Uuid")
-		}
-	}
-	
-	if($Members -Or $Id -Or $Uuid)
-	{
-		#Build uri
-		$uri = '/volumesets/'+$Query
-		
-		#Request
-		$Result = Invoke-3parWSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection	
-		If($Result.StatusCode -eq 200)
-		{			
-			$dataPS = ($Result.content | ConvertFrom-Json).members			
-		}
-	}	
-	else
-	{
-		#Request
-		$Result = Invoke-3parWSAPI -uri '/volumesets' -type 'GET' -WsapiConnection $WsapiConnection
-		If($Result.StatusCode -eq 200)
-		{			
-			$dataPS = ($Result.content | ConvertFrom-Json).members			
-		}		
-	}
-
-	If($Result.StatusCode -eq 200)
-	{
-		if($dataPS.Count -gt 0)
-		{
-			write-host ""
-			write-host "Cmdlet executed successfully" -foreground green
-			write-host ""
-			Write-DebugLog "SUCCESS: Get-3PARVVSet_WSAPI successfully Executed." $Info
-			
-			return $dataPS
-		}
-		else
-		{
-			write-host ""
-			write-host "FAILURE : While Executing Get-3PARVVSet_WSAPI. Expected Result Not Found with Given Filter Option : Members/$Members Id/$Id Uuid/$Uuid." -foreground red
-			write-host ""
-			Write-DebugLog "FAILURE : While Executing Get-3PARVVSet_WSAPI. Expected Result Not Found with Given Filter Option : Members/$Members Id/$Id Uuid/$Uuid." $Info
-			
-			return 
-		}
-	}
-	else
-	{
-		write-host ""
-		write-host "FAILURE : While Executing Get-3PARVVSet_WSAPI." -foreground red
-		write-host ""
-		Write-DebugLog "FAILURE : While Executing Get-3PARVVSet_WSAPI. " $Info
-		
-		return $Result.StatusDescription
-	}
-  }
-	End {}
-}#END Get-3PARVVSet_WSAPI
-
-############################################################################################################################################
-## FUNCTION Get-3PARFileServices_WSAPI
-############################################################################################################################################
 Function Get-3PARFileServices_WSAPI 
 {
   <#
@@ -23640,208 +21760,29 @@ Function Add-RedType
 	End {  }
  }# Ended Add-RedType
 
-Export-ModuleMember New-3PARWSAPIConnection , Close-3PARWSAPIConnection , Get-3PARRCStatisticalReports_WSAPI , Get-3PARRCopyVolumeStatisticalReports_WSAPI , Get-3PARQoSStatisticalReports_WSAPI , New-3PARFileShares_WSAPI , Get-3PARVVSpaceReports_WSAPI , Get-3PARVLUNStatisticsReports_WSAPI , Get-3PARPortStatisticsReports_WSAPI , Get-3PARPDSpaceReports_WSAPI , Get-3PARPDStatisticsReports_WSAPI , Get-3PARPDCapacityReports_WSAPI , Get-3PARCPUStatisticalDataReports_WSAPI , Get-3PARCPGStatisticalDataReports_WSAPI , Get-3PARCPGSpaceDataReports_WSAPI , Get-3PARCacheMemoryStatisticsDataReports_WSAPI , Get-3PARAOConfiguration_WSAPI , Get-3PARRoles_WSAPI , Get-3PARUsers_WSAPI , Get-3PARFlashCache_WSAPI , Remove-3PARFlashCache_WSAPI , New-3PARFlashCache_WSAPI , Set-3PARVVSetFlashCachePolicy_WSAPI , Restore-3PARFilePersonaQuota_WSAPI , Group-3PARFilePersonaQuota_WSAPI , Get-3PARFilePersonaQuota_WSAPI , Remove-3PARFilePersonaQuota_WSAPI , Update-3PARFilePersonaQuota_WSAPI , New-3PARFilePersonaQuota_WSAPI , Get-3PARDirPermission_WSAPI , Get-3PARFileShare_WSAPI , Remove-3PARFileShare_WSAPI , Get-3PARFileStoreSnapshot_WSAPI , Remove-3PARFileStoreSnapshot_WSAPI , New-3PARFileStoreSnapshot_WSAPI , Get-3PARFileStore_WSAPI , Remove-3PARFileStore_WSAPI , Update-3PARFileStore_WSAPI , New-3PARFileStore_WSAPI , Get-3PARVFS_WSAPI , Remove-3PARVFS_WSAPI , New-3PARVFS_WSAPI , Get-3PAREventLogs_WSAPI , Get-3PARRCopyLink_WSAPI , Get-3PARRCopyGroupVV_WSAPI , Get-3PARRCopyGroupTarget_WSAPI , Get-3PARRCopyGroup_WSAPI , Get-3PARRCopyTarget_WSAPI , Get-3PARRCopyInfo_WSAPI , New-3PARSnapRCGroupVV_WSAPI , Remove-3PARTargetFromRCopyGroup_WSAPI , Add-3PARTargetToRCopyGroup_WSAPI , Update-3PARRCopyTarget_WSAPI , New-3PARRCopyTarget_WSAPI , Remove-3PARVVFromRCopyGroup_WSAPI , Add-3PARVVToRCopyGroup_WSAPI , Restore-3PARRCopyGroup_WSAPI , Update-3PARRCopyGroup_WSAPI , Update-3PARRCopyGroupTarget_WSAPI , Remove-3PARRCopyGroup_WSAPI , Sync-3PARRCopyGroup_WSAPI , Stop-3PARRCopyGroup_WSAPI , Start-3PARRCopyGroup_WSAPI , New-3PARRCopyGroup_WSAPI , Set-3PARFlashCache_WSAPI , Stop-3PAROngoingTask_WSAPI , Get-3PARTask_WSAPI , Get-3PARWSAPIConfigInfo , Get-3PARVersion_WSAPI , Update-3PARSystem_WSAPI , Get-3PARSystem_WSAPI , Update-3PARVVOrVVSets_WSAPI , Stop-3PARVVSetPhysicalCopy_WSAPI , Reset-3PARVVSetPhysicalCopy_WSAPI , New-3PARVVSetPhysicalCopy_WSAPI , New-3PARVVSetSnapshot_WSAPI , Stop-3PARPhysicalCopy_WSAPI , Move-3PARVirtualCopy_WSAPI , Move-3PARVVSetVirtualCopy_WSAPI , Reset-3PARPhysicalCopy_WSAPI , New-3PARVVPhysicalCopy_WSAPI , New-3PARVVListGroupSnapshot_WSAPI , New-3PARVVSnapshot_WSAPI , Get-3PARVLunUsingFilters_WSAPI , Get-3PARVLun_WSAPI , Remove-3PARVLun_WSAPI , New-3PARVLun_WSAPI , Remove-3PARISCSIVlan_WSAPI , Reset-3PARISCSIPort_WSAPI , Set-3PARISCSIVlan_WSAPI , New-3PARISCSIVlan_WSAPI , Set-3PARISCSIPort_WSAPI , Get-3PARFCSwitches_WSAPI , Get-3PARPortDeviceTDZ_WSAPI , Get-3PARPortDevices_WSAPI , Get-3PARPort_WSAPI , Get-3PARiSCSIVLANs_WSAPI , Get-3PARFPGReclamationTasks_WSAPI , Get-3PARFPG_WSAPI , Remove-3PARFPG_WSAPI , New-3PARFPG_WSAPI , Get-3PARFileServices_WSAPI , Get-3PARVVSet_WSAPI , Remove-3PARVVSet_WSAPI , Update-3PARVVSet_WSAPI , New-3PARVVSet_WSAPI , Get-3PARHostSet_WSAPI , Remove-3PARHostSet_WSAPI , Add-Rem3PARHostWWN_WSAPI , Update-3PARHost_WSAPI , Update-3PARHostSet_WSAPI , New-3PARHostSet_WSAPI , Get-3PARHost_WSAPI , Get-3PARHostWithFilter_WSAPI , Get-3PARHostPersona_WSAPI , Remove-3PARHost_WSAPI , New-3PARHost_WSAPI , Get-3PARCapacity_WSAPI , Get-3PARVV_WSAPI , Remove-3PARVV_WSAPI , Compress-3PARVV_WSAPI , Resize-Grow3PARVV_WSAPI , Get-3parVVSpaceDistribution_WSAPI , Update-3PARVV_WSAPI , New-3PARVV_WSAPI , Get-3PARCpg_WSAPI , Remove-3PARCpg_WSAPI , Update-3PARCpg_WSAPI, New-3PARCpg_WSAPI , Open-3PARSSE_WSAPI 
-
-# SIG # Begin signature block
-# MIIlhQYJKoZIhvcNAQcCoIIldjCCJXICAQExDzANBglghkgBZQMEAgEFADB5Bgor
-# BgEEAYI3AgEEoGswaTA0BgorBgEEAYI3AgEeMCYCAwEAAAQQH8w7YFlLCE63JNLG
-# KX7zUQIBAAIBAAIBAAIBAAIBADAxMA0GCWCGSAFlAwQCAQUABCACx12V96YztERH
-# PBXg1ZsILKpUbLYmV+c/UReI9iv3/aCCFikwggVMMIIDNKADAgECAhMzAAAANdjV
-# WVsGcUErAAAAAAA1MA0GCSqGSIb3DQEBBQUAMH8xCzAJBgNVBAYTAlVTMRMwEQYD
-# VQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVNaWNy
-# b3NvZnQgQ29ycG9yYXRpb24xKTAnBgNVBAMTIE1pY3Jvc29mdCBDb2RlIFZlcmlm
-# aWNhdGlvbiBSb290MB4XDTEzMDgxNTIwMjYzMFoXDTIzMDgxNTIwMzYzMFowbzEL
-# MAkGA1UEBhMCU0UxFDASBgNVBAoTC0FkZFRydXN0IEFCMSYwJAYDVQQLEx1BZGRU
-# cnVzdCBFeHRlcm5hbCBUVFAgTmV0d29yazEiMCAGA1UEAxMZQWRkVHJ1c3QgRXh0
-# ZXJuYWwgQ0EgUm9vdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALf3
-# GjPm8gAELTngTlvtH7xsD821+iO2zt6bETOXpClMfZOfvUq8k+0DGuOPz+VtUFrW
-# lymUWoCwSXrbLpX9uMq/NzgtHj6RQa1wVsfwTz/oMp50ysiQVOnGXw94nZpAPA6s
-# YapeFI+eh6FqUNzXmk6vBbOmcZSccbNQYArHE504B4YCqOmoaSYYkKtMsE8jqzpP
-# hNjfzp/haW+710LXa0Tkx63ubUFfclpxCDezeWWkWaCUN/cALw3CknLa0Dhy2xSo
-# RcRdKn23tNbE7qzNE0S3ySvdQwAl+mG5aWpYIxG3pzOPVnVZ9c0p10a3CitlttNC
-# bxWyuHv77+ldU9U0WicCAwEAAaOB0DCBzTATBgNVHSUEDDAKBggrBgEFBQcDAzAS
-# BgNVHRMBAf8ECDAGAQH/AgECMB0GA1UdDgQWBBStvZh6NLQm9/rEJlTvA73gJMtU
-# GjALBgNVHQ8EBAMCAYYwHwYDVR0jBBgwFoAUYvsKIVt/Q24R2glUUGv10pZx8Z4w
-# VQYDVR0fBE4wTDBKoEigRoZEaHR0cDovL2NybC5taWNyb3NvZnQuY29tL3BraS9j
-# cmwvcHJvZHVjdHMvTWljcm9zb2Z0Q29kZVZlcmlmUm9vdC5jcmwwDQYJKoZIhvcN
-# AQEFBQADggIBADYrovLhMx/kk/fyaYXGZA7Jm2Mv5HA3mP2U7HvP+KFCRvntak6N
-# NGk2BVV6HrutjJlClgbpJagmhL7BvxapfKpbBLf90cD0Ar4o7fV3x5v+OvbowXvT
-# gqv6FE7PK8/l1bVIQLGjj4OLrSslU6umNM7yQ/dPLOndHk5atrroOxCZJAC8UP14
-# 9uUjqImUk/e3QTA3Sle35kTZyd+ZBapE/HSvgmTMB8sBtgnDLuPoMqe0n0F4x6GE
-# NlRi8uwVCsjq0IT48eBr9FYSX5Xg/N23dpP+KUol6QQA8bQRDsmEntsXffUepY42
-# KRk6bWxGS9ercCQojQWj2dUk8vig0TyCOdSogg5pOoEJ/Abwx1kzhDaTBkGRIywi
-# pacBK1C0KK7bRrBZG4azm4foSU45C20U30wDMB4fX3Su9VtZA1PsmBbg0GI1dRtI
-# uH0T5XpIuHdSpAeYJTsGm3pOam9Ehk8UTyd5Jz1Qc0FMnEE+3SkMc7HH+x92DBdl
-# BOvSUBCSQUns5AZ9NhVEb4m/aX35TUDBOpi2oH4x0rWuyvtT1T9Qhs1ekzttXXya
-# Pz/3qSVYhN0RSQCix8ieN913jm1xi+BbgTRdVLrM9ZNHiG3n71viKOSAG0DkDyrR
-# fyMVZVqsmZRDP0ZVJtbE+oiV4pGaoy0Lhd6sjOD5Z3CfcXkCMfdhoinEMIIFYTCC
-# BEmgAwIBAgIQJl6ULMWyOufq8fQJzRxR/TANBgkqhkiG9w0BAQsFADB8MQswCQYD
-# VQQGEwJHQjEbMBkGA1UECBMSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHEwdT
-# YWxmb3JkMRgwFgYDVQQKEw9TZWN0aWdvIExpbWl0ZWQxJDAiBgNVBAMTG1NlY3Rp
-# Z28gUlNBIENvZGUgU2lnbmluZyBDQTAeFw0xOTA0MjYwMDAwMDBaFw0yMDA0MjUy
-# MzU5NTlaMIHSMQswCQYDVQQGEwJVUzEOMAwGA1UEEQwFOTQzMDQxCzAJBgNVBAgM
-# AkNBMRIwEAYDVQQHDAlQYWxvIEFsdG8xHDAaBgNVBAkMEzMwMDAgSGFub3ZlciBT
-# dHJlZXQxKzApBgNVBAoMIkhld2xldHQgUGFja2FyZCBFbnRlcnByaXNlIENvbXBh
-# bnkxGjAYBgNVBAsMEUhQIEN5YmVyIFNlY3VyaXR5MSswKQYDVQQDDCJIZXdsZXR0
-# IFBhY2thcmQgRW50ZXJwcmlzZSBDb21wYW55MIIBIjANBgkqhkiG9w0BAQEFAAOC
-# AQ8AMIIBCgKCAQEAvxp2KuPOGop6ObVmKZ17bhP+oPpH4ZdDHwiaCP2KKn1m13Wd
-# 5YuMcYOmF6xxb7rK8vcFRRf72MWwPvI05bKGZ1hKilh4UQZ8IpDZ6PlVF6cOFRKv
-# PVt3r1nzA3fpEptdNmK54HktcfQIlTBNa0gBAzuWD5nwXckfwTujfa9bxT3ZLfNV
-# V6rA9oMmsIUCF5rKQBnlwYGP5ceFFW0KBfdDNOZSLI5/96AbWO7Kh7+lfFjYYYyp
-# j9a/+BdgxeLAUAc3wwtspxPui0FPDpmFAFs3Mj/eLSBjlBwd+Gb1OzQvgE+fagoy
-# Kh6MB8xO4dueEdwJBEyNqNQIatE+klCMAS3L/QIDAQABo4IBhjCCAYIwHwYDVR0j
-# BBgwFoAUDuE6qFM6MdWKvsG7rWcaA4WtNA4wHQYDVR0OBBYEFPqXMYWJeByh5r0Z
-# 7Cfmb6MYpSExMA4GA1UdDwEB/wQEAwIHgDAMBgNVHRMBAf8EAjAAMBMGA1UdJQQM
-# MAoGCCsGAQUFBwMDMBEGCWCGSAGG+EIBAQQEAwIEEDBABgNVHSAEOTA3MDUGDCsG
-# AQQBsjEBAgEDAjAlMCMGCCsGAQUFBwIBFhdodHRwczovL3NlY3RpZ28uY29tL0NQ
-# UzBDBgNVHR8EPDA6MDigNqA0hjJodHRwOi8vY3JsLnNlY3RpZ28uY29tL1NlY3Rp
-# Z29SU0FDb2RlU2lnbmluZ0NBLmNybDBzBggrBgEFBQcBAQRnMGUwPgYIKwYBBQUH
-# MAKGMmh0dHA6Ly9jcnQuc2VjdGlnby5jb20vU2VjdGlnb1JTQUNvZGVTaWduaW5n
-# Q0EuY3J0MCMGCCsGAQUFBzABhhdodHRwOi8vb2NzcC5zZWN0aWdvLmNvbTANBgkq
-# hkiG9w0BAQsFAAOCAQEAfggdDqfErm1J/WVBlc2H1wSKATk/d/vgypGsrFU1uOqv
-# 3qJrz9X51HMMh/7zn5J6pKonnj5Gn9unqYPbBjyEZTYPDPfmFZNC9zZC+vhxO0mV
-# PCiV9wd1f1sJjF4GBcNi/eUbCSXsXeiDWxRs1ISFj5pDp+sefNEpyMx6ryObuZ/G
-# 0m3TsvMwgFy/oRKB7rcL8tACN+K4lotiuFDYjy0+vB7VuorM0fmvs9BIAnatbCz7
-# begsrw0tRhw9A3tB3fEtgEZAOHsK1vg+CqFnB1vbNX3XLHw4znn7+fYdjlL1ZRo+
-# zoGO6MGPIrILnlQnsldwpwYYd619q1aVkMZ8GycvojCCBXcwggRfoAMCAQICEBPq
-# KHBb9OztDDZjCYBhQzYwDQYJKoZIhvcNAQEMBQAwbzELMAkGA1UEBhMCU0UxFDAS
-# BgNVBAoTC0FkZFRydXN0IEFCMSYwJAYDVQQLEx1BZGRUcnVzdCBFeHRlcm5hbCBU
-# VFAgTmV0d29yazEiMCAGA1UEAxMZQWRkVHJ1c3QgRXh0ZXJuYWwgQ0EgUm9vdDAe
-# Fw0wMDA1MzAxMDQ4MzhaFw0yMDA1MzAxMDQ4MzhaMIGIMQswCQYDVQQGEwJVUzET
-# MBEGA1UECBMKTmV3IEplcnNleTEUMBIGA1UEBxMLSmVyc2V5IENpdHkxHjAcBgNV
-# BAoTFVRoZSBVU0VSVFJVU1QgTmV0d29yazEuMCwGA1UEAxMlVVNFUlRydXN0IFJT
-# QSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTCCAiIwDQYJKoZIhvcNAQEBBQADggIP
-# ADCCAgoCggIBAIASZRc2DsPbCLPQrFcNdu3NJ9NMrVCDYeKqIE0JLWQJ3M6Jn8w9
-# qez2z8Hc8dOx1ns3KBErR9o5xrw6GbRfpr19naNjQrZ28qk7K5H44m/Q7BYgkAk+
-# 4uh0yRi0kdRiZNt/owbxiBhqkCI8vP4T8IcUe/bkH47U5FHGEWdGCFHLhhRUP7wz
-# /n5snP8WnRi9UY41pqdmyHJn2yFmsdSbeAPAUDrozPDcvJ5M/q8FljUfV1q3/875
-# PbcstvZU3cjnEjpNrkyKt1yatLcgPcp/IjSufjtoZgFE5wFORlObM2D3lL5TN5Bz
-# Q/Myw1Pv26r+dE5px2uMYJPexMcM3+EyrsyTO1F4lWeL7j1W/gzQaQ8bD/MlJmsz
-# bfduR/pzQ+V+DqVmsSl8MoRjVYnEDcGTVDAZE6zTfTen6106bDVc20HXEtqpSQvf
-# 2ICKCZNijrVmzyWIzYS4sT+kOQ/ZAp7rEkyVfPNrBaleFoPMuGfi6BOdzFuC00yz
-# 7Vv/3uVzrCM7LQC/NVV0CUnYSVgaf5I25lGSDvMmfRxNF7zJ7EMm0L9BX0CpRET0
-# medXh55QH1dUqD79dGMvsVBlCeZYQi5DGky08CVHWfoEHpPUJkZKUIGy3r54t/xn
-# FeHJV4QeD2PW6WK61l9VLupcxigIBCU5uA4rqfJMlxwHPw1S9e3vL4IPAgMBAAGj
-# gfQwgfEwHwYDVR0jBBgwFoAUrb2YejS0Jvf6xCZU7wO94CTLVBowHQYDVR0OBBYE
-# FFN5v1qqK0rPVIDh2JvAnfKyA2bLMA4GA1UdDwEB/wQEAwIBhjAPBgNVHRMBAf8E
-# BTADAQH/MBEGA1UdIAQKMAgwBgYEVR0gADBEBgNVHR8EPTA7MDmgN6A1hjNodHRw
-# Oi8vY3JsLnVzZXJ0cnVzdC5jb20vQWRkVHJ1c3RFeHRlcm5hbENBUm9vdC5jcmww
-# NQYIKwYBBQUHAQEEKTAnMCUGCCsGAQUFBzABhhlodHRwOi8vb2NzcC51c2VydHJ1
-# c3QuY29tMA0GCSqGSIb3DQEBDAUAA4IBAQCTZfY3g5UPXsOCHB/Wd+c8isCqCfDp
-# Cybx4MJqdaHHecm5UmDIKRIO8K0D1gnEdt/lpoGVp0bagleplZLFto8DImwzd8F7
-# MhduB85aFEE6BSQb9hQGO6glJA67zCp13blwQT980GM2IQcfRv9gpJHhZ7zeH34Z
-# FMljZ5HqZwdrtI+LwG5DfcOhgGyyHrxThX3ckKGkvC3vRnJXNQW/u0a7bm03mbb/
-# I5KRxm5A+I8pVupf1V8UU6zwT2Hq9yLMp1YL4rg0HybZexkFaD+6PNQ4BqLT5o8O
-# 47RxbUBCxYS0QJUr9GWgSHn2HYFjlp1PdeD4fOSOqdHyrYqzjMchzcLvMIIF9TCC
-# A92gAwIBAgIQHaJIMG+bJhjQguCWfTPTajANBgkqhkiG9w0BAQwFADCBiDELMAkG
-# A1UEBhMCVVMxEzARBgNVBAgTCk5ldyBKZXJzZXkxFDASBgNVBAcTC0plcnNleSBD
-# aXR5MR4wHAYDVQQKExVUaGUgVVNFUlRSVVNUIE5ldHdvcmsxLjAsBgNVBAMTJVVT
-# RVJUcnVzdCBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTgxMTAyMDAw
-# MDAwWhcNMzAxMjMxMjM1OTU5WjB8MQswCQYDVQQGEwJHQjEbMBkGA1UECBMSR3Jl
-# YXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHEwdTYWxmb3JkMRgwFgYDVQQKEw9TZWN0
-# aWdvIExpbWl0ZWQxJDAiBgNVBAMTG1NlY3RpZ28gUlNBIENvZGUgU2lnbmluZyBD
-# QTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAIYijTKFehifSfCWL2MI
-# Hi3cfJ8Uz+MmtiVmKUCGVEZ0MWLFEO2yhyemmcuVMMBW9aR1xqkOUGKlUZEQauBL
-# Yq798PgYrKf/7i4zIPoMGYmobHutAMNhodxpZW0fbieW15dRhqb0J+V8aouVHltg
-# 1X7XFpKcAC9o95ftanK+ODtj3o+/bkxBXRIgCFnoOc2P0tbPBrRXBbZOoT5Xax+Y
-# vMRi1hsLjcdmG0qfnYHEckC14l/vC0X/o84Xpi1VsLewvFRqnbyNVlPG8Lp5UEks
-# 9wO5/i9lNfIi6iwHr0bZ+UYc3Ix8cSjz/qfGFN1VkW6KEQ3fBiSVfQ+noXw62oY1
-# YdMCAwEAAaOCAWQwggFgMB8GA1UdIwQYMBaAFFN5v1qqK0rPVIDh2JvAnfKyA2bL
-# MB0GA1UdDgQWBBQO4TqoUzox1Yq+wbutZxoDha00DjAOBgNVHQ8BAf8EBAMCAYYw
-# EgYDVR0TAQH/BAgwBgEB/wIBADAdBgNVHSUEFjAUBggrBgEFBQcDAwYIKwYBBQUH
-# AwgwEQYDVR0gBAowCDAGBgRVHSAAMFAGA1UdHwRJMEcwRaBDoEGGP2h0dHA6Ly9j
-# cmwudXNlcnRydXN0LmNvbS9VU0VSVHJ1c3RSU0FDZXJ0aWZpY2F0aW9uQXV0aG9y
-# aXR5LmNybDB2BggrBgEFBQcBAQRqMGgwPwYIKwYBBQUHMAKGM2h0dHA6Ly9jcnQu
-# dXNlcnRydXN0LmNvbS9VU0VSVHJ1c3RSU0FBZGRUcnVzdENBLmNydDAlBggrBgEF
-# BQcwAYYZaHR0cDovL29jc3AudXNlcnRydXN0LmNvbTANBgkqhkiG9w0BAQwFAAOC
-# AgEATWNQ7Uc0SmGk295qKoyb8QAAHh1iezrXMsL2s+Bjs/thAIiaG20QBwRPvrjq
-# iXgi6w9G7PNGXkBGiRL0C3danCpBOvzW9Ovn9xWVM8Ohgyi33i/klPeFM4MtSkBI
-# v5rCT0qxjyT0s4E307dksKYjalloUkJf/wTr4XRleQj1qZPea3FAmZa6ePG5yOLD
-# CBaxq2NayBWAbXReSnV+pbjDbLXP30p5h1zHQE1jNfYw08+1Cg4LBH+gS667o6XQ
-# hACTPlNdNKUANWlsvp8gJRANGftQkGG+OY96jk32nw4e/gdREmaDJhlIlc5KycF/
-# 8zoFm/lv34h/wCOe0h5DekUxwZxNqfBZslkZ6GqNKQQCd3xLS81wvjqyVVp4Pry7
-# bwMQJXcVNIr5NsxDkuS6T/FikyglVyn7URnHoSVAaoRXxrKdsbwcCtp8Z359Luko
-# TBh+xHsxQXGaSynsCz1XUNLK3f2eBVHlRHjdAd6xdZgNVCT98E7j4viDvXK6yz06
-# 7vBeF5Jobchh+abxKgoLpbn0nu6YMgWFnuv5gynTxix9vTp3Los3QqBqgu07SqqU
-# EKThDfgXxbZaeTMYkuO1dfih6Y4KJR7kHvGfWocj/5+kUZ77OYARzdu1xKeogG/l
-# U9Tg46LC0lsa+jImLWpXcBw8pFguo/NbSwfcMlnzh6cabVgxgg6yMIIOrgIBATCB
-# kDB8MQswCQYDVQQGEwJHQjEbMBkGA1UECBMSR3JlYXRlciBNYW5jaGVzdGVyMRAw
-# DgYDVQQHEwdTYWxmb3JkMRgwFgYDVQQKEw9TZWN0aWdvIExpbWl0ZWQxJDAiBgNV
-# BAMTG1NlY3RpZ28gUlNBIENvZGUgU2lnbmluZyBDQQIQJl6ULMWyOufq8fQJzRxR
-# /TANBglghkgBZQMEAgEFAKB8MBAGCisGAQQBgjcCAQwxAjAAMBkGCSqGSIb3DQEJ
-# AzEMBgorBgEEAYI3AgEEMBwGCisGAQQBgjcCAQsxDjAMBgorBgEEAYI3AgEVMC8G
-# CSqGSIb3DQEJBDEiBCAFenVdX+P8wqZVM+fzzN1ul1Lw849rl3ZWaeuagux2bTAN
-# BgkqhkiG9w0BAQEFAASCAQAI/PRvzNNYK02IEP7LbIuVw01+Xc9JQf9ZHHajBnlf
-# 3oz5A/+ZW2+MstahCPZdjNzpbDoonsyAJvK/9+VgCoV1hhQP+MthXlo5P6uz6jMG
-# OLaQlIqcSHHHQ8kFC7899x611p/Aq1spq/Be/0UO+EXjdzkS8OXOTBnoQRvILc5P
-# bkRVUDItmRZjPjFB47Kkg7vcbMqNJSgoguKMqnJvpKmdGh3n5dZ+KzY4AV0k8a4O
-# bC6y+b32BTAFiswzt3+yPIGxwrIUOUCRdEIBdz8tP/Z56MTm5v789FJx5mWli9Hw
-# qBeUov2N3meDrwMWLPHojM2RN5NNo6QyPRUOSB4ZXgmzoYIMdDCCDHAGCisGAQQB
-# gjcDAwExggxgMIIMXAYJKoZIhvcNAQcCoIIMTTCCDEkCAQMxDzANBglghkgBZQME
-# AgEFADCBrwYLKoZIhvcNAQkQAQSggZ8EgZwwgZkCAQEGCSsGAQQBoDICAzAxMA0G
-# CWCGSAFlAwQCAQUABCC5+EZ4MvPKE56ZYwzxgzyLGsvX3M60bPN1w6F27EAWOQIU
-# BlHHSCpGg3AH4lLisTNZ461G/MQYDzIwMTkwODIyMTA1MjUxWqAvpC0wKzEpMCcG
-# A1UEAwwgR2xvYmFsU2lnbiBUU0EgZm9yIEFkdmFuY2VkIC0gRzKgggjTMIIEtjCC
-# A56gAwIBAgIMDKfPXQcHJKyJ55o6MA0GCSqGSIb3DQEBCwUAMFsxCzAJBgNVBAYT
-# AkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMTEwLwYDVQQDEyhHbG9iYWxT
-# aWduIFRpbWVzdGFtcGluZyBDQSAtIFNIQTI1NiAtIEcyMB4XDTE4MDIxOTAwMDAw
-# MFoXDTI5MDMxODEwMDAwMFowKzEpMCcGA1UEAwwgR2xvYmFsU2lnbiBUU0EgZm9y
-# IEFkdmFuY2VkIC0gRzIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC3
-# x5KKKNjzkctQDV3rKUTBglmlymTOvYO1UeWUzG6Amhds3P9i5jZDXgHCDGSNynee
-# 9l13RbleyCTrQTcRZjesyM10m8yz70zifxvOc77Jlp01Hnz3VPds7KAS1q6ZnWPE
-# eF9ZqS4i9cMn2LJbRWMnkP+MsT2ptPMOwPEgZQaJnQMco7BSQYU067zLzlT2Ev6z
-# AYlKpvpUxR/70xzA47+X4z/QG/lAxxvV6yZ8QzDHcPJ4EaqFTqUODQBKOhF3o8oj
-# AYCeyJNWXUbMitjSqgqEhbKJW9UyzkF7GE5UyqvRUl4S0ySeVvMMj929ko551UGJ
-# w6Og5ZH8x2edhzPOcTJzAgMBAAGjggGoMIIBpDAOBgNVHQ8BAf8EBAMCB4AwTAYD
-# VR0gBEUwQzBBBgkrBgEEAaAyAR4wNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93d3cu
-# Z2xvYmFsc2lnbi5jb20vcmVwb3NpdG9yeS8wCQYDVR0TBAIwADAWBgNVHSUBAf8E
-# DDAKBggrBgEFBQcDCDBGBgNVHR8EPzA9MDugOaA3hjVodHRwOi8vY3JsLmdsb2Jh
-# bHNpZ24uY29tL2dzL2dzdGltZXN0YW1waW5nc2hhMmcyLmNybDCBmAYIKwYBBQUH
-# AQEEgYswgYgwSAYIKwYBBQUHMAKGPGh0dHA6Ly9zZWN1cmUuZ2xvYmFsc2lnbi5j
-# b20vY2FjZXJ0L2dzdGltZXN0YW1waW5nc2hhMmcyLmNydDA8BggrBgEFBQcwAYYw
-# aHR0cDovL29jc3AyLmdsb2JhbHNpZ24uY29tL2dzdGltZXN0YW1waW5nc2hhMmcy
-# MB0GA1UdDgQWBBQtbm7RjeUDgO7nY+mn2doLPFciPTAfBgNVHSMEGDAWgBSSIadK
-# lV1ksJu0HuYAN0fmnUErTDANBgkqhkiG9w0BAQsFAAOCAQEAjf0dH4+I02X4tVxG
-# 6afTtj9Ky0MFwgcNw14DhCM3qHqMlyP/J5yEfWHrXEtXPpv0RNuAWPe2Zd6PEgpf
-# p4d0t9oUQIdR7J9KR1XwF+gYPnEgMeYoIqtO9q6ca8LnRPtoDSB/Uz+UG6GGgk4y
-# FhBaP4lYwdC027aQ+40y6aFLRlA3tsM66SkkEpJaTiu5tgp6NoyXwO+JfDPeMeGh
-# l+TnRa1hUv1aidNUfopNW4l7DpZ30fI8OBva+aVhIGUCvMWt1wxiECgs3bbjqGEA
-# rAgmo42F0GTJNpAeilLJh401pV1IkfyTpqVl8ez5OtylLJ4EbWIz/t76n8XOr5Xz
-# UajyzjCCBBUwggL9oAMCAQICCwQAAAAAATGJxlAEMA0GCSqGSIb3DQEBCwUAMEwx
-# IDAeBgNVBAsTF0dsb2JhbFNpZ24gUm9vdCBDQSAtIFIzMRMwEQYDVQQKEwpHbG9i
-# YWxTaWduMRMwEQYDVQQDEwpHbG9iYWxTaWduMB4XDTExMDgwMjEwMDAwMFoXDTI5
-# MDMyOTEwMDAwMFowWzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24g
-# bnYtc2ExMTAvBgNVBAMTKEdsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gU0hB
-# MjU2IC0gRzIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCqm47DqxFR
-# JQG2lpTiT9jBCPZGI9lFxZWXW6sav9JsV8kzBh+gD8Y8flNIer+dh56v7sOMR+FC
-# 7OPjoUpsDBfEpsG5zVvxHkSJjv4L3iFYE+5NyMVnCxyys/E0dpGiywdtN8WgRyYC
-# FaSQkal5ntfrV50rfCLYFNfxBx54IjZrd3mvr/l/jk7htQgx/ertS3FijCPxAzmP
-# RHm2dgNXnq0vCEbc0oy89I50zshoaVF2EYsPXSRbGVQ9JsxAjYInG1kgfVn2k4CO
-# +Co4/WugQGUfV3bMW44ETyyo24RQE0/G3Iu5+N1pTIjrnHswJvx6WLtZvBRykoFX
-# t3bJ2IAKgG4JAgMBAAGjgegwgeUwDgYDVR0PAQH/BAQDAgEGMBIGA1UdEwEB/wQI
-# MAYBAf8CAQAwHQYDVR0OBBYEFJIhp0qVXWSwm7Qe5gA3R+adQStMMEcGA1UdIARA
-# MD4wPAYEVR0gADA0MDIGCCsGAQUFBwIBFiZodHRwczovL3d3dy5nbG9iYWxzaWdu
-# LmNvbS9yZXBvc2l0b3J5LzA2BgNVHR8ELzAtMCugKaAnhiVodHRwOi8vY3JsLmds
-# b2JhbHNpZ24ubmV0L3Jvb3QtcjMuY3JsMB8GA1UdIwQYMBaAFI/wS3+oLkUkrk1Q
-# +mOai97i3Ru8MA0GCSqGSIb3DQEBCwUAA4IBAQAEVoJKfNDOyb82ZtG+NZ6TbJfo
-# Bs4xGFn5bEFfgC7AQiW4GMf81LE3xGigzyhqA3RLY5eFd2E71y/j9b0zopJ9ER+e
-# imzvLLD0Yo02c9EWNvG8Xuy0gJh4/NJ2eejhIZTgH8Si4apn27Occ+VAIs85ztvm
-# d5Wnu7LL9hmGnZ/I1JgFsnFvTnWu8T1kajteTkamKl0IkvGj8x10v2INI4xcKjiV
-# 0sDVzc+I2h8otbqBaWQqtaai1XOv3EbbBK6R127FmLrUR8RWdIBHeFiMvu8r/exs
-# v9GU979Q4HvgkP0gGHgYIl0ILowcoJfzHZl9o52R0wZETgRuehwg4zbwtlC5MYIC
-# qDCCAqQCAQEwazBbMQswCQYDVQQGEwJCRTEZMBcGA1UEChMQR2xvYmFsU2lnbiBu
-# di1zYTExMC8GA1UEAxMoR2xvYmFsU2lnbiBUaW1lc3RhbXBpbmcgQ0EgLSBTSEEy
-# NTYgLSBHMgIMDKfPXQcHJKyJ55o6MA0GCWCGSAFlAwQCAQUAoIIBDjAaBgkqhkiG
-# 9w0BCQMxDQYLKoZIhvcNAQkQAQQwHAYJKoZIhvcNAQkFMQ8XDTE5MDgyMjEwNTI1
-# MVowLwYJKoZIhvcNAQkEMSIEIGzzHeyaLdOl+P+hBRk8AWwj3C42K2AqOHEJ3bYm
-# svpLMIGgBgsqhkiG9w0BCRACDDGBkDCBjTCBijCBhwQUmxIFeucqr/bWN3K0n2oj
-# byZJzakwbzBfpF0wWzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24g
-# bnYtc2ExMTAvBgNVBAMTKEdsb2JhbFNpZ24gVGltZXN0YW1waW5nIENBIC0gU0hB
-# MjU2IC0gRzICDAynz10HBySsieeaOjANBgkqhkiG9w0BAQEFAASCAQBZNMxs7o5I
-# X669+SqTwAzY4c/EGJWAIJ1YG7UFN0L/vhwjQ+V2CP+gRgFw2ITJzjfz9pOJWVCE
-# 6VR2hY2gqajhmTvHJmKEXAdtPZOg7IQ84iFazVr31u7BF7Ttz3mRGsdEETinUdoy
-# jTonxmnHok5phSXtnZehSHkgeqFHCGb6iyYX1A4gbztfjhlrRC0FAStV2Gj/vpOM
-# jaR63TB+8pLxBe9REmIYVfPhEJjjSIOwxmQCuCNTKtxDfpvmqK0GfAdcB1ONBzx8
-# I34sA1j/tf57IrOjT1KiQy8URZ41qU4rLiqHAIZ86gbpGLXN01ejkotHZpiZV/2G
-# FBiv6sHZLeyA
-# SIG # End signature block
+Export-ModuleMember New-3PARWSAPIConnection , Close-3PARWSAPIConnection , Get-3PARRCStatisticalReports_WSAPI , Get-3PARRCopyVolumeStatisticalReports_WSAPI , 
+Get-3PARQoSStatisticalReports_WSAPI , New-3PARFileShares_WSAPI , Get-3PARVVSpaceReports_WSAPI , Get-3PARVLUNStatisticsReports_WSAPI , 
+Get-3PARPortStatisticsReports_WSAPI , Get-3PARPDSpaceReports_WSAPI , Get-3PARPDStatisticsReports_WSAPI , Get-3PARPDCapacityReports_WSAPI , 
+Get-3PARCPUStatisticalDataReports_WSAPI , Get-3PARCPGStatisticalDataReports_WSAPI , Get-3PARCPGSpaceDataReports_WSAPI , 
+Get-3PARCacheMemoryStatisticsDataReports_WSAPI , Get-3PARAOConfiguration_WSAPI , Get-3PARRoles_WSAPI , Get-3PARUsers_WSAPI , Get-3PARFlashCache_WSAPI , 
+Remove-3PARFlashCache_WSAPI , New-3PARFlashCache_WSAPI , Set-3PARVVSetFlashCachePolicy_WSAPI , Restore-3PARFilePersonaQuota_WSAPI , 
+Group-3PARFilePersonaQuota_WSAPI , Get-3PARFilePersonaQuota_WSAPI , Remove-3PARFilePersonaQuota_WSAPI , Update-3PARFilePersonaQuota_WSAPI , 
+New-3PARFilePersonaQuota_WSAPI , Get-3PARDirPermission_WSAPI , Get-3PARFileShare_WSAPI , Remove-3PARFileShare_WSAPI , Get-3PARFileStoreSnapshot_WSAPI , 
+Remove-3PARFileStoreSnapshot_WSAPI , New-3PARFileStoreSnapshot_WSAPI , Get-3PARFileStore_WSAPI , Remove-3PARFileStore_WSAPI , Update-3PARFileStore_WSAPI , 
+New-3PARFileStore_WSAPI , Get-3PARVFS_WSAPI , Remove-3PARVFS_WSAPI , New-3PARVFS_WSAPI , Get-3PAREventLogs_WSAPI , Get-3PARRCopyLink_WSAPI , 
+Get-3PARRCopyGroupVV_WSAPI , Get-3PARRCopyGroupTarget_WSAPI , Get-3PARRCopyGroup_WSAPI , Get-3PARRCopyTarget_WSAPI , Get-3PARRCopyInfo_WSAPI , 
+New-3PARSnapRCGroupVV_WSAPI , Remove-3PARTargetFromRCopyGroup_WSAPI , Add-3PARTargetToRCopyGroup_WSAPI , Update-3PARRCopyTarget_WSAPI , 
+New-3PARRCopyTarget_WSAPI , Remove-3PARVVFromRCopyGroup_WSAPI , Add-3PARVVToRCopyGroup_WSAPI , Restore-3PARRCopyGroup_WSAPI , Update-3PARRCopyGroup_WSAPI , 
+Update-3PARRCopyGroupTarget_WSAPI , Remove-3PARRCopyGroup_WSAPI , Sync-3PARRCopyGroup_WSAPI , Stop-3PARRCopyGroup_WSAPI , Start-3PARRCopyGroup_WSAPI , 
+New-3PARRCopyGroup_WSAPI , Set-3PARFlashCache_WSAPI , Stop-3PAROngoingTask_WSAPI , Get-3PARTask_WSAPI , Get-3PARWSAPIConfigInfo , Get-3PARVersion_WSAPI , 
+Update-3PARSystem_WSAPI , Get-3PARSystem_WSAPI , Update-3PARVVOrVVSets_WSAPI , Stop-3PARVVSetPhysicalCopy_WSAPI , Reset-3PARVVSetPhysicalCopy_WSAPI , 
+New-3PARVVSetPhysicalCopy_WSAPI , New-3PARVVSetSnapshot_WSAPI , Stop-3PARPhysicalCopy_WSAPI , Move-3PARVirtualCopy_WSAPI , Move-3PARVVSetVirtualCopy_WSAPI , 
+Reset-3PARPhysicalCopy_WSAPI , New-3PARVVPhysicalCopy_WSAPI , New-3PARVVListGroupSnapshot_WSAPI , New-3PARVVSnapshot_WSAPI , Get-3PARVLunUsingFilters_WSAPI , 
+Get-3PARVLun_WSAPI , Remove-3PARVLun_WSAPI , New-3PARVLun_WSAPI , Remove-3PARISCSIVlan_WSAPI , Reset-3PARISCSIPort_WSAPI , Set-3PARISCSIVlan_WSAPI , 
+New-3PARISCSIVlan_WSAPI , Set-3PARISCSIPort_WSAPI , Get-3PARFCSwitches_WSAPI , Get-3PARPortDeviceTDZ_WSAPI , Get-3PARPortDevices_WSAPI , Get-3PARPort_WSAPI ,
+Get-3PARiSCSIVLANs_WSAPI , Get-3PARFPGReclamationTasks_WSAPI , Get-3PARFPG_WSAPI , Remove-3PARFPG_WSAPI , New-3PARFPG_WSAPI , Get-3PARFileServices_WSAPI , 
+Get-3PARVVSet_WSAPI , Remove-3PARVVSet_WSAPI , Update-3PARVVSet_WSAPI , New-3PARVVSet_WSAPI , 
+Add-Rem3PARHostWWN_WSAPI , Update-3PARHost_WSAPI ,  Get-3PARHost_WSAPI , Get-3PARHostWithFilter_WSAPI , 
+Get-3PARHostPersona_WSAPI , Remove-3PARHost_WSAPI , New-3PARHost_WSAPI , Get-3PARCapacity_WSAPI , Get-3PARVV_WSAPI , Remove-3PARVV_WSAPI , 
+Compress-3PARVV_WSAPI , Resize-Grow3PARVV_WSAPI , Get-3parVVSpaceDistribution_WSAPI , Update-3PARVV_WSAPI , New-3PARVV_WSAPI , Get-3PARCpg_WSAPI , 
+Remove-3PARCpg_WSAPI , Update-3PARCpg_WSAPI, New-3PARCpg_WSAPI , Open-3PARSSE_WSAPI 
