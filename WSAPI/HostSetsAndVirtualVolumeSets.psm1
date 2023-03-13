@@ -4,65 +4,43 @@
 
 Function New-HostSet_WSAPI 
 {
-  <#
-  
-  .SYNOPSIS
+<#
+.SYNOPSIS
 	Creates a new host Set.
-	
-  .DESCRIPTION
+.DESCRIPTION
 	Creates a new host Set.
     Any user with the Super or Edit role can create a host set. Any role granted hostset_set permission can add hosts to a host set.
 	You can add hosts to a host set using a glob-style pattern. A glob-style pattern is not supported when removing hosts from sets.
 	For additional information about glob-style patterns, see “Glob-Style Patterns” in the HPE 3PAR Command Line Interface Reference.
-	  
-  .PARAMETER HostSetName
+.PARAMETER HostSetName
 	Name of the host set to be created.
-  
-  .PARAMETER Comment
+.PARAMETER Comment
 	Comment for the host set.
-	
-  .PARAMETER Domain
+.PARAMETER Domain
 	The domain in which the host set will be created.
-	
-  .PARAMETER SetMembers
+.PARAMETER SetMembers
 	The host to be added to the set. The existence of the hist will not be checked.
-
-  .PARAMETER WsapiConnection 
+.PARAMETER WsapiConnection 
     WSAPI Connection object created with Connection command
-
-  .EXAMPLE
+.EXAMPLE
 	New-HostSet_WSAPI -HostSetName MyHostSet
     Creates a new host Set with name MyHostSet.
-	
-  .EXAMPLE
+.EXAMPLE
 	New-HostSet_WSAPI -HostSetName MyHostSet -Comment "this Is Test Set" -Domain MyDomain
     Creates a new host Set with name MyHostSet.
-	
-  .EXAMPLE
+.EXAMPLE
 	New-HostSet_WSAPI -HostSetName MyHostSet -Comment "this Is Test Set" -Domain MyDomain -SetMembers MyHost
 	Creates a new host Set with name MyHostSet with Set Members MyHost.
-	
-  .EXAMPLE	
+.EXAMPLE	
 	New-HostSet_WSAPI -HostSetName MyHostSet -Comment "this Is Test Set" -Domain MyDomain -SetMembers "MyHost,MyHost1,MyHost2"
     Creates a new host Set with name MyHostSet with Set Members MyHost.	
 #>
-  [CmdletBinding()]
-  Param(
-      [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
-      [System.String]
-	  $HostSetName,	  
-	  
-	  [Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Comment,	
-	  
-	  [Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-      [System.String]
-	  $Domain, 
-	  
-	  [Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-      [String[]]
-	  $SetMembers  
+[CmdletBinding()]
+Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+		[String]	$HostSetName,	  
+		[String]	$Comment,	
+		[String]	$Domain, 
+		[String[]]	$SetMembers  
 )
 Begin 
 {	Test-WSAPIConnection
@@ -71,41 +49,21 @@ Process
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     $body = @{}    
     $body["name"] = "$($HostSetName)"
-    If ($Comment) 
-    {
-		$body["comment"] = "$($Comment)"
-    }  
-
-	If ($Domain) 
-    {
-		$body["domain"] = "$($Domain)"
-    }
-	
-	If ($SetMembers) 
-    {
-		$body["setmembers"] = $SetMembers
-    }
-    
+    If ($Comment)     {	$body["comment"] = "$($Comment)"    }  
+	If ($Domain)     {	$body["domain"] = "$($Domain)" }
+	If ($SetMembers)     {	$body["setmembers"] = $SetMembers }
     $Result = $null
-	
-    #Request
-    $Result = Invoke-WSAPI -uri '/hostsets' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri '/hostsets' -type 'POST' -body $body
 	$status = $Result.StatusCode	
 	if($status -eq 201)
-	{
-		write-host ""
-		write-host "Cmdlet executed successfully" -foreground green
-		write-host ""
+	{	write-host "`nCmdlet executed successfully.`n" -foreground green
 		Write-DebugLog "SUCCESS: Host Set:$HostSetName created successfully" $Info
 		
 		Get-HostSet_WSAPI -HostSetName $HostSetName
 		Write-DebugLog "End: New-HostSet_WSAPI" $Debug
 	}
 	else
-	{
-		write-host ""
-		write-host "FAILURE : While creating Host Set:$HostSetName " -foreground red
-		write-host ""
+	{	write-host "`nFAILURE : While creating Host Set:$HostSetName `n" 
 		Write-DebugLog "FAILURE : While creating Host Set:$HostSetName " $Info
 		
 		return $Result.StatusDescription
