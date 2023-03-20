@@ -1,31 +1,6 @@
 ﻿####################################################################################
 ## 	© 2020,2021 Hewlett Packard Enterprise Development LP
 ##
-## 	Permission is hereby granted, free of charge, to any person obtaining a
-## 	copy of this software and associated documentation files (the "Software"),
-## 	to deal in the Software without restriction, including without limitation
-## 	the rights to use, copy, modify, merge, publish, distribute, sublicense,
-## 	and/or sell copies of the Software, and to permit persons to whom the
-## 	Software is furnished to do so, subject to the following conditions:
-##
-## 	The above copyright notice and this permission notice shall be included
-## 	in all copies or substantial portions of the Software.
-##
-## 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-## 	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-## 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-## 	THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-## 	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-## 	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-## 	OTHER DEALINGS IN THE SOFTWARE.
-##
-##	File Name:		AdaptiveOptimization.psm1
-##	Description: 	Adaptive Optimization(AO) cmdlets 
-##		
-##	Created:		October 2019
-##	Last Modified:	October 2019
-##	History:		v3.0 - Created	
-#####################################################################################
 
 $Info = "INFO:"
 $Debug = "DEBUG:"
@@ -34,12 +9,6 @@ $global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-#Import-Module "$global:VSLibraries\Global\Logger.psm1"
-#Import-Module "$global:VSLibraries\Global\VS-Functions.psm1"
-
-############################################################################################################################################
-## FUNCTION Test-CLIObject
-############################################################################################################################################
 Function Test-CLIObject 
 {
 Param( 	
@@ -68,33 +37,17 @@ Param(
 Function Get-AOConfigurations()
 {
 <#
-  .SYNOPSIS
-   Get-AOConfigurations - Show Adaptive Optimization configurations.
-
-  .DESCRIPTION
-   The Get-AOConfigurations command shows Adaptive Optimization (AO) configurations in
-   the system.
-
-  .EXAMPLE
-
-  .PARAMETER Domain
-   Shows only AO configurations that are in domains with names matching
-   one or more of the <domain_name_or_pattern> argument. This option
-   does not allow listing objects within a domain of which the user is
-   not a member. Patterns are glob-style (shell-style) patterns (see
-   help on sub,globpat)
-
-  .PARAMETER AOConfigurationName
-   
-  .Notes
-    NAME: Get-AOConfigurations
-    LASTEDIT 17-10-2019 
-    KEYWORDS: Get-AOConfigurations
-  
-  .Link
-    http://www.hpe.com
-
- #Requires PS -Version 3.0
+.SYNOPSIS
+	Get-AOConfigurations - Show Adaptive Optimization configurations.
+.DESCRIPTION
+	The Get-AOConfigurations command shows Adaptive Optimization (AO) configurations in the system.
+.PARAMETER Domain
+	Shows only AO configurations that are in domains with names matching
+	one or more of the <domain_name_or_pattern> argument. This option
+	does not allow listing objects within a domain of which the user is
+	not a member. Patterns are glob-style (shell-style) patterns (see
+	help on sub,globpat)
+.PARAMETER AOConfigurationName
 #>
 [CmdletBinding()]
  param(

@@ -16,21 +16,18 @@ Function Get-FileServices_WSAPI
 #>
 [CmdletBinding()]
 Param()
+Begin
+{	Test-WSAPIConnection 
+}
 Process
-{	# Test if connection exist    
-	Test-WSAPIConnection -WsapiConnection $WsapiConnection
-	#Request 
-	$Result = Invoke-WSAPI -uri '/fileservices' -type 'GET' -WsapiConnection $WsapiConnection
+{	$Result = Invoke-WSAPI -uri '/fileservices' -type 'GET' -WsapiConnection $WsapiConnection
 	if($Result.StatusCode -eq 200)
-		{	# Results
-			$dataPS = ($Result.content | ConvertFrom-Json)
-			write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Get-FileServices_WSAPI successfully Executed." $Info
+		{	$dataPS = ($Result.content | ConvertFrom-Json)
+			write-host "`n SUCCESS: Get-FileServices_WSAPI successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-FileServices_WSAPI.`n" 
-			Write-DebugLog "FAILURE : While Executing Get-FileServices_WSAPI. " $Info
 			return $Result.StatusDescription
 		}  
 }
@@ -80,9 +77,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	# Creation of the body hash
-	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body 			= @{}    
+{	$body 			= @{}    
     $body["name"] 	= "$($FPGName)"
 	$body["cpg"] 	= "$($CPGName)"
 	$body["sizeTiB"]= $SizeTiB
@@ -94,14 +89,11 @@ Process
     $Result = Invoke-WSAPI -uri '/fpgs' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode	
 	if($status -eq 202)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: File Provisioning Groups:$FPGName created successfully" $Info	
+		{	write-host "`n SUCCESS: File Provisioning Groups:$FPGName created successfully. `n" -foreground green
 			Get-FPG_WSAPI -FPG $FPGName
-			Write-DebugLog "End: New-FPG_WSAPI" $Debug
-		}
+	}
 	else
 		{	write-host "`n FAILURE : While creating File Provisioning Groups:$FPGName `n"
-			Write-DebugLog "FAILURE : While creating File Provisioning Groups:$FPGName" $Info
 			return $Result.StatusDescription
 		}	
 }
@@ -127,24 +119,16 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{   #Build uri
-	Write-DebugLog "Running: Building uri to Remove-FPG_WSAPI." $Debug
-	$uri = '/fpgs/'+$FPGId
+{   $uri = '/fpgs/'+$FPGId
 	$Result = $null
-	#Request
-	Write-DebugLog "Request: Request to Remove-FPG_WSAPI : $FPGId (Invoke-WSAPI)." $Debug
 	$Result = Invoke-WSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 202)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: File Provisioning Group:$FPGId successfully remove" $Info
-			Write-DebugLog "End: Remove-FPG_WSAPI" $Debug	
-			return ""
+		{	write-host "`n SUCCESS: File Provisioning Group:$FPGId successfully remove. `n" -foreground green
+			return 
 		}
 	else
 		{	write-error "`n FAILURE : While Removing File Provisioning Group : $FPGId `n"
-			Write-DebugLog "FAILURE : While Removing File Provisioning Group : $FPGId " $Info
-			Write-DebugLog "End: Remove-FPG_WSAPI" $Debug
 			return $Result.StatusDescription
 		}    	
 }
@@ -177,8 +161,7 @@ Begin
 {	Test-WSAPIConnection	 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-FPG_WSAPI File Provisioning Group : $FPG (Invoke-WSAPI)." $Debug
-	$Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	$Query="?query=""  """
 	if($FPG)
@@ -216,19 +199,16 @@ Process
 		}
 	If($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -gt 0)
-				{	write-host "`n Cmdlet executed successfully.`n " -foreground green
-					Write-DebugLog "SUCCESS: Get-FPG_WSAPI successfully Executed." $Info
+				{	write-host "`n SUCCESS: Get-FPG_WSAPI successfully Executed.`n " -foreground green
 					return $dataPS
 				}
 			else
 				{	write-error "`n FAILURE : While Executing Get-FPG_WSAPI. Expected Result Not Found with Given Filter Option .`n"
-					Write-DebugLog "FAILURE : While Executing Get-FPG_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 					return 
 				}
 		}
 	else
 		{	write-error "`n FAILURE : While Executing Get-FPG_WSAPI.`n "
-			Write-DebugLog "FAILURE : While Executing Get-FPG_WSAPI. " $Info		
 			return $Result.StatusDescription
 		}
 }
@@ -251,24 +231,20 @@ Begin
 {	Test-WSAPIConnection
 }
 Process
-{	#Request 
-	$Result = Invoke-WSAPI -uri '/fpgs/reclaimtasks' -type 'GET'
+{	$Result = Invoke-WSAPI -uri '/fpgs/reclaimtasks' -type 'GET'
 	if($Result.StatusCode -eq 200)
 		{	$dataPS = ($Result.content | ConvertFrom-Json).members
 			if($dataPS.Count -gt 0)
-				{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-					Write-DebugLog "SUCCESS: Get-FPGReclamationTasks_WSAPI successfully Executed." $Info
+				{	write-host "`n SUCCESS: Get-FPGReclamationTasks_WSAPI successfully Executed. `n" -foreground green
 					return $dataPS
 				}
 			else
 				{	write-error "`n FAILURE : While Executing Get-FPGReclamationTasks_WSAPI. `n" 
-					Write-DebugLog "FAILURE : While Executing Get-FPGReclamationTasks_WSAPI." $Info
 					return 
 				}
 		}
 	else
 		{	write-error "`n FAILURE : While Executing Get-FPGReclamationTasks_WSAPI.`n "
-			Write-DebugLog "FAILURE : While Executing Get-FPGReclamationTasks_WSAPI. " $Info
 			return $Result.StatusDescription
 		}  
 }
@@ -347,9 +323,7 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}
+{	$body = @{}
 	$IPInfoBody=@{}
 	If($VFSName) 		{	$body["name"] 			= "$($VFSName)"		}
 	If($PolicyId) 		{	$IPInfoBody["policyId"] = "$($PolicyId)"	}
@@ -372,19 +346,14 @@ Process
 	If($SnapshotQuotaEnabled){$body["snapshotQuotaEnabled"] = $true		}
 	if($IPInfoBody.Count -gt 0){$body["IPInfo"] 	= $IPInfoBody		}
     $Result = $null		
-    #Request
-	Write-DebugLog "Request: Request to New-VFS_WSAPI(Invoke-WSAPI)." $Debug	
     $Result = Invoke-WSAPI -uri '/virtualfileservers/' -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 202)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Created Virtual File Servers VFS Name : $VFSName." $Info				
+		{	write-host "`n SUCCESS: Successfully Created Virtual File Servers VFS Name : $VFSName. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-VFS_WSAPI" $Debug
 		}
 	else
 		{	write-host "`n FAILURE : While Creating Virtual File Servers VFS Name : $VFSName." `n 
-			Write-DebugLog "FAILURE : While Creating Virtual File Servers VFS Name : $VFSName." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -411,19 +380,14 @@ Begin
 Process 
 {	$Result = $null
 	$uri = "/virtualfileservers/"+$VFSID
-    #Request
-	Write-DebugLog "Request: Request to Remove-VFS_WSAPI : $VFSID (Invoke-WSAPI)." $Debug	
     $Result = Invoke-WSAPI -uri $uri -type 'DELETE' -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Virtual File Servers : $VFSID successfully Remove." $Info		
+		{	write-host "`n SUCCESS: Virtual File Servers : $VFSID successfully Removed. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: Remove-VFS_WSAPI" $Debug
 		}
 	else
 		{	write-host "`n FAILURE : While Dismissing a Virtual File Servers : $VFSID `n"
-			Write-DebugLog "FAILURE : While Dismissing a Virtual File Servers : $VFSID " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -464,7 +428,8 @@ Process
 	$Query="?query=""  """
 	if($VFSID)
 		{	if($VFSName -Or $FPGName)
-				{	Return "we cannot use VFSName and FPGName with VFSID as VFSName and FPGName is use for filtering."
+				{	write-error "we cannot use VFSName and FPGName with VFSID as VFSName and FPGName is use for filtering."
+					Return 
 				}
 			$uri = '/virtualfileservers/'+$VFSID
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
@@ -504,13 +469,11 @@ Process
 		{	if($dataPS.Count -eq 0)
 				{	return "No data Fount."
 				}
-			write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-VFS_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-VFS_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-host "`n FAILURE : While Executing Get-VFS_WSAPI.`n "
-			Write-DebugLog "FAILURE : While Executing Get-VFS_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -531,58 +494,42 @@ Function New-FileStore_WSAPI
 	Name of the VFS under which to create the File Store. If it does not exist, the system creates it.
 .PARAMETER FPG
 	Name of the FPG in which to create the File Store.
-.PARAMETER NTFS
-	File Store security mode is NTFS.
-.PARAMETER LEGACY
-	File Store security mode is legacy.
+.PARAMETER SecurityMode
+	File Store security mode is NTFS or legacy.
 .PARAMETER SupressSecOpErr 
 	Enables or disables the security operations error suppression for File Stores in NTFS security mode. Defaults to false. Cannot be used in LEGACY security mode.
 .PARAMETER Comment
 	Specifies any additional information about the File Store.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$FSName,
-		[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$VFS,
-		[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$FPG,
-		[Parameter(ValueFromPipeline=$true)][Switch]					$NTFS,
-		[Parameter(ValueFromPipeline=$true)][Switch]					$LEGACY,
-		[Parameter(ValueFromPipeline=$true)][Switch]					$SupressSecOpErr,
-		[Parameter(ValueFromPipeline=$true)][String]					$Comment
+Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)]					[String]	$FSName,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]					[String]	$VFS,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]					[String]	$FPG,
+		[Parameter(ValueFromPipeline=$true)][ValidateSet('NTFS','Legacy')]		[string]	$SecurityMode,
+		[Parameter(ValueFromPipeline=$true)]									[Switch]	$SupressSecOpErr,
+		[Parameter(ValueFromPipeline=$true)]									[String]	$Comment
 	)
 Begin 
 {	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
-	If($FSName) {	$body["name"] = "$($FSName)"	}
-	If($VFS) 	{	$body["vfs"] = "$($VFS)"		}
-	If($FPG) 	{	$body["fpg"] = "$($FPG)" 		}
-	If($NTFS) 
-		{	if($LEGACY)	{	return "Please Select Only One Security Mode NTFS or LEGACY"	}
-			else		{	$body["securityMode"] = 1	}
-		}
-	If($LEGACY) 
-		{	if($NTFS)	{	return "Please Select Only One Security Mode NTFS or LEGACY"	}
-			else		{	$body["securityMode"] = 2	}
-		}
-	If($SupressSecOpErr){	$body["supressSecOpErr"] 	= $true }
-	If($Comment) 		{	$body["comment"] 			= "$($Comment)"}
+{	$body = @{}	
+	If($FSName) 					{	$body["name"] 			= "$($FSName)"	}
+	If($VFS) 						{	$body["vfs"] 			= "$($VFS)"		}
+	If($FPG) 						{	$body["fpg"] 			= "$($FPG)" 	}
+	If($SecurityMode -eq 'Legacy') 	{	$body["securityMode"] 	= 1				}
+	If($SecurityMode -eq 'NTFS')	{	$body["securityMode"] 	= 2				}
+	If($SupressSecOpErr)			{	$body["supressSecOpErr"]= $true 		}
+	If($Comment) 					{	$body["comment"] 		= "$($Comment)"	}
     $Result = $null		
-    #Request
-	Write-DebugLog "Request: Request to New-FileStore_WSAPI(Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/filestores/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri '/filestores/' -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Created File Store, Name: $FSName." $Info
+		{	write-host "`n SUCCESS: Successfully Created File Store, Name: $FSName." -foreground green
 			return $Result
-			Write-DebugLog "End: New-FileStore_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While Creating File Store, Name: $FSName. `n "
-			Write-DebugLog "FAILURE : While Creating File Store, Name: $FSName." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -616,9 +563,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}		
+{	$body = @{}		
 	If($Comment) 	{	$body["comment"] = "$($Comment)"	}
 	If($SecurityMode -eq 'NTFS')	{	$body["securityMode"] = 2	}
 	If($SecurityMode -eq 'LEGACY')	{	$body["securityMode"] = 1	}
@@ -626,22 +571,15 @@ Process
 		{	$body["supressSecOpErr"] = $true 
 		}	
     $Result = $null
-    #Request
-	Write-DebugLog "Request: Request to Update-FileStore_WSAPI(Invoke-WSAPI)." $Debug	
-	#Request
 	$uri = '/filestores/'+$FStoreID
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Updated File Store, File Store ID: $FStoreID." $Info	
-			# Results
+		{	write-host "`n SUCCESS: Successfully Updated File Store, File Store ID: $FStoreID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Update-FileStore_WSAPI" $Debug
 		}
 	else
 		{	write-host "`nFAILURE : While Updating File Store, File Store ID: $FStoreID.`n" 
-			Write-DebugLog "FAILURE : While Updating File Store, File Store ID: $FStoreID." $Info	
 			return $Result.StatusDescription
 		}
 }
@@ -649,6 +587,7 @@ End
 { 
 }
 }
+
 Function Remove-FileStore_WSAPI 
 {
 <#      
@@ -668,19 +607,15 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Request: Request to Remove-FileStore_WSAPI(Invoke-WSAPI)." $Debug	
-	$uri = '/filestores/'+$FStoreID
+{	$uri = '/filestores/'+$FStoreID
     $Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Removed File Store, File Store ID: $FStoreID." $Info
+		{	write-host "`n SUCCESS: Successfully Removed File Store, File Store ID: $FStoreID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Remove-FileStore_WSAPI" $Debug
 		}
 	else
 		{	write-host "`nFAILURE : While Removing File Store, File Store ID: $FStoreID.`n" 
-			Write-DebugLog "FAILURE : While Removing File Store, File Store ID: $FStoreID." $Info
 			return $Result.StatusDescription
 	}
 }
@@ -711,11 +646,11 @@ Function Get-FileStore_WSAPI
 .PARAMETER FPGName
     File Provisioning Groups Name.	
 #>
-[CmdletBinding()]
-Param(	[Parameter(ValueFromPipeline=$true)][int]		$FStoreID,
-		[Parameter(ValueFromPipeline=$true)][String]	$FileStoreName,	  
-		[Parameter(ValueFromPipeline=$true)][String]	$VFSName,
-		[Parameter(ValueFromPipeline=$true)][String]	$FPGName
+[CmdletBinding(DefaultParameterSetName='Default')]
+Param(	[Parameter(ParameterSetName='FStore',ValueFromPipeline=$true)][int]		$FStoreID,
+		[Parameter(ParameterSetName='Filter',ValueFromPipeline=$true)][String]	$FileStoreName,	  
+		[Parameter(ParameterSetName='Filter',ValueFromPipeline=$true)][String]	$VFSName,
+		[Parameter(ParameterSetName='Filter',ValueFromPipeline=$true)][String]	$FPGName
 	)
 Begin 
 {	Test-WSAPIConnection
@@ -727,16 +662,13 @@ Process
 	$flgFPG = "Yes"
 	$Query="?query=""  """
 	if($FStoreID)
-		{	if($VFSName -Or $FPGName -Or $FileStoreName)
-				{	Return "we cannot use VFSName,FileStoreName and FPGName with FStoreID as VFSName,FileStoreName and FPGName is use for filtering."
-				}
-			$uri = '/filestores/'+$FStoreID
+		{	$uri = '/filestores/'+$FStoreID
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)
 				{	$dataPS = $Result.content | ConvertFrom-Json
 				}
 		}
-	elseif($FileStoreName)
+	if($FileStoreName)
 		{	$Query = $Query.Insert($Query.Length-3," name EQ $FileStoreName")			
 			if($VFSName)
 				{	$Query = $Query.Insert($Query.Length-3," AND vfs EQ $VFSName")
@@ -787,15 +719,14 @@ Process
 		}	
 	if($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -eq 0)
-				{	return "No data Fount."
+				{	Write-Warning "No data Found."
+					Return
 				}
-			write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-FileStore_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-FileStore_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-Error "`nFAILURE : While Executing Get-FileStore_WSAPI." 
-			Write-DebugLog "FAILURE : While Executing Get-FileStore_WSAPI." $Info	
 			return $Result.StatusDescription
 		}
 }	
@@ -834,27 +765,21 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	If($TAG) 		{	$body["tag"] 			= "$($TAG)"		}
 	If($FStore) 	{	$body["fstore"] 		= "$($FStore)"	}
 	If($VFS) 		{	$body["vfs"] 			= "$($VFS)"		}
 	If($RetainCount){	$body["retainCount"] 	= $RetainCount	}
 	If($FPG) 		{	$body["fpg"] 			= "$($FPG)" 	}
     $Result = $null		
-	Write-DebugLog "Request: Request to New-FileStoreSnapshot_WSAPI(Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/filestoresnapshots/' -type 'POST' -body $body
+	$Result = Invoke-WSAPI -uri '/filestoresnapshots/' -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Created File Store snapshot." $Info
+		{	write-host "`n SUCCESS: Successfully Created File Store snapshot. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-FileStoreSnapshot_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While Creating File Store snapshot.`n "
-			Write-DebugLog "FAILURE : While Creating File Store snapshot." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -878,19 +803,15 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Request: Request to Remove-FileStoreSnapshot_WSAPI(Invoke-WSAPI)." $Debug	
-	$uri = '/filestoresnapshots/'+$ID
+{	$uri = '/filestoresnapshots/'+$ID
     $Result = Invoke-WSAPI -uri $uri -type 'DELETE'	
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Removed File Store snapshot, File Store snapshot ID: $ID." $Info
+		{	write-host "`n SUCCESS: Successfully Removed File Store snapshot, File Store snapshot ID: $ID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Remove-FileStoreSnapshot_WSAPI" $Debug
 		}
 	else
 		{	write-error "`nFAILURE : While Removing File Store snapshot, File Store snapshot ID: $ID.`n"
-			Write-DebugLog "FAILURE : While Removing File Store snapshot, File Store snapshot ID: $ID." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -920,12 +841,13 @@ Function Get-FileStoreSnapshot_WSAPI
 .PARAMETER FPGName
 	The name of the FPG to which the VFS belongs.
 #>
-[CmdletBinding()]
-Param(	[Parameter(ValueFromPipeline=$true)][String]	$ID,
-		[Parameter(ValueFromPipeline=$true)][String]	$FileStoreSnapshotName,
-		[Parameter(ValueFromPipeline=$true)][String]	$FileStoreName,	  
-		[Parameter(ValueFromPipeline=$true)][String]	$VFSName,
-		[Parameter(ValueFromPipeline=$true)][String]	$FPGName	)
+[CmdletBinding(DefaultParameterSetName='Default')]
+Param(	[Parameter(ParameterSetName='ById')]	[String]	$ID,
+		[Parameter(ParameterSetName='ByFilter')][String]	$FileStoreSnapshotName,
+		[Parameter(ParameterSetName='ByFilter')][String]	$FileStoreName,	  
+		[Parameter(ParameterSetName='ByFilter')][String]	$VFSName,
+		[Parameter(ParameterSetName='ByFilter')][String]	$FPGName	
+	)
 Begin 
 {	Test-WSAPIConnection
 }
@@ -937,17 +859,13 @@ Process
 	$flgFPG = "Yes"
 	$Query  = "?query=""  """
 	if($ID)
-		{	if($FileStoreSnapshotName -Or $VFSName -Or $FPGName -Or $FileStoreName)
-				{	Write-error "we cannot use FileStoreSnapshotName,VFSName,FileStoreName and FPGName with ID as FileStoreSnapshotName,VFSName,FileStoreName and FPGName is use for filtering."
-					return
-				}
-			$uri = '/filestoresnapshots/'+$ID
+		{	$uri = '/filestoresnapshots/'+$ID
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)
 				{	$dataPS = $Result.content | ConvertFrom-Json
 				}
 		}
-	elseif($FileStoreSnapshotName)
+	if($FileStoreSnapshotName)
 		{	$Query = $Query.Insert($Query.Length-3," name EQ $FileStoreSnapshotName")			
 			if($FileStoreName)
 				{	$Query = $Query.Insert($Query.Length-3," AND fstore EQ $FileStoreName")
@@ -1027,13 +945,11 @@ Process
 				{	write-warning "No data Fount." 
 					return 
 				}
-			write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-FileStoreSnapshot_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-FileStoreSnapshot_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-error "`n FAILURE : While Executing Get-FileStoreSnapshot_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Get-FileStoreSnapshot_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -1117,13 +1033,10 @@ Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$FSName,
 		[String[]]		$FtpShareIPs,
 		[String]		$FtpOptions	)
 Begin 
-{	# Test if connection exist
-    Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	If ($FSName) 			{	$body["name"] 				= "$($FSName)"	}
 	If ($Protocol -eq 'NFS'){	$body["type"] 				= 1				}
 	If ($Protocol -eq 'SMB'){	$body["type"] 				= 2				}
@@ -1152,14 +1065,11 @@ Process
     $Result = Invoke-WSAPI -uri '/fileshares/' -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Created File Share, Name: $FSName." $Info
+		{	write-host "`n SUCCESS: Successfully Created File Share, Name: $FSName.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-FileShare_WSAPI" $Debug
 		}
 	else
 		{	write-error "`nFAILURE : While Creating File Share, Name: $FSName.`n" 
-			Write-DebugLog "FAILURE : While Creating File Share, Name: $FSName." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -1184,19 +1094,15 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Request: Request to Remove-FileShare_WSAPI(Invoke-WSAPI)." $Debug	
-	$uri = '/fileshares/'+$ID
+{	$uri = '/fileshares/'+$ID
     $Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Removed File Share, File Share ID: $ID." $Info
+		{	write-host "`n SUCCESS: Successfully Removed File Share, File Share ID: $ID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Remove-FileShare_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While Removing File Share, File Share ID: $ID.`n" 
-			Write-DebugLog "FAILURE : While Removing File Share, File Share ID: $ID." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -1278,20 +1184,18 @@ Process
 					$flg = "YES"
 				}
 			$uri = '/fileshares/'+$Query
-			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
+			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 		}
 	if($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -eq 0)	{	write-warning "No data Found."
 										return
 									}
-			write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-FileShare_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-FileShare_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-error "`nFAILURE : While Executing Get-FileShare_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Get-FileShare_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -1318,7 +1222,6 @@ Begin
 Process 
 {	$Result = $null
 	$dataPS = $null	
-	#Request
 	$uri = '/fileshares/'+$ID+'/dirperms'
 	$Result = Invoke-WSAPI -uri $uri -type 'GET'
 	if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}	
@@ -1327,13 +1230,11 @@ Process
 				{	write-warning "No data Found."
 					return
 				}
-			write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-DirPermission_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-DirPermission_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-error "`n FAILURE : While Executing Get-DirPermission_WSAPI.`n "
-			Write-DebugLog "FAILURE : While Executing Get-DirPermission_WSAPI." $Info
 			return $Result.StatusDescription
 	}
 }	
@@ -1380,8 +1281,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}	
+{	$body = @{}	
 	$body["name"] = "$($Name)"
 	if($Type -eq "user")	{	$body["type"] = 1	}
 	if($Type -eq "group")	{	$body["type"] = 2	}
@@ -1393,18 +1293,14 @@ Process
 	If($SoftFileLimit) 		{	$body["softFileLimit"] = $SoftFileLimit	}
 	If($HardFileLimit) 		{	$body["hardFileLimit"] = $HardFileLimit	}
     $Result = $null
-	Write-DebugLog "Request: Request to New-FilePersonaQuota_WSAPI(Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/filepersonaquotas/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+	$Result = Invoke-WSAPI -uri '/filepersonaquotas/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully.`n " -foreground green
-			Write-DebugLog "SUCCESS: Successfully Created File Persona quota." $Info	
+		{	write-host "`n SUCCESS: Successfully Created File Persona quota.`n " -foreground green
 			return $Result
-			Write-DebugLog "End: New-FilePersonaQuota_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While Creating File Persona quota.`n"
-			Write-DebugLog "FAILURE : While Creating File Persona quota." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -1466,9 +1362,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	If($SoftFileLimit) 		{	$body["softFileLimit"] 		= $SoftFileLimit }	
 	If($RMSoftFileLimit) 	{	$body["rmSoftFileLimit"] 	= $RMSoftFileLimit 	}
 	If($HardFileLimit) 		{	$body["hardFileLimit"] 		= $HardFileLimit }
@@ -1478,19 +1372,15 @@ Process
 	If($HardBlockMiB) 		{	$body["hardBlockMiB"] 		= $HardBlockMiB 		}
 	If($RMHardBlockMiB) 	{	$body["rmHardBlockMiB"] 	= $RMHardBlockMiB 		}
     $Result = $null
-	Write-DebugLog "Request: Request to Update-FilePersonaQuota_WSAPI(Invoke-WSAPI)." $Debug	
 	$uri = '/filepersonaquotas/'+$ID
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Updated File Persona quota information, ID: $ID." $Info			
+		{	write-host "`n SUCCESS: Successfully Updated File Persona quota information, ID: $ID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Update-FilePersonaQuota_WSAPI" $Debug
 		}
 	else
 		{	write-error "`nFAILURE : While Updating File Persona quota information, ID: $ID.`n" 
-			Write-DebugLog "FAILURE : While Updating File Persona quota information, ID: $ID." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -1509,7 +1399,7 @@ Function Remove-FilePersonaQuota_WSAPI
 	The <id> variable contains the unique ID of the File Persona you want to Remove.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)][String]	$ID
+Param(	[Parameter(Mandatory=$true)][String]	$ID
 	)
 Begin 
 {	Test-WSAPIConnection
@@ -1520,14 +1410,11 @@ Process
     $Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Removed File Persona quota, File Persona quota ID: $ID." $Info
+		{	write-host "`n SUCCESS: Successfully Removed File Persona quota, File Persona quota ID: $ID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Remove-FilePersonaQuota_WSAPI" $Debug
 		}
 	else
 		{	write-error "`nFAILURE : While Removing File Persona quota, File Persona quota ID: $ID.`n"
-			Write-DebugLog "FAILURE : While Removing File Persona quota, File Persona quota ID: $ID." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -1576,8 +1463,7 @@ Process
 	$Query="?query=""  """
 	$flg = "NO"	
 	if($ID)
-		{	#Request
-			$uri = '/filepersonaquota/'+$ID
+		{	$uri = '/filepersonaquota/'+$ID
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 			if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}
 		}
@@ -1606,7 +1492,6 @@ Process
 					else				{	$Query = $Query.Insert($Query.Length-3," AND fpg EQ $FPG")	}
 					$flg = "YES"
 				}
-			#Request
 			$uri = '/filepersonaquota/'+$Query
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 			if($Result.StatusCode -eq 200)
@@ -1619,13 +1504,11 @@ Process
 		}	
 	if($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -eq 0)	{	return "No data Found."	}
-			write-host "Cmdlet executed successfully" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-FilePersonaQuota_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-FilePersonaQuota_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-error "`n FAILURE : While Executing Get-FilePersonaQuota_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Get-FilePersonaQuota_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -1653,24 +1536,19 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}
+{	$body = @{}
 	$body["action"] = 2 
 	If($VFSUUID) 		{	$body["vfsUUID"] = "$($VFSUUID)"			}
 	If($ArchivedPath)	{	$body["archivedPath"] = "$($ArchivedPath)"	}
     $Result = $null
-	Write-DebugLog "Request: Request to Restore-FilePersonaQuota_WSAPI(Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/filepersonaquotas/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+	$Result = Invoke-WSAPI -uri '/filepersonaquotas/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Restore a File Persona quota, VFSUUID: $VFSUUID." $Info	
+		{	write-host "`n SUCCESS: Successfully Restore a File Persona quota, VFSUUID: $VFSUUID.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: Restore-FilePersonaQuota_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While Restoring a File Persona quota, VFSUUID: $VFSUUID.`n"
-			Write-DebugLog "FAILURE : While Restoring a File Persona quota, VFSUUID: $VFSUUID." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -1695,30 +1573,33 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}
+{	$body = @{}
 	$body["action"] = 1 
 	If($QuotaArchiveParameter) {	$body["quotaArchiveParameter"] = "$($QuotaArchiveParameter)"	}
     $Result = $null		
-	Write-DebugLog "Request: Request to Group-FilePersonaQuota_WSAPI(Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/filepersonaquotas/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+	$Result = Invoke-WSAPI -uri '/filepersonaquotas/' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n " -foreground green
-			Write-DebugLog "SUCCESS: Successfully Restore a File Persona quota, VFSUUID: $VFSUUID." $Info	
+		{	write-host "`n SUCCESS: Successfully Restore a File Persona quota, VFSUUID: $VFSUUID.`n " -foreground green
 			return $Result
-			Write-DebugLog "End: Group-FilePersonaQuota_WSAPI" $Debug
 		}
 	else
 		{	write-error "`nFAILURE : While Restoring a File Persona quota, VFSUUID: $VFSUUID.`n" 
-			Write-DebugLog "FAILURE : While Restoring a File Persona quota, VFSUUID: $VFSUUID." $Info	
 			return $Result.StatusDescription
 		}
 }
 }
 
-Export-ModuleMember Get-FileServices_WSAPI , New-FPG_WSAPI , Remove-FPG_WSAPI , Get-FPG_WSAPI , Get-FPGReclamationTasks_WSAPI , New-VFS_WSAPI ,
-Remove-VFS_WSAPI , Get-VFS_WSAPI , New-FileStore_WSAPI , Update-FileStore_WSAPI , Remove-FileStore_WSAPI , Get-FileStore_WSAPI , New-FileStoreSnapshot_WSAPI ,
-Remove-FileStoreSnapshot_WSAPI , Get-FileStoreSnapshot_WSAPI , New-FileShare_WSAPI , Remove-FileShare_WSAPI , Get-FileShare_WSAPI , Get-DirPermission_WSAPI ,
-New-FilePersonaQuota_WSAPI , Update-FilePersonaQuota_WSAPI , Remove-FilePersonaQuota_WSAPI , Get-FilePersonaQuota_WSAPI , Group-FilePersonaQuota_WSAPI ,
+Export-ModuleMember Get-FileServices_WSAPI , New-FPG_WSAPI , Remove-FPG_WSAPI , Get-FPG_WSAPI , Get-FPGReclamationTasks_WSAPI
+
+Export-ModuleMember New-VFS_WSAPI, Remove-VFS_WSAPI , Get-VFS_WSAPI 
+
+Export-ModuleMember New-FileStore_WSAPI , Update-FileStore_WSAPI , Remove-FileStore_WSAPI , Get-FileStore_WSAPI , New-FileStoreSnapshot_WSAPI ,
+Remove-FileStoreSnapshot_WSAPI , Get-FileStoreSnapshot_WSAPI 
+
+Export-ModuleMember New-FileShare_WSAPI , Remove-FileShare_WSAPI , Get-FileShare_WSAPI 
+
+Export-ModuleMember Get-DirPermission_WSAPI
+
+Export-ModuleMember New-FilePersonaQuota_WSAPI , Update-FilePersonaQuota_WSAPI , Remove-FilePersonaQuota_WSAPI , Get-FilePersonaQuota_WSAPI , Group-FilePersonaQuota_WSAPI ,
 Restore-FilePersonaQuota_WSAPI

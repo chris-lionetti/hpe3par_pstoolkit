@@ -29,20 +29,16 @@ Begin
 }
 Process 
 {  	$body = @{}	
-	If ($Enable)		{	$body["flashCachePolicy"] = 1	}
+	If ($Enable)	{	$body["flashCachePolicy"] = 1	}
 	If ($Disable) 	{	$body["flashCachePolicy"] = 2	}
 	$Result = $null	
-	Write-DebugLog "Request: Request to Set-FlashCache_WSAPI (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri '/system' -type 'PUT' -body $body -WsapiConnection $WsapiConnection
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Set Flash Cache policy." $Info
+		{	write-host "`n SUCCESS: Successfully Set Flash Cache policy. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Set-FlashCache_WSAPI." $Debug
 		}
 	else
 		{	write-error "`nFAILURE : While Setting Flash Cache policy.`n " 
-			Write-DebugLog "FAILURE : While Setting Flash Cache policy." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -85,8 +81,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-	$body = @{}
+{	$body = @{}
 	$FlashCacheBody = @{} 
 	If($SizeGiB) 			{	$FlashCacheBody["sizeGiB"] = $SizeGiB	}
 	If($Mode) 				{	$FlashCacheBody["mode"] = $Mode			}
@@ -94,19 +89,15 @@ Process
 	if($RAIDType -eq "R1")	{	$FlashCacheBody["RAIDType"] = 2}		
 	If($NoCheckSCMSize) 	{	$FlashCacheBody["noCheckSCMSize"] = $NoCheckSCMSize }
 	if($FlashCacheBody.Count -gt 0)	{	$body["flashCache"] = $FlashCacheBody }
-    $Result = $null		
-    Write-DebugLog "Request: Request to New-FlashCache_WSAPI(Invoke-WSAPI)." $Debug	
+    $Result = $null
 	$Result = Invoke-WSAPI -uri '/' -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Created Flash Cache." $Info
+		{	write-host "`n SUCCESS: Successfully Created Flash Cache.`n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-FlashCache_WSAPI" $Debug
 		}
 	else
-	{	write-error "`nFAILURE : While creating a Flash Cache.`n" 
-		Write-DebugLog "FAILURE : While creating a Flash Cache." $Info
+	{	write-error "`n FAILURE : While creating a Flash Cache.`n" 
 		return $Result.StatusDescription
 	}
 }
@@ -128,17 +119,15 @@ Begin
 }
 Process 
 {	Write-DebugLog "Request: Request to Remove-FlashCache_WSAPI(Invoke-WSAPI)." $Debug	
-	$Result = Invoke-WSAPI -uri '/flashcache' -type 'DELETE' -WsapiConnection $WsapiConnection
+	$Result = Invoke-WSAPI -uri '/flashcache' -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Removed Flash CacheD." $Info	
+		{	write-host "`n SUCCESS: Successfully Removed Flash Cache.`n" -foreground green
+			Write-DebugLog "" $Info	
 			return $Result
-			Write-DebugLog "End: Remove-FlashCache_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While Removing Flash Cache.`n"
-			Write-DebugLog "FAILURE : While Removing Flash Cache." $Info
 			return $Result.StatusDescription
 	}
 }
@@ -163,16 +152,14 @@ Begin
 Process 
 {	$Result = $null
 	$dataPS = $null
-	$Result = Invoke-WSAPI -uri '/flashcache' -type 'GET' -WsapiConnection $WsapiConnection
+	$Result = Invoke-WSAPI -uri '/flashcache' -type 'GET'
 	if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}		
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-FlashCache_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-FlashCache_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-error "`n FAILURE : While Executing Get-FlashCache_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Get-FlashCache_WSAPI." $Info
 			return $Result.StatusDescription
 	}
 }	

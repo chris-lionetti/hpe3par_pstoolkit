@@ -1,4 +1,4 @@
-﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
+﻿## 	© 2020,2021,2023 Hewlett Packard Enterprise Development LP
 ##		
 
 Function New-Host_WSAPI 
@@ -51,85 +51,75 @@ Function New-Host_WSAPI
 .PARAMETER Comment
 	Any additional information for the host.
 .PARAMETER Persona
-	Uses the default persona "GENERIC_ALUA" unless you specify the host persona.
-	1	GENERIC
-	2	GENERIC_ALUA
-	3	GENERIC_LEGACY
-	4	HPUX_LEGACY
-	5	AIX_LEGACY
-	6	EGENERA
-	7	ONTAP_LEGACY
-	8	VMWARE
-	9	OPENVMS
-	10	HPUX
-	11	WindowsServer
-	12	AIX_ALUA
+	Uses the default persona "GENERIC_ALUA" unless you specify the host persona. Valid answers are GENERIC, GENERIC_ALUA, GENERIC_LEGACY,
+	HPUX_LEGACY, AIX_LEGACY, EGENERA, ONTAP_LEGACY,	VMWARE, OPENVMS, HPUX, WindowsServer, AIX_ALUA
 .PARAMETER Port
 	Specifies the desired relationship between the array ports and the host for target-driven zoning. Use this option when the Smart SAN license is installed only.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$HostName,
-		[Parameter(ValueFromPipeline=$true)][String]					$Domain,
-		[Parameter(ValueFromPipeline=$true)][String[]]					$FCWWN,
-		[Parameter(ValueFromPipeline=$true)][Boolean]					$ForceTearDown,
-		[Parameter(ValueFromPipeline=$true)][String[]]					$ISCSINames,
-		[Parameter(ValueFromPipeline=$true)][String]					$Location,
-		[Parameter(ValueFromPipeline=$true)][String]					$IPAddr,
-		[Parameter(ValueFromPipeline=$true)][String]					$OS,
-		[Parameter(ValueFromPipeline=$true)][String]					$Model,
-		[Parameter(ValueFromPipeline=$true)][String]					$Contact,
-		[Parameter(ValueFromPipeline=$true)][String]					$Comment,
-		[Parameter(ValueFromPipeline=$true)]
-		[ValidateSet=('GENERIC','GENERIC_ALUA','GENERIC_LEGACY','HPUX_LEGACY','AIX_LEGACY','EGENERA','ONTAP_LEGACY','VMWARE','OPENVMS','HPUX','WindowsServer','AIX_ALUA')]
-											[String]					$Persona,
-		[Parameter(ValueFromPipeline=$true)][String[]]					$Port
+Param(	[Parameter(Mandatory=$true)]
+		[String]	$HostName,
+		[String]	$Domain,
+		[String[]]	$FCWWN,
+		[Boolean]	$ForceTearDown,
+		[String[]]	$ISCSINames,
+		[String]	$Location,
+		[String]	$IPAddr,
+		[String]	$OS,
+		[String]	$Model,
+		[String]	$Contact,
+		[String]	$Comment,
+		[ValidateSet('GENERIC', 'GENERIC_ALUA', 'GENERIC_LEGACY', 'HPUX_LEGACY', 'AIX_LEGACY', 'EGENERA', 'ONTAP_LEGACY',
+		'VMWARE' ,'OPENVMS', 'HPUX', 'WindowsServer', 'AIX_ALUA')]
+		[String]	$Persona,
+		[String[]]	$Port
 )
 Begin 
-{	Test-WSAPIConnection 
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     $body = @{}    
     $body["name"] = "$($HostName)"
-    If ($Domain) 						{	$body["domain"] = "$($Domain)"	}
-    If ($FCWWN) 						{	$body["FCWWNs"] = $FCWWN		} 
-    If ($ForceTearDown) 				{	$body["forceTearDown"] = $ForceTearDown	}
-	If ($ISCSINames) 					{	$body["iSCSINames"] = $ISCSINames	}
-	if($Persona -eq "GENERIC")			{	$body["persona"] = 1 	}
-	if($Persona -eq "GENERIC_ALUA")		{	$body["persona"] = 2 	}
-	if($Persona -eq "GENERIC_LEGACY")	{	$body["persona"] = 3 	}
-	if($Persona -eq "HPUX_LEGACY")		{	$body["persona"] = 4	}
-	if($Persona -eq "AIX_LEGACY")		{	$body["persona"] = 5	}
-	if($Persona -eq "EGENERA")			{	$body["persona"] = 6	}
-	if($Persona -eq "ONTAP_LEGACY")		{	$body["persona"] = 7	}
-	if($Persona -eq "VMWARE")			{	$body["persona"] = 8	}
-	if($Persona -eq "OPENVMS")			{	$body["persona"] = 9	}
-	if($Persona -eq "HPUX")				{	$body["persona"] = 10	}
-	if($Persona -eq "WindowsServer")	{	$body["persona"] = 11	}
-	if($Persona -eq "AIX_ALUA")			{	$body["persona"] = 12	}
-	If ($Port) 							{	$body["port"] = $Por	}
+    If ($Domain)    				{	$body["domain"] = "$($Domain)" 	}
+    If ($FCWWN) 					{	$body["FCWWNs"] = $FCWWN    	} 	
+    If ($ForceTearDown) 			{	$body["forceTearDown"] = $ForceTearDown    }
+	If ($ISCSINames)				{	$body["iSCSINames"] = $ISCSINames }	
+	if($Persona -eq "GENERIC")		{	$body["persona"] = 1	}
+	if($Persona -eq "GENERIC_ALUA")	{	$body["persona"] = 2	}
+	if($Persona -eq "GENERIC_LEGACY"){	$body["persona"] = 3	}
+	if($Persona -eq "HPUX_LEGACY")	{	$body["persona"] = 4	}
+	if($Persona -eq "AIX_LEGACY")	{	$body["persona"] = 5	}
+	if($Persona -eq "EGENERA")		{	$body["persona"] = 6	}
+	if($Persona -eq "ONTAP_LEGACY")	{	$body["persona"] = 7	}
+	if($Persona -eq "VMWARE")		{	$body["persona"] = 8	}
+	if($Persona -eq "OPENVMS")		{	$body["persona"] = 9	}
+	if($Persona -eq "HPUX")			{	$body["persona"] = 10	}
+	if($Persona -eq "WindowsServer"){	$body["persona"] = 11	}
+	if($Persona -eq "AIX_ALUA")		{	$body["persona"] = 12	}
+	If ($Port) 	{	$body["port"] = $Port }
 	$DescriptorsBody = @{}   
-	If ($Location)	{	$DescriptorsBody["location"] 	= "$($Location)" }
-	If ($IPAddr)  	{	$DescriptorsBody["IPAddr"] 		= "$($IPAddr)"	}
-	If ($OS) 		{	$DescriptorsBody["os"] 			= "$($OS)"	}
-	If ($Model)     {	$DescriptorsBody["model"] 		= "$($Model)"}
-	If ($Contact) 	{	$DescriptorsBody["contact"] 	= "$($Contact)" }
-	If ($Comment) 	{	$DescriptorsBody["Comment"] 	= "$($Comment)"}
-	if($DescriptorsBody.Count -gt 0){$body["descriptors"] = $DescriptorsBody }    
+	If ($Location)	{	$DescriptorsBody["location"] 	= "$($Location)"}	
+	If ($IPAddr) 	{	$DescriptorsBody["IPAddr"] 		= "$($IPAddr)"  }
+	If ($OS) 	    {	$DescriptorsBody["os"] 			= "$($OS)"		}
+	If ($Model) 	{	$DescriptorsBody["model"] 		= "$($Model)"   }
+	If ($Contact)   {	$DescriptorsBody["contact"] 	= "$($Contact)" }
+	If ($Comment)   {	$DescriptorsBody["Comment"] 	= "$($Comment)" }
+	if ($DescriptorsBody.Count -gt 0)	{	$body["descriptors"] = $DescriptorsBody 	}    
     $Result = $null
-    $Result = Invoke-WSAPI -uri '/hosts' -type 'POST' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri '/hosts' -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Host:$HostName successfully created" $Info
-			Get-Host_WSAPI -HostName $HostName
-			Write-DebugLog "End: New-Host_WSAPI" $Debug
-		}
+	{	write-host "`nCmdlet executed successfully.`n" -foreground green
+		Write-DebugLog "SUCCESS: Host:$HostName successfully created" $Info
+		Get-Host_WSAPI -HostName $HostName
+		Write-DebugLog "End: New-Host_WSAPI" $Debug
+	}
 	else
-		{	write-error "`nFAILURE : While creating Host:$HostName `n"
-			Write-DebugLog "FAILURE : While creating Host:$HostName " $Info
-			return $Result.StatusDescription
-		}	
+	{	write-host "FAILURE : While creating Host:$HostName " -foreground red
+		Write-DebugLog "FAILURE : While creating Host:$HostName " $Info
+		return $Result.StatusDescription
+	}	
 }
 }
 
@@ -161,48 +151,54 @@ Function Add-RemoveHostWWN_WSAPI
 	Recommended method for removing WWN from host. Operates the same as using the PUT method with the pathOperation specified as REMOVE.
 .PARAMETER AddWwnToTZone   
 	Adds WWN to target driven zone. Creates the target driven zone if it does not exist, and adds the WWN to the host if it does not exist.
+	
 .PARAMETER RemoveWwnFromTZone
 	Removes WWN from the targetzone. Removes the target driven zone unless it is the last WWN. Does not remove the last WWN from the host.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$HostName,
-		[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String[]]			$FCWWNs,
-		[Parameter(ValueFromPipeline=$true)][String[]]							$Port,
-		[Parameter(ValueFromPipeline=$true)][switch]							$AddWwnToHost,
-		[Parameter(ValueFromPipeline=$true)][switch]							$RemoveWwnFromHost,
-		[Parameter(ValueFromPipeline=$true)][switch]							$AddWwnToTZone,
-		[Parameter(ValueFromPipeline=$true)][switch]							$RemoveWwnFromTZone
+Param(	[Parameter(Mandatory=$true)]
+		[String]	$HostName,
+		[Parameter(Mandatory=$true)]
+		[String[]]	$FCWWNs,
+		[String[]]	$Port,
+		[Parameter(ParameterSetName = 'Add', Mandatory=$true)]
+		[switch]	$AddWwnToHost,
+		[Parameter(ParameterSetName = 'Remove',	Mandatory=$true)]
+		[switch]	$RemoveWwnFromHost,
+		[Parameter(ParameterSetName = 'AddT', Mandatory=$true)]
+		[switch]	$AddWwnToTZone,
+		[Parameter(ParameterSetName = 'RemoveT', Mandatory=$true)]
+		[switch]	$RemoveWwnFromTZone
 )
 Begin 
-{	Test-WSAPIConnection 
+{	Test-WSAPIConnection
 }
 Process 
 {	Write-DebugLog "Running: Creation of the body hash" $Debug
     $body = @{}
-    If($AddWwnToHost) 			{	$body["action"] = 1	}
-	elseif($RemoveWwnFromHost)	{	$body["action"] = 2	}
-	elseIf($AddWwnToTZone) 		{	$body["action"] = 3	}
-	elseif($RemoveWwnFromTZone)	{	$body["action"] = 4	}
-	else						{	return "Please Select at-list one on above Action [AddWwnToHost | AddWwnToTZone | AddWwnToTZone | RemoveWwnFromTZone]"	}
+    If($AddWwnToHost) 			{	$body["action"] = 1 }
+	if($RemoveWwnFromHost)		{	$body["action"] = 2	}
+	If($AddWwnToTZone) 			{	$body["action"] = 3 }
+	if($RemoveWwnFromTZone)		{	$body["action"] = 4	}	
 	$ParametersBody = @{} 
-    If($FCWWNs) 				{	$ParametersBody["FCWWNs"] = $FCWWNs	}
-	If($Port) 					{	$ParametersBody["port"] = $Port		}
-	if($ParametersBody.Count -gt 0){$body["parameters"] = $ParametersBody }
+    If($FCWWNs) {	$ParametersBody["FCWWNs"] = $FCWWNs    }
+	If($Port)     {	$ParametersBody["port"] = $Port}
+	if($ParametersBody.Count -gt 0)	{	$body["parameters"] = $ParametersBody 	}
     $Result = $null
 	$uri = '/hosts/'+$HostName
-    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
+    $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Executed Successfully with Host : $HostName" $Info
-			Get-Host_WSAPI -HostName $HostName
-			Write-DebugLog "End: Add-RemoveHostWWN_WSAPI" $Debug
-		}
+	{	write-host "`nCmdlet executed successfully.`n" -foreground green
+		Write-DebugLog "SUCCESS: Command Executed Successfully with Host : $HostName" $Info
+		Get-Host_WSAPI -HostName $HostName
+		Write-DebugLog "End: Add-RemoveHostWWN_WSAPI" $Debug
+	}
 	else
-		{	write-host "`n FAILURE : Cmdlet Execution failed with Host : $HostName. `n"
-			Write-DebugLog "cmdlet Execution failed with Host : $HostName." $Info
-			return $Result.StatusDescription
-		}	
+	{	write-host "FAILURE : Cmdlet Execution failed with Host : $HostName." -foreground red
+		Write-DebugLog "cmdlet Execution failed with Host : $HostName." $Info
+		return $Result.StatusDescription
+	}	
 }
 }
 
@@ -251,76 +247,71 @@ Function Update-Host_WSAPI
 	1) ADD : Add host chap or path.
 	2) REMOVE : Remove host chap or path.
 .PARAMETER Persona
-	The ID of the persona to modify the host’s persona to. It can only be one of the following { GENERIC | GENERIC_ALUA | GENERIC_LEGACY | 
-	HPUX_LEGACY | AIX_LEGACY | EGENERA | ONTAP_LEGACY | VMWARE | OPENVMS | HPUX | WindowsServer | AIX_ALUA }
+	The ID of the persona to modify the host’s persona to. Can be one of the following { GENERIC | GENERIC_ALUA | GENERIC_LEGACY |HPUX_LEGACY
+	AIX_LEGACY | EGENERA | ONTAP_LEGACY | VMWARE | OPENVMS | HPUX | WindowsServer | AIX_ALUA }
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$HostName,
-		[Parameter(ValueFromPipeline=$true)][String]					$ChapName,
-		[Parameter(ValueFromPipeline=$true)][int]						$ChapOperationMode,
-		[Parameter(ValueFromPipeline=$true)][Switch]					$ChapRemoveTargetOnly,
-		[Parameter(ValueFromPipeline=$true)][String]					$ChapSecret,
-		[Parameter(ValueFromPipeline=$true)][Switch]					$ChapSecretHex,
-		[Parameter(ValueFromPipeline=$true)]
-		[ValidateSet('INITIATOR','TARGET')][String]						$ChapOperation,
-		[Parameter(ValueFromPipeline=$true)][String]					$Descriptors,
-		[Parameter(ValueFromPipeline=$true)][String[]]					$FCWWN,
-		[Parameter(ValueFromPipeline=$true)][Switch]					$ForcePathRemoval,
-		[Parameter(ValueFromPipeline=$true)][String[]]					$iSCSINames,
-		[Parameter(ValueFromPipeline=$true)][String]					$NewName,
-		[Parameter(ValueFromPipeline=$true)]
-		[ValidateSet('ADD','REMOVE')]		[String]					$PathOperation,
-		[Parameter(ValueFromPipeline=$true)]
-		[ValidateSet('GENERIC','GENERIC_ALUA','GENERIC_LEGACY','HPUX_LEGACY','AIX_LEGACY','EGENERA','ONTAP_LEGACY','VMWARE','OPENVMS','HPUX')]
-											[String]					$Persona
-	)
+Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+		[String]	$HostName,
+		[String]	$ChapName,
+		[int]		$ChapOperationMode,
+		[Switch]	$ChapRemoveTargetOnly,
+		[String]	$ChapSecret,
+		[Switch]	$ChapSecretHex,
+		[ValidateSet('INITIATOR','TARGET')]
+		[String]	$ChapOperation,
+		[String]	$Descriptors,
+		[String[]]	$FCWWN,
+		[Switch]	$ForcePathRemoval,
+		[String[]]	$iSCSINames,
+		[String]	$NewName,
+		[ValidateSet('ADD','REMOVE')]
+		[String]	$PathOperation,
+		[ValidateSet('GENERIC','GENERIC_LEGACY','HPUX_LEGACY','AIX_LEGACY','EGENERA','ONTAP_LEGACY','VMWARE','OPENVMS','HPUX')]
+		[String]	$Persona
+)
 Begin 
-{	Test-WSAPIConnection
+{	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}		
-	If($ChapName) 					{	$body["chapName"] 				= "$($ChapName)"		}
-	If($ChapOperationMode) 			{	$body["chapOperationMode"] 		= $ChapOperationMode	}
-	If($ChapRemoveTargetOnly) 		{	$body["chapRemoveTargetOnly"] 	= $true					}
-	If($ChapSecret) 				{	$body["chapSecret"] 			= "$($ChapSecret)"		}
-	If($ChapSecretHex) 				{	$body["chapSecretHex"] 			= $true					}
-	if($ChapOperation -eq "INITIATOR"){	$body["chapOperation"] 			= 1 					}
-	if($ChapOperation -eq "TARGET")	{	$body["chapOperation"] 			= 2 					}
-	If($Descriptors) 				{	$body["descriptors"] 			= "$($Descriptors)"		}
-	If($FCWWN) 						{	$body["FCWWNs"] 				= $FCWWN				}
-	If($ForcePathRemoval) 			{	$body["forcePathRemoval"] 		= $true					}
-	If($iSCSINames) 				{	$body["iSCSINames"] 			= $iSCSINames			}
-	If($NewName) 					{	$body["newName"] 				= "$($NewName)"			}
-	if($PathOperation -eq "ADD")	{	$body["pathOperation"] 			= 1						}
-	if($PathOperation -eq "REMOVE")	{	$body["pathOperation"] 			= 2						}
-	if ($Persona -eq "GENERIC")	  	{	$body["persona"] = 1 }
-	if($Persona -eq "GENERIC_ALUA") {	$body["persona"] = 2 }
-	if($Persona -eq "GENERIC_LEGACY"){	$body["persona"] = 3 }
-	if($Persona -eq "HPUX_LEGACY")  {	$body["persona"] = 4 }
-	if($Persona -eq "AIX_LEGACY")   {	$body["persona"] = 5 }
-	if($Persona -eq "EGENERA")      { 	$body["persona"] = 6 }
-	if($Persona -eq "ONTAP_LEGACY") {	$body["persona"] = 7 }
-	if($Persona -eq "VMWARE")       {	$body["persona"] = 8 }
-	if($Persona -eq "OPENVMS")	  	{ 	$body["persona"] = 9 }
-	if($Persona -eq "HPUX")		  	{	$body["persona"] = 10}
+{	$body = @{}		
+	If($ChapName) 					{	$body["chapName"] = "$($ChapName)"    }
+	If($ChapOperationMode) 			{	$body["chapOperationMode"] = $ChapOperationMode    }
+	If($ChapRemoveTargetOnly) 		{	$body["chapRemoveTargetOnly"] = $true    }
+	If($ChapSecret) 				{	$body["chapSecret"] = "$($ChapSecret)"    }
+	If($ChapSecretHex) 				{	$body["chapSecretHex"] = $true    }
+	if($ChapOperation -eq "INITIATOR"){	$body["chapOperation"] = 1	}
+	if($ChapOperation -eq "TARGET")	{	$body["chapOperation"] = 2	}
+	If($Descriptors) 				{	$body["descriptors"] = "$($Descriptors)" }
+	If($FCWWN) 						{	$body["FCWWNs"] = $FCWWN    }
+	If($ForcePathRemoval) 			{	$body["forcePathRemoval"] = $true    }
+	If($iSCSINames) 				{	$body["iSCSINames"] = $iSCSINames    }
+	If($NewName) 					{	$body["newName"] = "$($NewName)"    }
+	if($PathOperation -eq "ADD")	{	$body["pathOperation"] = 1	}
+	if($PathOperation -eq "REMOVE")	{	$body["pathOperation"] = 2	}
+	if($Persona -eq "GENERIC")		{	$body["persona"] = 1		}
+	if($Persona -eq "GENERIC_ALUA")	{	$body["persona"] = 2		}
+	if($Persona -eq "GENERIC_LEGACY"){	$body["persona"] = 3		}
+	if($Persona -eq "HPUX_LEGACY")	{	$body["persona"] = 4		}
+	if($Persona -eq "AIX_LEGACY")	{	$body["persona"] = 5		}
+	if($Persona -eq "EGENERA")		{	$body["persona"] = 6		}
+	if($Persona -eq "ONTAP_LEGACY")	{	$body["persona"] = 7		}
+	if($Persona -eq "VMWARE")		{	$body["persona"] = 8		}
+	if($Persona -eq "OPENVMS")		{	$body["persona"] = 9		}
+	if($Persona -eq "HPUX")			{	$body["persona"] = 10		}
     $Result = $null
-	Write-DebugLog "Request: Request to Update-Host_WSAPI(Invoke-WSAPI)." $Debug	
 	$uri = '/hosts/'+$HostName
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Update Host : $HostName." $Info
-			if($NewName)	{	Get-Host_WSAPI -HostName $NewName	}
-			else			{	Get-Host_WSAPI -HostName $HostName	}
-			Write-DebugLog "End: Update-Host_WSAPI" $Debug
-		}
+	{	write-host "`n SUCCESS: Successfully Update Host : $HostName.`n" -foreground green
+		if($NewName){	Get-Host_WSAPI -HostName $NewName}
+		else		{	Get-Host_WSAPI -HostName $HostName	}
+	}
 	else
-		{	write-Error "`n FAILURE : While Updating Host : $HostName.`n"
-			Write-DebugLog "FAILURE : Updating Host : $HostName." $Info
-			return $Result.StatusDescription
-		}
+	{	write-Error "FAILURE : While Updating Host : $HostName." -foreground red
+		return $Result.StatusDescription
+	}
 }
 }
 
@@ -338,31 +329,25 @@ Function Remove-Host_WSAPI
 	Specify the name of Host to be removed.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory = $true,ValueFromPipeline=$True,ValueFromPipelinebyPropertyName=$True)]
+Param(	[Parameter(Mandatory = $true)]
 		[String]$HostName
 	)
 Begin 
-{	Test-WSAPIConnection
+{	Test-WSAPIConnection 
 }
 Process 
-{   Write-DebugLog "Running: Building uri to Remove-Host_WSAPI." $Debug
-	$uri = '/hosts/'+$HostName
+{	$uri = '/hosts/'+$HostName
 	$Result = $null
-	Write-DebugLog "Request: Request to Remove-Host_WSAPI : $HostName (Invoke-WSAPI)." $Debug
-	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
+	$Result = Invoke-WSAPI -uri $uri -type 'DELETE' 
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Host:$HostName successfully remove" $Info
-			Write-DebugLog "End: Remove-Host_WSAPI" $Debug
-			return ""
-		}
+	{	write-host "`n SUCCESS: Host:$HostName successfully removed."
+		return 
+	}
 	else
-		{	write-Error "`n FAILURE : While Removing Host:$HostName `n"
-			Write-DebugLog "FAILURE : While creating Host:$HostName " $Info
-			Write-DebugLog "End: Remove-Host_WSAPI" $Debug
-			return $Result.StatusDescription
-		}    	
+	{	write-host "FAILURE : While Removing Host:$HostName " -foreground red
+		return $Result.StatusDescription
+	}    
 }
 }
 
@@ -383,34 +368,31 @@ Function Get-Host_WSAPI
 	Specify name of the Host.
 #>
 [CmdletBinding()]
-Param(	[Parameter(ValueFromPipeline=$true)][String]	$HostName
+Param (	[String]	$HostName
 	)
 Begin 
-{	Test-WSAPIConnection	 
+{	Test-WSAPIConnection 	 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-Host_WSAPI HostName : $HostName (Invoke-WSAPI)." $Debug
-    $Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	if($HostName)
-		{	$uri = '/hosts/'+$HostName
-			$Result = Invoke-WSAPI -uri $uri -type 'GET'
-			If($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}	
-		}	
+	{	$uri = '/hosts/'+$HostName
+		$Result = Invoke-WSAPI -uri $uri -type 'GET' 
+		If($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json }	
+	}	
 	else
-		{	$Result = Invoke-WSAPI -uri '/hosts' -type 'GET'
-			If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
-		}
+	{	$Result = Invoke-WSAPI -uri '/hosts' -type 'GET' 
+		If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
+	}
 	If($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Get-Host_WSAPI successfully Executed." $Info
-			return $dataPS
-		}
+	{	write-host "`n SUCCESS: Get-Host_WSAPI successfully Executed.`n"
+		return $dataPS
+	}
 	else
-		{	write-Error "`n FAILURE : While Executing Get-Host_WSAPI.`n "
-			Write-DebugLog "FAILURE : While Executing Get-Host_WSAPI. " $Info
-			return $Result.StatusDescription
-		}
+	{	write-Error "FAILURE : While Executing Get-Host_WSAPI."
+		return $Result.StatusDescription
+	}
 }
 }
 
@@ -433,7 +415,7 @@ Function Get-HostWithFilter_WSAPI
 .EXAMPLE
 	Get-HostWithFilter_WSAPI -ISCSI "123,ABC,000" 
 	Get a host detail with multiple ISCSI name
-.EXAMPLE	
+.EXAMPLE
 	Get-HostWithFilter_WSAPI -WWN "xxx,xxx,xxx" -ISCSI "xxx,xxx,xxx" 
 .PARAMETER WWN
 	Specify WWN of the Host.
@@ -441,74 +423,72 @@ Function Get-HostWithFilter_WSAPI
 	Specify ISCSI of the Host.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Position=0, ValueFromPipeline=$true)][String]	$WWN,
-		[Parameter(Position=1, ValueFromPipeline=$true)][String]	$ISCSI
-	)
+Param(	[String]	$WWN,
+		[String]	$ISCSI
+)
 Begin 
-{	Test-WSAPIConnection 
+{	Test-WSAPIConnection 	 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-HostWithFilter_WSAPI HostName : $HostName (Invoke-WSAPI)." $Debug
-    $Result = $null
+{	$Result = $null
 	$dataPS = $null	
 	$Query="?query=""  """	
 	if($WWN)
-		{	$Query = $Query.Insert($Query.Length-3," FCPaths[ ]")
-			$count = 1
-			$lista = $WWN.split(",")
-			foreach($sub in $lista)
-				{	$Query = $Query.Insert($Query.Length-4," wwn EQ $sub")			
-					if($lista.Count -gt 1)
-						{	if($lista.Count -ne $count)
-								{	$Query = $Query.Insert($Query.Length-4," OR ")
-									$count = $count + 1
-								}				
-						}
-				}		
-		}	
+	{	$Query = $Query.Insert($Query.Length-3," FCPaths[ ]")
+		$count = 1
+		$lista = $WWN.split(",")
+		foreach($sub in $lista)
+		{	$Query = $Query.Insert($Query.Length-4," wwn EQ $sub")			
+			if($lista.Count -gt 1)
+			{	if($lista.Count -ne $count)
+				{	$Query = $Query.Insert($Query.Length-4," OR ")
+					$count = $count + 1
+				}				
+			}
+		}		
+	}	
 	if($ISCSI)
-		{	$Link
-			if($WWN)
-				{	$Query = $Query.Insert($Query.Length-2," OR iSCSIPaths[ ]")
-					$Link = 3
-				}
-			else
-				{	$Query = $Query.Insert($Query.Length-3," iSCSIPaths[ ]")
-					$Link = 5
-				}		
-			$count = 1
-			$lista = $ISCSI.split(",")
-			foreach($sub in $lista)
-				{	$Query = $Query.Insert($Query.Length-$Link," name EQ $sub")			
-					if($lista.Count -gt 1)
-						{	if($lista.Count -ne $count)
-								{	$Query = $Query.Insert($Query.Length-$Link," OR ")
-									$count = $count + 1
-								}				
-						}
-				}		
-		}	
+	{	$Link = $null
+		if($WWN)
+		{	$Query = $Query.Insert($Query.Length-2," OR iSCSIPaths[ ]")
+			$Link = 3
+		}
+		else
+		{	$Query = $Query.Insert($Query.Length-3," iSCSIPaths[ ]")
+			$Link = 5
+		}		
+		$count = 1
+		$lista = $ISCSI.split(",")
+		foreach($sub in $lista)
+		{	$Query = $Query.Insert($Query.Length-$Link," name EQ $sub")			
+			if($lista.Count -gt 1)
+			{	if($lista.Count -ne $count)
+				{	$Query = $Query.Insert($Query.Length-$Link," OR ")
+					$count = $count + 1
+				}				
+			}
+		}		
+	}
 	if($ISCSI -Or $WWN)	{	$uri = '/hosts/'+$Query }
-	else				{	return "Please select at list any one from [ISCSI | WWN]"	}	
-	$Result = Invoke-WSAPI -uri $uri -type 'GET'
+		else	{ 	Write-error "Command Failed, YOu must supply from [ISCSI | WWN]" 
+					return
+				}
+	$Result = Invoke-WSAPI -uri $uri -type 'GET' 
 	If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 	If($Result.StatusCode -eq 200)
-		{	if($dataPS.Count -gt 0)
-				{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-					Write-DebugLog "SUCCESS: Get-HostWithFilter_WSAPI successfully Executed." $Info
-					return $dataPS
-				}
-			else
-				{	write-Error "`n FAILURE : While Executing Get-HostWithFilter_WSAPI. Expected Result Not Found with Given Filter Option : ISCSI/$ISCSI WWN/$WWN. `n" 
-					Write-DebugLog "FAILURE : While Executing Get-HostWithFilter_WSAPI. Expected Result Not Found with Given Filter Option : ISCSI/$ISCSI WWN/$WWN." $Info
-					return 
-				}		
+	{	if($dataPS.Count -gt 0)
+		{	write-host "`n SUCCESS: Get-HostWithFilter_WSAPI successfully Executed. `n"
+			return $dataPS
 		}
+		else
+		{	write-Error "FAILURE : While Executing Get-HostWithFilter_WSAPI. Expected Result Not Found with Given Filter Option : ISCSI/$ISCSI WWN/$WWN."
+			return 
+		}		
+	}
 	else
-		{	write-Error "`n FAILURE : While Executing Get-HostWithFilter_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-HostWithFilter_WSAPI. " $Info
-			return $Result.StatusDescription
-		}
+	{	write-host "FAILURE : While Executing Get-HostWithFilter_WSAPI." -foreground red
+		return $Result.StatusDescription
+	}
 }
 }
 
@@ -536,82 +516,51 @@ Function Get-HostPersona_WSAPI
 	Multiple Host.
 .PARAMETER Id
 	Specify host persona id you want to query.
+.PARAMETER WsapiAssignedId
+	To filter by wsapi Assigned Id.
 #>
-[CmdletBinding()]
-Param(	[Parameter(ValueFromPipeline=$true)][int]			$Id,
-		[Parameter(ValueFromPipeline=$true)][string]		$WsapiAssignedId
+[CmdletBinding(DefaultParameterSetName='default')]
+Param(	[Parameter(ParameterSetName='ById')]			[int]		$Id,
+		[Parameter(ParameterSetName='ByAssignedId')]	[String]	$WsapiAssignedId	
 	)
 Begin 
-{	Test-WSAPIConnection	 
+{	Test-WSAPIConnection 	 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-HostPersona_WSAPI Id : $Id (Invoke-WSAPI)." $Debug
-    $Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	$Query="?query=""  """
-	if($Id)
-		{	$uri = '/hostpersonas/'+$Id
-			$Result = Invoke-WSAPI -uri $uri -type 'GET'
-			If($Result.StatusCode -eq 200)
-				{	$dataPS = $Result.content | ConvertFrom-Json
-					write-host "`n Cmdlet executed successfully. `n" -foreground green
-					Write-DebugLog "SUCCESS: Get-HostPersona_WSAPI successfully Executed." $Info
-					return $dataPS
-				}		
-			else
-				{	write-host "`n FAILURE : While Executing Get-HostPersona_WSAPI. `n"
-					Write-DebugLog "FAILURE : While Executing Get-HostPersona_WSAPI. " $Info
-					return $Result.StatusDescription
-				}	
+	if($Id)	{	$uri = '/hostpersonas/'+$Id	}
+	if($WsapiAssignedId)
+	{	$count = 1
+		$lista = $WsapiAssignedId.split(",")
+		foreach($sub in $lista)
+		{	$Query = $Query.Insert($Query.Length-3," wsapiAssignedId EQ $sub")			
+			if($lista.Count -gt 1)
+			{	if($lista.Count -ne $count)
+				{	$Query = $Query.Insert($Query.Length-3," OR ")
+					$count = $count + 1
+				}				
+			}
 		}
-	elseif($WsapiAssignedId)
-		{	$count = 1
-			$lista = $WsapiAssignedId.split(",")
-			foreach($sub in $lista)
-				{	$Query = $Query.Insert($Query.Length-3," wsapiAssignedId EQ $sub")			
-					if($lista.Count -gt 1)
-						{	if($lista.Count -ne $count)
-								{	$Query = $Query.Insert($Query.Length-3," OR ")
-									$count = $count + 1
-								}				
-						}
-				}
-			$uri = '/hostpersonas/'+$Query		
-			$Result = Invoke-WSAPI -uri $uri -type 'GET'
-			If($Result.StatusCode -eq 200)
-				{	$dataPS = ($Result.content | ConvertFrom-Json).members	
-					if($dataPS.Count -gt 0)
-						{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-							Write-DebugLog "SUCCESS: Get-HostPersona_WSAPI successfully Executed." $Info
-							return $dataPS
-						}
-					else
-						{	write-Error "`nFAILURE : While Executing Get-HostPersona_WSAPI. Expected Result Not Found with Given Filter Option : WsapiAssignedId/$WsapiAssignedId."
-							Write-DebugLog "FAILURE : While Executing Get-HostPersona_WSAPI. Expected Result Not Found with Given Filter Option : WsapiAssignedId/$WsapiAssignedId." $Info
-							return 
-						}
-				}
-			else
-				{	write-Error "`nFAILURE : While Executing Get-HostPersona_WSAPI.`n"
-					Write-DebugLog "FAILURE : While Executing Get-HostPersona_WSAPI. " $Info
-					return $Result.StatusDescription
-				}
+		$uri = '/hostpersonas/'+$Query		
+	}
+	if ($PSCmdlet.ParameterSetName -eq 'default')
+	{	$uri = '/hostpersonas'
+	}	
+	$Result = Invoke-WSAPI -uri $uri -type 'GET' 
+	If($Result.StatusCode -eq 200)
+		{	$dataPS = ($Result.content | ConvertFrom-Json).members	
+			write-host "`n SUCCESS: Get-HostPersona_WSAPI successfully Executed." -ForegroundColor Green
+			return $dataPS
 		}
-	else
-		{	$Result = Invoke-WSAPI -uri '/hostpersonas' -type 'GET'
-			If($Result.StatusCode -eq 200)
-				{	$dataPS = ($Result.content | ConvertFrom-Json).members	
-					write-host "`nCmdlet executed successfully.`n" -foreground green
-					Write-DebugLog "SUCCESS: Get-HostPersona_WSAPI successfully Executed." $Info
-					return $dataPS
-				}
-			else
-				{	write-Error "`nFAILURE : While Executing Get-HostPersona_WSAPI."
-					Write-DebugLog "FAILURE : While Executing Get-HostPersona_WSAPI. " $Info
-					return $Result.StatusDescription
-				}
-		}	
+		else
+		{	write-error "`n FAILURE : While Executing Get-HostPersona_WSAPI.`n" 
+			return $Result.StatusDescription
+		}
 }
 }
 
-Export-ModuleMember New-Host_WSAPI , Add-RemoveHostWWN_WSAPI , Update-Host_WSAPI , Remove-Host_WSAPI , Get-Host_WSAPI , Get-HostWithFilter_WSAPI , Get-HostPersona_WSAPI
+Export-ModuleMember New-Host_WSAPI , Add-RemoveHostWWN_WSAPI , Update-Host_WSAPI , Remove-Host_WSAPI , Get-Host_WSAPI 
+Export-ModuleMember Get-HostWithFilter_WSAPI , Get-HostPersona_WSAPI
+

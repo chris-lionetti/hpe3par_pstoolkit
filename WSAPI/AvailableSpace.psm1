@@ -1,5 +1,5 @@
-﻿####################################################################################
-## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
+﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
+##
 
 Function Get-CapacityInfo_WSAPI 
 {
@@ -78,19 +78,12 @@ Process
 { #Request 
   $Result = Invoke-WSAPI -uri '/capacity' -type 'GET'
   if($Result.StatusCode -eq 200)
-    { # Results
-      $IntermediateResult = $Result.content | ConvertFrom-Json
-      if ( ($IntermediateResult).AllCapacity )
-        { $IntermediateResult = ($IntermediateResult).AllCapacity
-        }
+    { $IntermediateResult = $Result.content | ConvertFrom-Json
+      if ( ($IntermediateResult).AllCapacity )  { $IntermediateResult = ($IntermediateResult).AllCapacity }
       $dataPS = $IntermediateResult
     }
-  else
-    { return $Result.StatusDescription
-    }
-  # Add custom type to the resulting oject for formating purpose
+  else  { return $Result.StatusDescription  }
   $AlldataPS = Format-Result -dataPS $dataPS -TypeName ($ArrayType + '.Capacity')
-  Write-DebugLog "End: Get-CapacityInfo_WSAPI(WSAPI)" $Debug
   return $AlldataPS
 }
 }

@@ -1,5 +1,4 @@
-﻿####################################################################################
-## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
+﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
 
 Function New-VvSnapshot_WSAPI 
@@ -79,14 +78,11 @@ Process
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{ 	write-host "`n Cmdlet executed successfully, `n" -foreground green
-			Write-DebugLog "SUCCESS: volume snapshot:$snpVVName created successfully" $Info		
+		{ 	write-host "`n SUCCESS: volume snapshot:$snpVVName created successfully. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-VvSnapshot_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While creating volume snapshot: $snpVVName `n"
-			Write-DebugLog "FAILURE : While creating volume snapshot: $snpVVName " $Info	
 			return $Result.StatusDescription
 		}
 }
@@ -149,9 +145,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	$VolumeGroupBody = @()
 	$ParameterBody = @{}
     $body["action"] = 8	
@@ -197,15 +191,12 @@ Process
     $Result = Invoke-WSAPI -uri '/volumes' -type 'POST' -body $body 
 	$status = $Result.StatusCode
 	if($status -eq 300)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Group snapshots of a virtual volumes list : $SnapshotName created successfully" $Info		
+		{	write-host "`n SUCCESS: Group snapshots of a virtual volumes list : $SnapshotName created successfully.`n" -foreground green
 			# Results
 			return $Result
-			Write-DebugLog "End: New-VvListGroupSnapshot_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While creating group snapshots of a virtual volumes list : $SnapshotName `n"
-			Write-DebugLog "FAILURE : While creating group snapshots of a virtual volumes list : $SnapshotName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -289,9 +280,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	$ParameterBody = @{}
     $body["action"] = "createPhysicalCopy"
     If ($DestVolume) 			{	$ParameterBody["destVolume"] = "$($DestVolume)"}    
@@ -301,7 +290,8 @@ Process
 				{	$ParameterBody["destCPG"] = $DestCPG
 				}
 			else
-				{	return "Specifies the destination CPG for an online copy."
+				{	write-error "Specifies the destination CPG for an online copy." 
+					return 				
 				}
 		}	
     If ($WWN) 					{	$ParameterBody["WWN"] 		= "$($WWN)"	}
@@ -323,14 +313,11 @@ Process
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Physical copy of a volume: $VolumeName created successfully" $Info	
+		{	write-host "`n SUCCESS: Physical copy of a volume: $VolumeName created successfully. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-VvPhysicalCopy_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While creating Physical copy of a volume : $VolumeName `n"
-			Write-DebugLog "FAILURE : While creating Physical copy of a volume : $VolumeName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -364,14 +351,11 @@ Process
 	Write-DebugLog "Request: Request to Reset-PhysicalCopy_WSAPI : $VolumeName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Resynchronize a physical copy to its parent volume : $VolumeName ." $Info		
+		{	write-host "`n SUCCESS: Successfully Resynchronize a physical copy to its parent volume : $VolumeName . `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Reset-PhysicalCopy_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While Resynchronizing a physical copy to its parent volume : $VolumeName `n"
-			Write-DebugLog "FAILURE : While Resynchronizing a physical copy to its parent volume : $VolumeName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -405,15 +389,11 @@ Process
 	Write-DebugLog "Request: Request to Stop-PhysicalCopy_WSAPI : $VolumeName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Stop a physical copy of : $VolumeName ." $Info				
-			# Results		
+		{	write-host "`n SUCCESS: Successfully Stop a physical copy of : $VolumeName. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Stop-PhysicalCopy_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While stopping a physical copy : $VolumeName `n "
-			Write-DebugLog "FAILURE : While stopping a physical copy : $VolumeName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -465,18 +445,13 @@ Process
 		}
     $Result = $null	
 	$uri = "/volumes/" + $VirtualCopyName
-    #Request
-	Write-DebugLog "Request: Request to Move-VirtualCopy_WSAPI : $VirtualCopyName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Promoted a virtual copy : $VirtualCopyName ." $Info
+		{	write-host "`n SUCCESS: Successfully Promoted a virtual copy : $VirtualCopyName. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Move-VirtualCopy_WSAPI" $Debug
 		}
 	else
-		{	write-Error "`n FAILURE : While Promoting a virtual copy : $VirtualCopyName `n"
-			Write-DebugLog "FAILURE : While Promoting a virtual copy : $VirtualCopyName " $Info
+		{	write-Error "`n FAILURE : While Promoting a virtual copy : $VirtualCopyName. `n"
 			return $Result.StatusDescription
 		}
 }
@@ -532,14 +507,11 @@ Process
 	Write-DebugLog "Request: Request to Move-VvSetVirtualCopy_WSAPI : $VVSetName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Promoted a VV-Set virtual copy : $VVSetName ." $Info
+		{	write-host "`n SUCCESS: Successfully Promoted a VV-Set virtual copy : $VVSetName. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Move-VvSetVirtualCopy_WSAPI" $Debug
 		}
 	else
 		{	write-host "`n FAILURE : While Promoting a VV-Set virtual copy : $VVSetName `n"
-			Write-DebugLog "FAILURE : While Promoting a VV-Set virtual copy : $VVSetName " $Info	
 			return $Result.StatusDescription
 		}
 }
@@ -588,9 +560,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	$ParameterBody = @{}
     $body["action"] = "createSnapshot"
 	If ($SnpVVName) 	{	$ParameterBody["name"] 		= "$($SnpVVName)"	}    
@@ -602,19 +572,15 @@ Process
 	If ($AddToSet) 		{	$ParameterBody["addToSet"] 	= "$($AddToSet)"	}
 	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody 	}
     $Result = $null	
-	Write-DebugLog "Request: Request to New-VvSetSnapshot_WSAPI : $SnpVVName (Invoke-WSAPI)." $Debug	
 	$uri = '/volumesets/'+$VolumeSetName	
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: VV-set snapshot : $SnpVVName created successfully" $Info
+		{	write-host "`n SUCCESS: VV-set snapshot : $SnpVVName created successfully. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-VvSetSnapshot_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While creating VV-set snapshot : $SnpVVName `n"
-			Write-DebugLog "FAILURE : While creating VV-set snapshot : $SnpVVName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -650,9 +616,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
+{	$body = @{}	
 	$ParameterBody = @{}
     $body["action"] = "createPhysicalCopy"
 	If ($DestVolume) 			{	$ParameterBody["destVolume"] = "$($DestVolume)"}    
@@ -662,20 +626,15 @@ Process
 	if($Priority -eq "LOW")		{	$ParameterBody["priority"] = 3 }
 	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody }
     $Result = $null	
-    #Request
-	Write-DebugLog "Request: Request to New-VvSetPhysicalCopy_WSAPI : $VolumeSetName (Invoke-WSAPI)." $Debug	
-	$uri = '/volumesets/'+$VolumeSetName
+    $uri = '/volumesets/'+$VolumeSetName
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Physical copy of a VV set : $VolumeSetName created successfully" $Info		
+		{	write-host "`n SUCCESS: Physical copy of a VV set : $VolumeSetName created successfully. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: New-VvSetPhysicalCopy_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While creating Physical copy of a VV set : $VolumeSetName `n"
-			Write-DebugLog "FAILURE : While creating Physical copy of a VV set : $VolumeSetName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -713,18 +672,13 @@ Process
 	if($Priority -eq "LOW")		{	$body["priority"] = 3	}
     $Result = $null	
 	$uri = "/volumesets/" + $VolumeSetName
-    #Request
-	Write-DebugLog "Request: Request to Reset-VvSetPhysicalCopy_WSAPI : $VolumeSetName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body	
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Resynchronize a VV set physical copy : $VolumeSetName ." $Info		
+		{	write-host "`n SUCCESS: Successfully Resynchronize a VV set physical copy : $VolumeSetName. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Reset-VvSetPhysicalCopy_WSAPI" $Debug
 		}
 	else
 		{	write-host "`n FAILURE : While Resynchronizing a VV set physical copy : $VolumeSetName `n" -foreground red
-			Write-DebugLog "FAILURE : While Resynchronizing a VV set physical copy : $VolumeSetName " $Info	
 			return $Result.StatusDescription
 		}
 }
@@ -761,18 +715,13 @@ Process
 	if($Priority -eq "LOW")		{	$body["priority"] = 3	}
     $Result = $null	
 	$uri = "/volumesets/" + $VolumeSetName
-    #Request
-	Write-DebugLog "Request: Request to Stop-VvSetPhysicalCopy_WSAPI : $VolumeSetName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body 
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Stop a VV set physical copy : $VolumeSetName ." $Info	
+		{	write-host "`n SUCCESS: Successfully Stop a VV set physical copy : $VolumeSetName. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Stop-VvSetPhysicalCopy_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`nFAILURE : While Stopping a VV set physical copy : $VolumeSetName `n"
-			Write-DebugLog "FAILURE : While Stopping a VV set physical copy : $VolumeSetName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -805,27 +754,21 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}
+{	$body = @{}
 	$ParameterBody = @{}
     $body["action"] = 7
     If ($VolumeSnapshotList) 	{	$ParameterBody["volumeSnapshotList"] = $VolumeSnapshotList}
 	If ($ReadOnly) 				{	$ParameterBody["readOnly"] = $ReadOnly			}
 	if($ParameterBody.Count -gt 0){	$body["parameters"] = $ParameterBody }
     $Result = $null	
-	Write-DebugLog "Request: Request to Update-VvOrVvSets_WSAPI : $VolumeSnapshotList (Invoke-WSAPI)." $Debug	
-    $Result = Invoke-WSAPI -uri '/volumes/' -type 'POST' -body $body
+	$Result = Invoke-WSAPI -uri '/volumes/' -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Virtual copies or VV-sets : $VolumeSnapshotList successfully Updated." $Info
+		{	write-host "`n SUCCESS: Virtual copies or VV-sets : $VolumeSnapshotList successfully Updated. `n" -foreground green
 			return $Result
-			Write-DebugLog "End: Update-VvOrVvSets_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While Updating virtual copies or VV-sets : $VolumeSnapshotList `n"
-			Write-DebugLog "FAILURE : While Updating virtual copies or VV-sets : $VolumeSnapshotList " $Info
 			return $Result.StatusDescription
 		}
 }

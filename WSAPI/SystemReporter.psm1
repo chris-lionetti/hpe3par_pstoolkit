@@ -190,19 +190,16 @@ Process
 	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-CacheMemoryStatisticsDataReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-CacheMemoryStatisticsDataReports_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-CacheMemoryStatisticsDataReports_WSAPI. Expected Result Not Found with Given Filter Option . `n"
-			Write-DebugLog "FAILURE : While Executing Get-CacheMemoryStatisticsDataReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-Error "`n FAILURE : While Executing Get-CacheMemoryStatisticsDataReports_WSAPI. `n"
-		Write-DebugLog "FAILURE : While Executing Get-CacheMemoryStatisticsDataReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -402,20 +399,17 @@ Process
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-CPGSpaceDataReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-CPGSpaceDataReports_WSAPI Successfully Executed `n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-CPGSpaceDataReports_WSAPI. Expected Result Not Found with Given Filter Option .`n"
-			Write-DebugLog "FAILURE : While Executing Get-CPGSpaceDataReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{
 		write-Error "`n FAILURE : While Executing Get-CPGSpaceDataReports_WSAPI.`n"
-		Write-DebugLog "FAILURE : While Executing Get-CPGSpaceDataReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -539,7 +533,6 @@ Process
 	else						{ 	Write-Error "Please select Frequency it is mandatory" 
 									Return  
 								}
-	#Build uri
 	$uri = '/systemreporter/'+$Action+'/cpgstatistics/'+$Frequency
 	if($CpgName) { if($AtTime) { return "We cannot pass CpgName in At Time report." } $uri = $uri+";name:$CpgName"}	
 	if($Groupby) {  $uri = $uri+";groupby:$Groupby"}
@@ -577,25 +570,20 @@ Process
 		$addQuery = "Yes"		
 	}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
-	#write-host "URL = $uri"	
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET' 
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-CPGStatisticalDataReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-CPGStatisticalDataReports_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-CPGStatisticalDataReports_WSAPI. Expected Result Not Found with Given Filter Option . `n"
-			Write-DebugLog "FAILURE : While Executing Get-CPGStatisticalDataReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-host "`n FAILURE : While Executing Get-CPGStatisticalDataReports_WSAPI.`n "
-		Write-DebugLog "FAILURE : While Executing Get-CPGStatisticalDataReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -706,7 +694,7 @@ Process
 	if($VersusTime)	{	$Action = "vstime"	}	
 	elseif($AtTime)	{	$Action = "attime"	}	
 	else			{	Write-Error "Please Select atlist any one from Versus Time or At Time for statistics report."
-						Resume-BitsTransfer
+						return
 					}	
 	if($Frequency_Hires)		{	$Frequency = "hires"	}	
 	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
@@ -753,25 +741,20 @@ Process
 		$addQuery = "Yes"		
 	}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET'
-	
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-CPUStatisticalDataReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-CPUStatisticalDataReports_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`nFAILURE : While Executing Get-CPUStatisticalDataReports_WSAPI. Expected Result Not Found with Given Filter Option .`n"
-			Write-DebugLog "FAILURE : While Executing Get-CPUStatisticalDataReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-Error "`n FAILURE : While Executing Get-CPUStatisticalDataReports_WSAPI.`n"
-		Write-DebugLog "FAILURE : While Executing Get-CPUStatisticalDataReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -892,10 +875,8 @@ Process
 	else						{ 	write-error "Please select Frequency it is mandatory"
 									return
 								}
-	#Build uri
 	$uri = '/systemreporter/'+$Action+'/physicaldiskcapacity/'+$Frequency		
 	if($Id) { if($AtTime) { return "We cannot pass Id in At Time report." } $uri = $uri+";id:$Id"}
-	#if($DiskType) { if($AtTime) { return "We cannot pass DiskType in At Time report." } $uri = $uri+";type:$DiskType"}
 	if($DiskType) 
 	{	if($AtTime)	{ 	write-error "We cannot pass DiskType in At Time report." 
 						return
@@ -926,19 +907,16 @@ Process
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-PDCapacityReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-PDCapacityReports_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-PDCapacityReports_WSAPI. Expected Result Not Found with Given Filter Option .`n"
-			Write-DebugLog "FAILURE : While Executing Get-PDCapacityReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-Error "`n FAILURE : While Executing Get-PDCapacityReports_WSAPI.`n "
-		Write-DebugLog "FAILURE : While Executing Get-PDCapacityReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -1073,7 +1051,6 @@ Process
 	else						{ 	write-error "Please select Frequency it is mandatory"
 									return
 								}
-	#Build uri
 	$uri = '/systemreporter/'+$Action+'/physicaldiskstatistics/'+$Frequency
 	if($Id) { if($AtTime) { return "We cannot pass Id in At Time report." } $uri = $uri+";id:$Id"}
 	if($DiskType) { if($AtTime) { return "We cannot pass DiskType in At Time report." } $uri = $uri+";type:$DiskType"}
@@ -1108,25 +1085,20 @@ Process
 		$addQuery = "Yes"		
 	}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
-	#write-host "URL = $uri"
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET' 
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-PDStatisticsReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-PDStatisticsReports_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-PDStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option .`n" 
-			Write-DebugLog "FAILURE : While Executing Get-PDStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
-	{	write-host "FAILURE : While Executing Get-PDStatisticsReports_WSAPI." -foreground red
-		Write-DebugLog "FAILURE : While Executing Get-PDStatisticsReports_WSAPI." $Info
+	{	write-error "FAILURE : While Executing Get-PDStatisticsReports_WSAPI." 
 		return $Result.StatusDescription
 	}
 }	
@@ -1280,7 +1252,6 @@ Process
 	else						{ 	write-error "Please select Frequency it is mandatory" 
 									return
 								}
-	#Build uri
 	$uri = '/systemreporter/'+$Action+'/physicaldiskspacedata/'+$Frequency		
 	if($Id) { 	if($AtTime) { return "We cannot pass Id in At Time report." } 
 				$uri = $uri+";id:$Id"
@@ -1322,25 +1293,20 @@ Process
 					$addQuery = "Yes"		
 				}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
-	#write-host "URL = $uri"
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET' 
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-PDSpaceReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-PDSpaceReports_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-error "`nFAILURE : While Executing Get-PDSpaceReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
-			Write-DebugLog "FAILURE : While Executing Get-PDSpaceReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-error "FAILURE : While Executing Get-PDSpaceReports_WSAPI."
-		Write-DebugLog "FAILURE : While Executing Get-PDSpaceReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -1473,7 +1439,6 @@ Process
 	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
 	elseif($Frequency_Daily)	{	$Frequency = "daily"	}	
 	else						{ 	Return "Please select Frequency it is mandatory" }	
-	#Build uri
 	$uri = '/systemreporter/'+$Action+'/portstatistics/'+$Frequency
 	if($NSP) 	{ 	if($AtTime) { return "We cannot pass NSP in At Time report." } 
 					$uri = $uri+";portPos:$NSP"
@@ -1485,20 +1450,13 @@ Process
 	if($Summary) 	{ 	$uri = $uri+";summary:$Summary"}
     if($Compareby)
 	{ 	$cmpVal = $Compareby.ToLower()
-		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")
-		{	$uri = $uri+";compareby:$cmpVal,"
-		}
-		else
-		{	return "Compareby should be either top or bottom"
-		}
-		if($NoOfRecords)
-		{	$uri = $uri+$NoOfRecords+","
-		}
-		else
-		{	return "NoOfRecords is mandatory with Compareby. "
-		}
-		if($ComparebyField)		{	$uri = $uri+$ComparebyField	}
-		else	{	return "ComparebyField is mandatory with Compareby.please see the parameter help for this"	}		
+		if($cmpVal -eq "top" -OR $cmpVal -eq "bottom")	{	$uri = $uri+";compareby:$cmpVal,"}
+		else				{	return "Compareby should be either top or bottom"	}
+		if($NoOfRecords)	{	$uri = $uri+$NoOfRecords+","	}
+		else				{	return "NoOfRecords is mandatory with Compareby. "
+							}
+		if($ComparebyField)	{	$uri = $uri+$ComparebyField	}
+		else				{	return "ComparebyField is mandatory with Compareby.please see the parameter help for this"	}		
 	}		
 	if($GETime)
 	{	$Query = $Query.Insert($Query.Length-3," sampleTime GE $GETime")			
@@ -1509,30 +1467,24 @@ Process
 		$addQuery = "Yes"
 	}
 	if($LETime)
-	{	if($flg -eq "Yes")
-		{	$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")
-		}
+	{	if($flg -eq "Yes")	{	$Query = $Query.Insert($Query.Length-3," sampleTime LE $LETime")		}
 		$addQuery = "Yes"		
 	}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET' 	
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfull.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-PortStatisticsReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-PortStatisticsReports_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-error "`n FAILURE : While Executing Get-PortStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
-			Write-DebugLog "FAILURE : While Executing Get-PortStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info	
 			return 
 		}
 	}
 	else
 	{	write-host "FAILURE : While Executing Get-PortStatisticsReports_WSAPI." -foreground red
-		Write-DebugLog "FAILURE : While Executing Get-PortStatisticsReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -1682,7 +1634,6 @@ Process
 	elseif($Frequency_Hourly)	{	$Frequency = "hourly"	} 
 	elseif($Frequency_Daily)	{	$Frequency = "daily"	}	
 	else{ Return "Please select Frequency it is mandatory" }
-	#Build uri
 	$uri = '/systemreporter/'+$Action+'/qosstatistics/'+$Frequency
 	if($VvSetName) 
 	{ if($AtTime) { return "We cannot pass VvSetName in At Time report." }
@@ -1747,7 +1698,6 @@ Process
 	}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
 	write-host " uri = $uri"
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
@@ -1758,13 +1708,11 @@ Process
 		}
 		else
 		{	write-error "`n FAILURE : While Executing Get-QoSStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
-			Write-DebugLog "FAILURE : While Executing Get-QoSStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-error "`n FAILURE : While Executing Get-QoSStatisticalReports_WSAPI.`n" 
-		Write-DebugLog "FAILURE : While Executing Get-QoSStatisticalReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -1933,19 +1881,16 @@ Process
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-RCopyStatisticalReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-RCopyStatisticalReports_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-host "`n FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option .`n" 
-			Write-DebugLog "FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-error "`n FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI.`n" 
-		Write-DebugLog "FAILURE : While Executing Get-RCopyStatisticalReports_WSAPI." $Info
 		return $Result.StatusDescription
 	}
 }	
@@ -2158,19 +2103,16 @@ Process
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`nCmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-RCopyVolumeStatisticalReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-RCopyVolumeStatisticalReports_WSAPI Successfully Execute. `n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option. `n"
-			Write-DebugLog "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info	
 			return 
 		}
 	}
 	else
 	{	write-host "`n FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI.`n " 
-		Write-DebugLog "FAILURE : While Executing Get-RCopyVolumeStatisticalReports_WSAPI." $Info		
 		return $Result.StatusDescription
 	}
 }	
@@ -2343,19 +2285,16 @@ Process
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-vLunStatisticsReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-vLunStatisticsReports_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-error "`nFAILURE : While Executing Get-vLunStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
-			Write-DebugLog "FAILURE : While Executing Get-vLunStatisticsReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-Error "`nFAILURE : While Executing Get-vLunStatisticsReports_WSAPI." 
-		Write-DebugLog "FAILURE : While Executing Get-vLunStatisticsReports_WSAPI." $Info		
 		return $Result.StatusDescription
 	}
 }	
@@ -2570,25 +2509,20 @@ Process
 		$addQuery = "Yes"		
 	}
 	if($addQuery -eq "Yes")	{	$uri = $uri+$Query	}
-	#write-host "URL = $uri"
-	#Request
 	$Result = Invoke-WSAPI -uri $uri -type 'GET'
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	if($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-VvSpaceReports_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-VvSpaceReports_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
 		{	write-Error "`n FAILURE : While Executing Get-VvSpaceReports_WSAPI. Expected Result Not Found with Given Filter Option.`n"
-			Write-DebugLog "FAILURE : While Executing Get-VvSpaceReports_WSAPI. Expected Result Not Found with Given Filter Option." $Info
 			return 
 		}
 	}
 	else
 	{	write-Error "`n FAILURE : While Executing Get-VvSpaceReports_WSAPI.`n"
-		Write-DebugLog "FAILURE : While Executing Get-VvSpaceReports_WSAPI." $Info		
 		return $Result.StatusDescription
 	}
 }	
@@ -2631,7 +2565,6 @@ Process
 			}
 			else
 			{ 	Write-Error "FAILURE : -DiskType :- $DT is an Incorrect, Please Use [ FC | NL | SSD | SCM] only."
-				Write-DebugLog "Stop: Exiting Since -DiskType $DT in incorrect "
 				Return 
 			}						
 		}
@@ -2676,7 +2609,6 @@ Process
 			}
 			else
 			{ 	write-error "FAILURE : -RedType :- $RT is an Incorrect, Please Use [ R0 | R1 | R5 | R6 ] only ." 
-				Write-DebugLog "Stop: Exiting Since -RedType $RT in incorrect "
 				Return 
 			}						
 		}

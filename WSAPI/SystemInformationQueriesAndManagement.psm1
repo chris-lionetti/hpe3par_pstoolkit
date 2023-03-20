@@ -13,26 +13,24 @@ Function Get-System_WSAPI
 	Retrieve informations about the array.
 #>
 [CmdletBinding()]
-Param()
+Param(	[Parameter(DontShow)] $WsapiConnection = $WsapiConnection	
+)
 Begin 
-{	Test-WSAPIConnection
+{	Test-WSAPIConnection -WsapiConnection $WsapiConnection
 }
 Process 
 {	$Result = $null	
 	$dataPS = $null	
-	#Request
-	$Result = Invoke-WSAPI -uri '/system' -type 'GET'
+	$Result = Invoke-WSAPI -uri '/system' -type 'GET' -WsapiConnection $WsapiConnection
 	if($Result.StatusCode -eq 200)
 		{	$dataPS = $Result.content | ConvertFrom-Json
 		}	
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS:successfully Executed" $Info
+		{	write-host "`n SUCCESS:successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-System_WSAPI `n"
-			Write-DebugLog "FAILURE : While Executing Get-System_WSAPI" $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -108,94 +106,75 @@ Process
 {  	$body = @{}	
 	$ObjMain=@{}		
 	If ($RemoteSyslog) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["remoteSyslog"] = $RemoteSyslog
 		$ObjMain += $Obj				
     }
 	If ($RemoteSyslogHost) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["remoteSyslogHost"] = "$($RemoteSyslogHost)"
 		$ObjMain += $Obj
     }
 	If ($RemoteSyslogSecurityHost) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["remoteSyslogSecurityHost"] = "$($RemoteSyslogSecurityHost)"
 		$ObjMain += $Obj		
     }
 	If ($PortFailoverEnabled) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["portFailoverEnabled"] = $PortFailoverEnabled
 		$ObjMain += $Obj			
     }
 	If ($FailoverMatchedSet) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["failoverMatchedSet"] = $FailoverMatchedSet
 		$ObjMain += $Obj				
     }
 	If ($DisableDedup) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["disableDedup"] = $DisableDedup
 		$ObjMain += $Obj				
     }
 	If ($DisableCompr) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["disableCompr"] = $DisableCompr
 		$ObjMain += $Obj				
     }
 	If ($OverProvRatioLimit) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["overProvRatioLimit"] = $OverProvRatioLimit
 		$ObjMain += $Obj				
     }
 	If ($OverProvRatioWarning) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["overProvRatioWarning"] = $OverProvRatioWarning	
 		$ObjMain += $Obj			
     }
 	If ($AllowR5OnNLDrives) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["allowR5OnNLDrives"] = $AllowR5OnNLDrives	
 		$ObjMain += $Obj				
     }
 	If ($AllowR5OnFCDrives) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["allowR5OnFCDrives"] = $AllowR5OnFCDrives	
 		$ObjMain += $Obj				
     }
 	If ($ComplianceOfficerApproval) 
-	{
-		$Obj=@{}
+	{	$Obj=@{}
 		$Obj["complianceOfficerApproval"] = $ComplianceOfficerApproval	
 		$ObjMain += $Obj				
     }
-	
 	if($ObjMain.Count -gt 0)	{	$body["parameters"] = $ObjMain 	}	
     $Result = $null
-    #Request
 	Write-DebugLog "Request: Request to Update-System_WSAPI (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri '/system' -type 'PUT' -body $body
-	
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Update storage system parameters." $Info	
-			# Results		
+		{	write-host "`n SUCCESS: Successfully Update storage system parameters. `n" -foreground green
 			Get-System_WSAPI		
-			Write-DebugLog "End: Update-System_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While Updating storage system parameters.`n"
-			Write-DebugLog "FAILURE : While Updating storage system parameters." $Info
 			return $Result.StatusDescription
 		}
 }
@@ -226,25 +205,20 @@ Process
 	$APIurl = $Null
 	if($arrtyp.ToLower() -eq "3par")	{	$APIurl = 'https://'+$ip+':8080/api'	}	#$APIurl = "https://$($SANIPAddress):8080/api/v1"
 	if(($arrtyp.ToLower() -eq "primera") -or ($arrtyp.ToLower() -eq "alletra9000"))	{	$APIurl = 'https://'+$ip+':443/api'}	#$APIurl = "https://$($SANIPAddress):443/api/v1"
-    #Construct header
-	Write-DebugLog "Running: Constructing header." $Debug
 	$headers = @{}
     $headers["Accept"] = "application/json"
     $headers["Accept-Language"] = "en"
     $headers["Content-Type"] = "application/json"
     $headers["X-HP3PAR-WSAPI-SessionKey"] = $key	
-	#Request
-	if ($PSEdition -eq 'Core')	{	$Result = Invoke-WebRequest -Uri "$APIurl" -Headers $headers -Method GET -UseBasicParsing -SkipCertificateCheck } 
-	else {	$Result = Invoke-WebRequest -Uri "$APIurl" -Headers $headers -Method GET -UseBasicParsing  }
+	if ($PSEdition -eq 'Core')		{	$Result = Invoke-WebRequest -Uri "$APIurl" -Headers $headers -Method GET -UseBasicParsing -SkipCertificateCheck } 
+	else 							{	$Result = Invoke-WebRequest -Uri "$APIurl" -Headers $headers -Method GET -UseBasicParsing  }
 	if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json }
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS:successfully Executed" $Info
+		{	write-host "`n SUCCESS:successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 	else
 		{	write-Error "`nFAILURE : While Executing Get-Version_WSAPI`n "
-			Write-DebugLog "FAILURE : While Executing Get-Version_WSAPI" $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -273,13 +247,11 @@ Process
 	$Result = Invoke-WSAPI -uri '/wsapiconfiguration' -type 'GET'
 	if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS:successfully Executed" $Info
+		{	write-host "`n SUCCESS:successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-WSAPIConfigInfo. `n"
-			Write-DebugLog "FAILURE : While Executing Get-WSAPIConfigInfo" $Info
 			return $Result.StatusDescription
 	}
 }	
@@ -305,31 +277,26 @@ Function Get-Task_WSAPI
 Param(	[String]	$TaskID
 	)
 Begin 
-{	Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{	Test-WSAPIConnection 
 }
 Process 
 {	$Result = $null
 	$dataPS = $null	
-	#Build uri
 	if($TaskID)
 		{	$uri = '/tasks/'+$TaskID
-			#Request
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}
 		}
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/tasks' -type 'GET'
+		{	$Result = Invoke-WSAPI -uri '/tasks' -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 		}
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-Task_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-Task_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 	else
 		{	write-Error "FAILURE : While Executing Get-Task_WSAPI." 
-			Write-DebugLog "FAILURE : While Executing Get-Task_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -363,16 +330,12 @@ Process
 	Write-DebugLog "Request: Request to Stop-OngoingTask_WSAPI : $TaskID (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Successfully Cancels the ongoing task : $TaskID ." $Info	
-			# Results		
+		{	write-host "`n SUCCESS: Successfully Cancels the ongoing task : $TaskID. `n" -foreground green
 			return $Result		
-			Write-DebugLog "End: Stop-OngoingTask_WSAPI." $Debug
 		}
 	else
 		{
 		write-Error "`nFAILURE : While Cancelling the ongoing task : $TaskID `n"
-		Write-DebugLog "FAILURE : While Cancelling the ongoing task : $TaskID " $Info
 		return $Result.StatusDescription
 	}
 }

@@ -1,5 +1,4 @@
-﻿####################################################################################
-## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
+﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
 
 Function New-Cpg_WSAPI 
@@ -120,9 +119,7 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{	# Creation of the body hash
-	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}		
+{	$body = @{}		
     $body["name"] = "$($CPGName)"
     If ($Domain) 				{	$body["domain"] = "$($Domain)"	}
     If ($Template) 				{	$body["template"] = "$($Template)"}	 
@@ -220,20 +217,15 @@ Process
 	if($LDLayoutBody.Count -gt 0)
 		{	$body["LDLayout"] = $LDLayoutBody 
 		}	
-    #init the response var
     $Result = $null		
-    #Request
     $Result = Invoke-WSAPI -uri '/cpgs' -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: CPG:$CPGName created successfully" $Info
+		{	write-host "`n SUCCESS: CPG:$CPGName created successfully. `n" -foreground green
 			Get-Cpg_WSAPI -CPGName $CPGName
-			Write-DebugLog "End: New-Cpg_WSAPI" $Debug
 		}
 	else
 		{	write-error "`n FAILURE : While creating CPG:$CPGName `n"
-			Write-DebugLog "FAILURE : While creating CPG:$CPGName " $Info
 			return $Result.StatusDescription
 		}	
 }
@@ -358,9 +350,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	# Creation of the body hash
-	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}
+{	$body = @{}
     If ($NewName) 			{ 	$body["newName"] 			= "$($NewName)" 	} 
 	If($DisableAutoGrow) 	{ 	$body["disableAutoGrow"]	= $DisableAutoGrow 	} 
     If($RmGrowthLimit) 		{ 	$body["rmGrowthLimit"] 		= $RmGrowthLimit 	} 
@@ -452,21 +442,16 @@ Process
 	if($LDLayoutBody.Count -gt 0)				{	$body["LDLayout"] = $LDLayoutBody 	}
 	Write-DebugLog "Info:Body : $body" $Info    
     $Result = $null
-	#Build uri
-    $uri = '/cpgs/'+$CPGName	
-    #Request
+	$uri = '/cpgs/'+$CPGName	
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: CPG:$CPGName successfully Updated" $Info
+		{	write-host "`n SUCCESS: CPG:$CPGName successfully Updated. `n" -foreground green
 			if($NewName)	{	Get-Cpg_WSAPI -CPGName $NewName	}
 			else			{	Get-Cpg_WSAPI -CPGName $CPGName	}
-			Write-DebugLog "End: Update-Cpg_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While Updating CPG:$CPGName `n"
-			Write-DebugLog "FAILURE : While creating CPG:$CPGName " $Info	
 			return $Result.StatusDescription
 		}
 }
@@ -494,25 +479,16 @@ Begin
 { 	Test-WSAPIConnection
 }
 Process 
-{   #Build uri
-	Write-DebugLog "Running: Building uri to Remove-Cpg_WSAPI  ." $Debug
-	$uri = '/cpgs/'+$CPGName
-	#init the response var
+{   $uri = '/cpgs/'+$CPGName
 	$Result = $null
-	#Request
-	Write-DebugLog "Request: Request to Remove-Cpg_WSAPI : $CPGName (Invoke-WSAPI)." $Debug
 	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: CPG:$CPGName successfully remove" $Info
-			Write-DebugLog "End: Remove-Cpg_WSAPI" $Debug
-			return ""		
+		{	write-host "`n SUCCESS: CPG:$CPGName successfully remove. `n" -foreground green
+			return 		
 		}
 	else
 		{	write-Error "`n FAILURE : While Removing CPG:$CPGName `n"
-			Write-DebugLog "FAILURE : While creating CPG:$CPGName " $Info
-			Write-DebugLog "End: Remove-Cpg_WSAPI" $Debug
 			return $Result.StatusDescription
 		}    
 }
@@ -559,16 +535,12 @@ Process
 			}		
 	}
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: CPG:$CPGName Successfully Executed" $Info
-			# Add custom type to the resulting oject for formating purpose
-			Write-DebugLog "Running: Add custom type to the resulting object for formatting purpose" $Debug
+		{	write-host "`n SUCCESS: CPG:$CPGName Successfully Executed. `n" -foreground green
 			[array]$AlldataPS = Format-Result -dataPS $dataPS -TypeName ( $ArrayType + '.Cpgs' )		
 			return $AlldataPS
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-Cpg_WSAPI CPG:$CPGName `n"
-			Write-DebugLog "FAILURE : While Executing Get-Cpg_WSAPI CPG:$CPGName " $Info	
 			return $Result.StatusDescription
 		}
 }	

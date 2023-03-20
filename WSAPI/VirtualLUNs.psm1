@@ -56,15 +56,11 @@ Process
 	$status = $Result.StatusCode	
 	if($status -eq 201)
 		{
-		write-host "`nCmdlet executed successfully. `n" -foreground green
-		Write-DebugLog "SUCCESS: Successfully Created a VLUN" $Info	
+		write-host "`n SUCCESS: Successfully Created a VLUN. `n" -foreground green
 		Get-vLun_WSAPI -VolumeName $VolumeName -LUNID $LUNID -HostName $HostName	
-		Write-DebugLog "End: New-vLun_WSAPI" $Debug
 	}
 	else
 	{	write-Error "`nFAILURE : While Creating a VLUN.`n"
-		Write-DebugLog "FAILURE : Creating a VLUN" $Info
-		Write-DebugLog "End: New-vLun_WSAPI" $Debug
 		return $Result.StatusDescription
 	}	
 }
@@ -104,26 +100,17 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{   #Build uri
-	Write-DebugLog "Running: Building uri to Remove-vLun_WSAPI  ." $Debug
-	$uri = "/vluns/"+$VolumeName+","+$LUNID+","+$HostName
+{   $uri = "/vluns/"+$VolumeName+","+$LUNID+","+$HostName
 	if($NSP)	{	$uri = $uri+","+$NSP	}	
-	#init the response var
 	$Result = $null
-	#Request
-	Write-DebugLog "Request: Request to Remove-vLun_WSAPI : $CPGName (Invoke-WSAPI)." $Debug
 	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: VLUN Successfully removed with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]." $Info
-			Write-DebugLog "End: Remove-vLun_WSAPI" $Debug
+		{	write-host "`n SUCCESS: VLUN Successfully removed with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]. `n" -foreground green
 			return $Result		
 		}
 	else
 		{	write-Error "`n FAILURE : While Removing VLUN with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]. `n"
-			Write-DebugLog "FAILURE : While Removing VLUN with Given Values [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP ]." $Info
-			Write-DebugLog "End: Remove-vLun_WSAPI" $Debug
 			return $Result.StatusDescription
 		}    
 }
@@ -164,64 +151,39 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-vLun_WSAPI [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP] (Invoke-WSAPI)." $Debug
-    #Request
-	$Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	$uri = "/vluns/"+$Vlun_id+"/"
-	# Results
 	if($VolumeName)	{	$uri = $uri+$VolumeName	}
-	if($LUNID)		{	if($VolumeName)
-							{	$uri = $uri+","+$LUNID			
-							}
-						else
-							{	$uri = $uri+$LUNID
-							}
-		
+	if($LUNID)		{	if($VolumeName)							{	$uri = $uri+","+$LUNID	}
+						else									{	$uri = $uri+$LUNID		}		
 					}
-	if($HostName)	{	if($VolumeName -Or $LUNID)
-							{	$uri = $uri+","+$HostName			
-							}
-						else
-							{	$uri = $uri+$HostName
-							}
+	if($HostName)	{	if($VolumeName -Or $LUNID)				{	$uri = $uri+","+$HostName}
+						else									{	$uri = $uri+$HostName	}
 					}
-	if($NSP)		{	if($VolumeName -Or $LUNID -Or $HostName)
-							{	$uri = $uri+","+$NSP			
-							}
-						else
-							{	$uri = $uri+$NSP
-							}
+	if($NSP)		{	if($VolumeName -Or $LUNID -Or $HostName){	$uri = $uri+","+$NSP	}
+						else									{	$uri = $uri+$NSP		}
 					}
 	if($Vlun_id -Or $VolumeName -Or $LUNID -Or $HostName -Or $NSP)
-		{	#Request
-			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
-			If($Result.StatusCode -eq 200)
-				{	$dataPS = ($Result.content | ConvertFrom-Json).members
-				}
+		{	$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
+			If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 		}
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/vluns' -type 'GET' -WsapiConnection $WsapiConnection
-			If($Result.StatusCode -eq 200)
-				{	$dataPS = ($Result.content | ConvertFrom-Json).members			
-				}		
+		{	$Result = Invoke-WSAPI -uri '/vluns' -type 'GET' -WsapiConnection $WsapiConnection
+			If($Result.StatusCode -eq 200)		{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 		}
 	If($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -gt 0)
-				{	write-host "`nCmdlet executed successfully.`n" -foreground green
-					Write-DebugLog "SUCCESS: Get-vLun_WSAPI successfully Executed." $Info	
+				{	write-host "`n SUCCESS: Get-vLun_WSAPI successfully Executed.`n" -foreground green
 					return $dataPS
 				}
 			else
 				{	write-Error "`nFAILURE : While Executing Get-vLun_WSAPI. Expected Result Not Found [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP]." 
-					Write-DebugLog "FAILURE : While Executing Get-vLun_WSAPI. Expected Result Not Found [ VolumeName : $VolumeName | LUNID : $LUNID | HostName : $HostName | NSP : $NSP]" $Info
 					return 
 				}
 		}
 	else
 		{	write-Error "`nFAILURE : While Executing Get-vLun_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Get-vLun_WSAPI. " $Info	
 			return $Result.StatusDescription
 		}
 }
@@ -283,12 +245,9 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-vLunUsingFilters_WSAPI VVSetName : $VVSetName (Invoke-WSAPI)." $Debug
-    #Request
-	$Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	$Query="?query=""  """
-	# Results	
 	if($VolumeWWN)
 		{	$Query = LoopingFunction -Value $VolumeWWN -condition "volumeWWN" -flg $false -Query $Query		
 		}
@@ -325,9 +284,7 @@ Process
 				}
 		}
 	if($VolumeWWN -or $RemoteName -or $VolumeName -or $HostName -or $Serial)
-		{	#Build uri
-			$uri = '/vluns/'+$Query
-			#Request
+		{	$uri = '/vluns/'+$Query
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection		
 			If($Result.StatusCode -eq 200)
 				{	$dataPS = ($Result.content | ConvertFrom-Json).members			
@@ -335,19 +292,16 @@ Process
 		}		
 	If($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -gt 0)
-				{	write-host "`nCmdlet executed successfully.`n" -foreground green
-					Write-DebugLog "SUCCESS: Get-vLunUsingFilters_WSAPI successfully Executed." $Info
+				{	write-host "`n SUCCESS: Get-vLunUsingFilters_WSAPI successfully Executed.`n" -foreground green
 					return $dataPS
 				}
 			else
 				{	write-Error "`n FAILURE : While Executing Get-vLunUsingFilters_WSAPI. Expected Result Not Found with Given Filter Option : VolumeWWN/$VolumeWWN RemoteName/$RemoteName VolumeName/$VolumeName HostName/$HostName Serial/$Serial. `n" 
-					Write-DebugLog "FAILURE : While Executing Get-vLunUsingFilters_WSAPI. Expected Result Not Found with Given Filter Option : VolumeWWN/$VolumeWWN RemoteName/$RemoteName VolumeName/$VolumeName HostName/$HostName Serial/$Serial." $Info
 					return 
 				}
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-vLunUsingFilters_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-vLunUsingFilters_WSAPI. " $Info
 			return $Result.StatusDescription
 		}
 }

@@ -20,17 +20,14 @@ Begin
 Process 
 {	$Result = $null
 	$dataPS = $null	
-	#Request
 	$Result = Invoke-WSAPI -uri '/eventstream' -type 'GET'
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 	if($Result.StatusCode -eq 200)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Open-SSE_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Open-SSE_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Open-SSE_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Open-SSE_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -58,13 +55,11 @@ Process
 	$Result = Invoke-WSAPI -uri '/eventlog' -type 'GET'
 	if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-EventLogs_WSAPI Successfully Executed" $Info
+		{	write-host "`n SUCCESS: Command Get-EventLogs_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-EventLogs_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-EventLogs_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	

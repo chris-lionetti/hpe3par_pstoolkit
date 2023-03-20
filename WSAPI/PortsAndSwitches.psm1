@@ -52,13 +52,11 @@ Process
 		$Result = Invoke-WSAPI -uri $uri -type 'GET'
 		if($Result.StatusCode -eq 200)
 		{	$dataPS = $Result.content | ConvertFrom-Json
-			write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Get-Port_WSAPI successfully Executed." $Info
+			write-host "`n SUCCESS: Get-Port_WSAPI successfully Executed. `n" -foreground green
 			return $dataPS		
 		}
 		else
 		{	write-error "`nFAILURE : While Executing Get-Port_WSAPI.`n" 
-			Write-DebugLog "FAILURE : While Executing Get-Port_WSAPI. " $Info
 			return $Result.StatusDescription
 		}
 	}
@@ -93,13 +91,11 @@ Process
 		$Result = Invoke-WSAPI -uri $uri -type 'GET' 
 		If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 		if($dataPS.Count -gt 0)
-		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Get-Port_WSAPI successfully Executed." $Info
+		{	write-host "`n SUCCESS: Get-Port_WSAPI successfully Executed.`n" -foreground green
 			return $dataPS
 		}
 		else
-		{	write-host "`n FAILURE : While Executing Get-Port_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-Port_WSAPI." $Info
+		{	write-Error "`n FAILURE : While Executing Get-Port_WSAPI. `n"
 			return 
 		}
 	}
@@ -107,18 +103,17 @@ Process
 	{	$Result = Invoke-WSAPI -uri '/ports' -type 'GET' 
 		if($Result.StatusCode -eq 200) {	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 		if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Get-Port_WSAPI successfully Executed." $Info
+		{	write-host "`n SUCCESS: Get-Port_WSAPI successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 		else
-		{	write-host "`n FAILURE : While Executing Get-Port_WSAPI.`n" 
-			Write-DebugLog "FAILURE : While Executing Get-Port_WSAPI. " $Info
+		{	Write-Error "`n FAILURE : While Executing Get-Port_WSAPI.`n" 
 			return $Result.StatusDescription
 		} 
 	}
 }	
 }
+
 Function Get-IscsivLans_WSAPI 
 {
 <#
@@ -174,18 +169,15 @@ Process
 	$Result = Invoke-WSAPI -uri $uri -type 'GET'
 	if($Result.StatusCode -eq 200)	
 	{	$dataPS = ($Result.content | ConvertFrom-Json).members	
-		write-host "`nCmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: Command Get-IscsivLans_WSAPI Successfully Executed" $Info
+		write-host "`n SUCCESS: Command Get-IscsivLans_WSAPI Successfully Executed.`n" -foreground green
 		return $dataPS
 	}
 	else
 	{	write-error "`n FAILURE : While Executing Get-IscsivLans_WSAPI." 
-		Write-DebugLog "FAILURE : While Executing Get-IscsivLans_WSAPI." $Info		
 		return $Result.StatusDescription
 	}
 }	
 }
-
 
 Function Get-PortDevices_WSAPI 
 {
@@ -231,13 +223,11 @@ Process
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 			If($Result.StatusCode -eq 200) {	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 			if($dataPS.Count -gt 0)
-			{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-				Write-DebugLog "SUCCESS: Get-PortDevices_WSAPI successfully Executed." $Info
+			{	write-host "`n SUCCESS: Get-PortDevices_WSAPI successfully Executed. `n" -foreground green
 				return $dataPS
 			}
 			else
 			{	write-host "`n FAILURE : While Executing Get-PortDevices_WSAPI.`n "
-				Write-DebugLog "FAILURE : While Executing Get-PortDevices_WSAPI." $Info
 				return 
 			}
 		}
@@ -246,13 +236,11 @@ Process
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 			If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 			if($dataPS.Count -gt 0)
-			{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-				Write-DebugLog "SUCCESS: Get-PortDevices_WSAPI successfully Executed." $Info
+			{	write-host "`n SUCCESS: Get-PortDevices_WSAPI successfully Executed.`n" -foreground green
 				return $dataPS
 			}
 			else
 			{	write-host "`n FAILURE : While Executing Get-PortDevices_WSAPI. `n"
-				Write-DebugLog "FAILURE : While Executing Get-PortDevices_WSAPI." $Info
 				return 
 			}
 		}
@@ -283,8 +271,7 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-PortDeviceTDZ_WSAPI NSP : $NSP (Invoke-WSAPI)." $Debug
-    $Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	if($NSP)
 	{	$uri = '/portdevices/targetdrivenzones/'+$NSP
@@ -292,25 +279,22 @@ Process
 		If($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}	
 	}	
 	else
-	{	$Result = Invoke-WSAPI -uri '/portdevices/targetdrivenzones/' -type 'GET' -WsapiConnection $WsapiConnection
+	{	$Result = Invoke-WSAPI -uri '/portdevices/targetdrivenzones/' -type 'GET' 
 		If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}		
 	}
 
 	If($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
-			{	write-host "`nCmdlet executed successfully.`n" -foreground green
-				Write-DebugLog "SUCCESS: Get-PortDeviceTDZ_WSAPI successfully Executed." $Info
+			{	write-host "`n SUCCESS: Get-PortDeviceTDZ_WSAPI successfully Executed.`n" -foreground green
 				return $dataPS
 			}
 			else
 			{	write-error "`nFAILURE : While Executing Get-PortDeviceTDZ_WSAPI. `n"
-				Write-DebugLog "FAILURE : While Executing Get-PortDeviceTDZ_WSAPI." $Info
 				return 
 			}
 	}
 	else
 	{	write-error "`n FAILURE : While Executing Get-PortDeviceTDZ_WSAPI.`n"
-		Write-DebugLog "FAILURE : While Executing Get-PortDeviceTDZ_WSAPI. " $Info
 		return $Result.StatusDescription
 	}
 }
@@ -336,8 +320,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-FcSwitches_WSAPI NSP : $NSP (Invoke-WSAPI)." $Debug
-    $Result = $null
+{	$Result = $null
 	$dataPS = $null		
 	if($NSP)
 	{	$uri = '/portdevices/fcswitch/'+$NSP
@@ -346,18 +329,15 @@ Process
 	If($Result.StatusCode -eq 200)
 	{	if($dataPS.Count -gt 0)
 		{	write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Get-FcSwitches_WSAPI successfully Executed." $Info
 			return $dataPS
 		}
 		else
 		{	write-error "`nFAILURE : While Executing Get-FcSwitches_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-FcSwitches_WSAPI." $Info
 			return 
 		}
 	}
 	else
 	{	write-error "`nFAILURE : While Executing Get-FcSwitches_WSAPI.`n" 
-		Write-DebugLog "FAILURE : While Executing Get-FcSwitches_WSAPI. " $Info
 		return $Result.StatusDescription
 	}
 }
@@ -413,17 +393,13 @@ Process
 	if($iSCSIPortInfobody.Count -gt 0)	{	$body["iSCSIPortInfo"] = $iSCSIPortInfobody }
     $Result = $null	
 	$uri = '/ports/'+$NSP 
-	Write-DebugLog "Request: Request to Set-ISCSIPort_WSAPI : $NSP (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-	{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: iSCSI ports : $NSP successfully configure." $Info
+	{	write-host "`n SUCCESS: iSCSI ports : $NSP successfully configure.`n" -foreground green
 		return $Result		
-		Write-DebugLog "End: Set-ISCSIPort_WSAPI" $Debug
 	}
 	else
 	{	write-error "`nFAILURE : While Configuring iSCSI ports: $NSP `n "
-		Write-DebugLog "FAILURE : While Configuring iSCSI ports: $NSP " $Info
 		return $Result.StatusDescription
 	}
 }
@@ -475,15 +451,11 @@ Process
 	$Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body
 	$status = $Result.StatusCode	
 	if($status -eq 201)
-	{	write-host "`nCmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: VLAN on an iSCSI port :$NSP created successfully" $Info		
-		Write-DebugLog "End: New-IscsivLan_WSAPI" $Debug
+	{	write-host "`n SUCCESS: VLAN on an iSCSI port :$NSP created successfully.`n" -foreground green
 		return $Result
 	}
 	else
-	{	write-host "`nFAILURE : While creating VLAN on an iSCSI port : $NSP `n" 
-		Write-DebugLog "FAILURE : While VLAN on an iSCSI port : $NSP" $Info
-		Write-DebugLog "End: New-IscsivLan_WSAPI" $Debug
+	{	write-error "`nFAILURE : While creating VLAN on an iSCSI port : $NSP `n" 
 		return $Result.StatusDescription
 	}	
 }
@@ -528,15 +500,11 @@ Process
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body 
 	$status = $Result.StatusCode	
 	if($status -eq 201)
-	{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: VLAN on an iSCSI port :$NSP created successfully" $Info		
-		Write-DebugLog "End: New-IscsivLun_WSAPI" $Debug
+	{	write-host "`n SUCCESS: VLAN on an iSCSI port :$NSP created successfully`n" -foreground green
 		return $Result
 	}
 	else
 	{	write-error "`nFAILURE : While creating VLAN on an iSCSI port : $NSP `n" 
-		Write-DebugLog "FAILURE : While VLAN on an iSCSI port : $NSP" $Info
-		Write-DebugLog "End: New-IscsivLun_WSAPI" $Debug
 		return $Result.StatusDescription
 	}	
 }
@@ -584,7 +552,7 @@ Param(	[Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$true)]
 		[String]	$ISNSAddr
 )
 Begin 
-{	Test-WSAPIConnection -WsapiConnection $WsapiConnection
+{	Test-WSAPIConnection 
 }
 Process 
 {	$body = @{}		
@@ -597,17 +565,13 @@ Process
 	If ($ISNSAddr) 	{ 	$body["iSNSAddr"] ="$($ISNSAddr)" 	}
     $Result = $null	
 	$uri = "/ports/" + $NSP + "/iSCSIVlans/" + $VlanTag 
-	Write-DebugLog "Request: Request to Set-IscsivLan_WSAPI : $NSP (Invoke-WSAPI)." $Debug
-    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body -WsapiConnection $WsapiConnection
+    $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-	{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: Successfully configure VLAN on an iSCSI port : $NSP ." $Info
+	{	write-host "`n SUCCESS: Successfully configure VLAN on an iSCSI port : $NSP .`n" -foreground green
 		return $Result		
-		Write-DebugLog "End: Set-IscsivLan_WSAPI" $Debug
 	}
 	else
 	{	write-host "`n FAILURE : While Configuring VLAN on an iSCSI port : $NSP `n" 
-		Write-DebugLog "FAILURE : While Configuring VLAN on an iSCSI port : $NSP " $Info
 		return $Result.StatusDescription
 	}
 }
@@ -633,23 +597,18 @@ Begin
 {	Test-WSAPIConnection 
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    $body = @{}    
+{	$body = @{}    
     $body["action"] = 2
     $Result = $null
 	$uri = '/ports/'+$NSP 
     $Result = Invoke-WSAPI -uri $uri -type 'POST' -body $body -WsapiConnection $WsapiConnection
 	$status = $Result.StatusCode	
 	if($status -eq 200)
-	{	write-host "`nCmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: Successfully Reset an iSCSI port configuration $NSP" $Info		
-		Write-DebugLog "End: Reset-IscsiPort_WSAPI" $Debug
+	{	write-host "`n SUCCESS: Successfully Reset an iSCSI port configuration $NSP `n" -foreground green
 		return $Result
 	}
 	else
 	{	write-error "`nFAILURE : While Resetting an iSCSI port configuration : $NSP `n" 
-		Write-DebugLog "FAILURE : While Resetting an iSCSI port configuration : $NSP" $Info
-		Write-DebugLog "End: Reset-IscsiPort_WSAPI" $Debug		
 		return $Result.StatusDescription
 	}	
 }
@@ -671,32 +630,23 @@ Function Remove-IscsivLan_WSAPI
 	VLAN tag.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-		[String]	$NSP,
-
-		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-		[int]		$VlanTag
+Param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)][String]	$NSP,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)][int]		$VlanTag
 	)
 Begin 
 {	Test-WSAPIConnection
 }
 Process 
-{   Write-DebugLog "Running: Building uri to Remove-IscsivLan_WSAPI." $Debug
-	$uri = "/ports/"+$NSP+"/iSCSIVlans/"+$VlanTag 
+{   $uri = "/ports/"+$NSP+"/iSCSIVlans/"+$VlanTag 
 	$Result = $null
-	Write-DebugLog "Request: Request to Remove-IscsivLan_WSAPI : $NSP (Invoke-WSAPI)." $Debug
 	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 202)
-	{	write-host "`nCmdlet executed successfully.`n" -foreground green
-		Write-DebugLog "SUCCESS: Successfully remove an iSCSI port VLAN : $NSP" $Info
-		Write-DebugLog "End: Remove-IscsivLan_WSAPI" $Debug
+	{	write-host "`n SUCCESS: Successfully remove an iSCSI port VLAN : $NSP `n" -foreground green
 		return 
 	}
 	else
 	{	write-error "`nFAILURE : While Removing an iSCSI port VLAN : $NSP `n" 
-		Write-DebugLog "FAILURE : While Removing an iSCSI port VLAN : $NSP " $Info
-		Write-DebugLog "End: Remove-IscsivLan_WSAPI" $Debug
 		return $Result.StatusDescription
 	}    	
 }

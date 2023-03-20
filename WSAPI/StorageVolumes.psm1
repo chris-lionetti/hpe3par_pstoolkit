@@ -109,12 +109,8 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}	
-    # Name parameter
+{	$body = @{}	
     $body["name"] = "$($VVName)"
-    # cpg parameter
     If ($CpgName) 					{	$body["cpg"] 			= "$($CpgName)"	}
     If ($SizeMiB) 					{	$body["sizeMiB"] 		= $SizeMiB 		}
     If ($Id) 						{	$body["id"] 			= $Id 			}	
@@ -141,20 +137,14 @@ Process
 	If ($Compression) 				{	$body["compression"] 	= $true			}
 	if ($VvPolicies.Count -gt 0)	{	$body["policies"] 		= $VvPolicies 	}
     $Result = $null
-    #Request
-	Write-DebugLog "Request: Request to New-Vv_WSAPI : $VVName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri '/volumes' -type 'POST' -body $body
 	$status = $Result.StatusCode
 	if($status -eq 201)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Volumes:$VVName created successfully" $Info
-			# Results
+		{	write-host "`n SUCCESS: Volumes:$VVName created successfully`n" -foreground green
 			Get-Vv_WSAPI -VVName $VVName
-			Write-DebugLog "End: New-Vv_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While creating Volumes: $VVName `n"
-			Write-DebugLog "FAILURE : While creating Volumes: $VVName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -269,9 +259,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}
+{	$body = @{}
     If ($NewName) 			{	$body["newName"] 			= "$($NewName)"		}
     If ($Comment) 			{	$body["comment"] 			= "$($Comment)"    	}	
 	If ($WWN) 				{	$body["WWN"] 				= "$($WWN)"			}
@@ -305,23 +293,16 @@ Process
 	If ($RmSsSpcAllocLimit) {	$body["rmSsSpcAllocLimit"] 	= $true    			}
 	If ($RmUsrSpcAllocLimit){	$body["rmUsrSpcAllocLimit"] = $true    			}
 	if($VvPolicies.Count -gt 0){$body["policies"] 			= $VvPolicies 		}
-    #init the response var
     $Result = $null
 	$uri = '/volumes/'+$VVName 
-    #Request
-	Write-DebugLog "Request: Request to Update-Vv_WSAPI : $VVName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Volumes:$VVName successfully Updated" $Info	
-			# Results
+		{	write-host "`n SUCCESS: Volumes:$VVName successfully Updated`n" -foreground green
 			if($NewName)	{	Get-Vv_WSAPI -VVName $NewName	}
 			else			{	Get-Vv_WSAPI -VVName $VVName	}
-			Write-DebugLog "End: Update-Vv_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While Updating Volumes: $VVName `n"
-			Write-DebugLog "FAILURE : While Updating Volumes: $VVName " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -353,32 +334,23 @@ Begin
 {  Test-WSAPIConnection	
 }
 Process 
-{ 	Write-DebugLog "Request: Request fo vv Space Distributation (Invoke-WSAPI)." $Debug
-    #Request    
-	$Result = $null
+{ 	$Result = $null
 	$dataPS = $null			
-	#Build uri
-	#Request
 	if($VVName)
-		{	#Build uri
-			$uri = '/volumespacedistribution/'+$VVName
-			#Request
+		{	$uri = '/volumespacedistribution/'+$VVName
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 		}
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/volumespacedistribution' -type 'GET'
+		{	$Result = Invoke-WSAPI -uri '/volumespacedistribution' -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members 	}			
 		}
 	If($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Get-VvSpaceDistribution_WSAPI successfully Executed." $Info
+		{	write-host "`n SUCCESS: Get-VvSpaceDistribution_WSAPI successfully Executed. `n" -foreground green
 			return $dataPS
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-VvSpaceDistribution_WSAPI.`n"
-			Write-DebugLog "FAILURE : While Executing Get-VvSpaceDistribution_WSAPI. " $Info
 			return $Result.StatusDescription
 		}
 }
@@ -400,38 +372,27 @@ Function Resize-Vv_WSAPI
     Specifies the size (in MiB) to add to the volume user space. Rounded up to the next multiple of chunklet size (256 MiB or 1,000 MiB).
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory = $true,HelpMessage = 'Volume Name')]
-		[String]$VVName,
+Param(	[Parameter(Mandatory = $true)]	[String]$VVName,
 
-		[Parameter(Mandatory = $true,HelpMessage = 'Specifies the size in MiB to be added to the volume user space. The size is rounded up to the next multiple of chunklet size')]
-		[int]$SizeMiB
+		[Parameter(Mandatory = $true)]	[int]$SizeMiB
 )
 Begin 
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{}
+{	$body = @{}
 	$body["action"] = 3 # GROW_VOLUME 3 Increase the size of a virtual volume. refer Volume custom action enumeration
 	If ($SizeMiB) {	$body["sizeMiB"] = $SizeMiB	}
-    #init the response var
     $Result = $null	
 	$uri = '/volumes/'+$VVName 
-    #Request
-	Write-DebugLog "Request: Request to Resize-Vv_WSAPI : $VVName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
-		{	write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Volumes:$VVName successfully Updated" $Info
-			# Results		
+		{	write-host "`n SUCCESS: Volumes:$VVName successfully Updated.`n" -foreground green
 			Get-Vv_WSAPI -VVName $VVName		
-			Write-DebugLog "End: Resize-Vv_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`nFAILURE : While Growing Volumes: $VVName `n" 
-			Write-DebugLog "FAILURE : While Growing Volumes: $VVName " $Info
-			return $Result.StatusDescription
+		return $Result.StatusDescription
 		}
 }
 }
@@ -475,7 +436,7 @@ Function Compress-Vv_WSAPI
 	Enables (true) or disables (false) compression. You cannot compress a fully provisioned volume.
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory = $true,HelpMessage = 'Volume Name')]
+Param(	[Parameter(Mandatory = $true)]
 		[String]$VVName,
 
 		[ValidateSet('USR_CPG','SNP_CPG')]
@@ -486,7 +447,7 @@ Param(	[Parameter(Mandatory = $true,HelpMessage = 'Volume Name')]
 		[ValidateSet('TPVV','FPVV','TDVV','CONVERT_TO_DECO')]
 		[string]$ConversionOperation,
 		
-		[Parameter(Mandatory = $true,HelpMessage = 'Name of the new volume where the original logical disks are saved.')]
+		[Parameter(Mandatory = $true)]
 		[String]$KeepVV,
 		[Boolean]$Compression		
 )
@@ -494,9 +455,7 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{	Write-DebugLog "Running: Creation of the body hash" $Debug
-    # Creation of the body hash
-    $body = @{} 	
+{	$body = @{} 	
 	$body["action"] = 6	
 	if($TuneOperation -eq "USR_CPG")	{	$body["tuneOperation"] = 1	}
 	if($TuneOperation -eq "SNP_CPG")	{	$body["tuneOperation"] = 2	}
@@ -518,21 +477,15 @@ Process
 	If ($Compression) 					{	$body["compression"] = $false	 } 
 	$Result = $null	
 	$uri = '/volumes/'+$VVName 
-    #Request
-	Write-DebugLog "Request: Request to Compress-Vv_WSAPI : $VVName (Invoke-WSAPI)." $Debug
     $Result = Invoke-WSAPI -uri $uri -type 'PUT' -body $body
 	if($Result.StatusCode -eq 200)
 		{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-			Write-DebugLog "SUCCESS: Volumes:$VVName successfully Tune" $Info			
-			# Results		
 			Get-Vv_WSAPI -VVName $VVName		
-			Write-DebugLog "End: Compress-Vv_WSAPI" $Debug
 		}
 	else
 		{	write-Error "`n FAILURE : While Tuning Volumes: $VVName `n"
-			Write-DebugLog "FAILURE : While Tuning Volumes: $VVName " $Info	
 			return $Result.StatusDescription
-	}
+		}
 }
 }
 
@@ -606,26 +559,19 @@ Begin
 {	Test-WSAPIConnection -WsapiConnection $WsapiConnection	 
 }
 Process 
-{	Write-DebugLog "Request: Request to Get-Vv_WSAPI VVName : $VVName (Invoke-WSAPI)." $Debug
-    #Request
-	$Result = $null
+{	$Result = $null
 	$dataPS = $null	
 	$Query="?query=""  """	
-	# Results
 	if($VVName)
-		{	#Build uri
-			$uri = '/volumes/'+$VVName
-			#Request
+		{	$uri = '/volumes/'+$VVName
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 			If($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}		
 			If($Result.StatusCode -eq 200)
-				{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-					Write-DebugLog "SUCCESS: Get-Vv_WSAPI successfully Executed." $Info
+				{	write-host "`n SUCCESS: Get-Vv_WSAPI successfully Executed. `n" -foreground green
 					return $dataPS
 				}
 			else
 				{	write-Error "`n FAILURE : While Executing Get-Vv_WSAPI.`n "
-					Write-DebugLog "FAILURE : While Executing Get-Vv_WSAPI. " $Info			
 					return $Result.StatusDescription
 				}
 		}	
@@ -664,33 +610,26 @@ Process
 	if($WWN -Or $UserCPG -Or $SnapCPG -Or $CopyOf)	{	$Query = $Query.Insert($Query.Length-3," OR provisioningType EQ $PEnum")	}
 	else											{	$Query = $Query.Insert($Query.Length-3," provisioningType EQ $PEnum")	}	
 	if($WWN -Or $UserCPG -Or $SnapCPG -Or $CopyOf -Or $ProvisioningType)
-		{	#Build uri
-			$uri = '/volumes/'+$Query		
-			#Request
+		{	$uri = '/volumes/'+$Query		
 			$Result = Invoke-WSAPI -uri $uri -type 'GET' -WsapiConnection $WsapiConnection
 			If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}
 		}
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/volumes' -type 'GET' -WsapiConnection $WsapiConnection
+		{	$Result = Invoke-WSAPI -uri '/volumes' -type 'GET' -WsapiConnection $WsapiConnection
 			If($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members }	
 		}
 	If($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -gt 0)
-				{	write-host "`n Cmdlet executed successfully. `n" -foreground green
-					Write-DebugLog "SUCCESS: Get-Vv_WSAPI successfully Executed." $Info
+				{	write-host "`n SUCCESS: Get-Vv_WSAPI successfully Executed. `n" -foreground green
 					return $dataPS
 				}
 			else
 				{	write-Error "`n FAILURE : While Executing Get-Vv_WSAPI. Expected Result Not Found with Given Filter Option : UserCPG/$UserCPG | WWN/$WWN | SnapCPG/$SnapCPG | CopyOf/$CopyOf | ProvisioningType/$ProvisioningType.`n" 
-					Write-DebugLog "FAILURE : While Executing Get-Vv_WSAPI. Expected Result Not Found with Given Filter Option : UserCPG/$UserCPG | WWN/$WWN | SnapCPG/$SnapCPG | CopyOf/$CopyOf | ProvisioningType/$ProvisioningType." $Info
 					return 
 				}
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-Vv_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-Vv_WSAPI. " $Info
-		
 			return $Result.StatusDescription
 		}
 }
@@ -716,25 +655,16 @@ Begin
 {	Test-WSAPIConnection
 }
 Process 
-{   #Build uri
-	Write-DebugLog "Running: Building uri to Remove-Vv_WSAPI." $Debug
-	$uri = '/volumes/'+$VVName
-	#init the response var
+{   $uri = '/volumes/'+$VVName
 	$Result = $null
-	#Request
-	Write-DebugLog "Request: Request to Remove-Vv_WSAPI : $VVName (Invoke-WSAPI)." $Debug
 	$Result = Invoke-WSAPI -uri $uri -type 'DELETE'
 	$status = $Result.StatusCode
 	if($status -eq 200)
-		{	write-host "`n Cmdlet executed successfully. `n"
-			Write-DebugLog "SUCCESS: Volumes:$VVName successfully remove" $Info
-			Write-DebugLog "End: Remove-Vv_WSAPI" $Debug
-			return ""
+		{	write-host "`n SUCCESS: Volumes:$VVName successfully remove `n" -ForegroundColor green
+			return 
 		}
 	else
 		{	write-eRROR "`n FAILURE : While Removing Volume:$VVName `n"
-			Write-DebugLog "FAILURE : While creating Volume:$VVName " $Info
-			Write-DebugLog "End: Remove-Vv_WSAPI" $Debug
 			return $Result.StatusDescription
 		}    	
 }

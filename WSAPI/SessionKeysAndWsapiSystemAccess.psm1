@@ -1,11 +1,31 @@
-﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
-##		
+﻿####################################################################################
+## 	© 2020,2021 Hewlett Packard Enterprise Development LP
+##
 
 $Info = "INFO:"
 $Debug = "DEBUG:"
 $global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
 $global:ArrayType = $null
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+$global:LogInfo 	= $true
+$global:DisplayInfo = $true
+if(!$global:VSVersion)	{	$global:VSVersion = "v3.0"	}
+if(!$global:ConfigDir) 	{	$global:ConfigDir = $null 	}
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$curPath  = Split-Path -Path $MyInvocation.MyCommand.Definition | Split-path  
+$Global:pathLogs = join-path $curPath "X-Logs"
+write-host "Curpath = $CurPath"
+if(-Not (Test-Path $pathLogs) )
+	{	try	{	New-Item $pathLogs -Type Directory | Out-Null
+			}
+		catch
+			{	$global:LogInfo = $false
+				Write-Warning "Failed to create Logs Directory $_.Exception.ToString() Log file will not be created."
+			}
+	}
+[String]$temp 	= Get-Date -f s
+
 
 Function New-WSAPIConnection {
 <#	
@@ -34,126 +54,74 @@ Function New-WSAPIConnection {
 	Specify the array type ie. 3Par, Primera or Alletra9000
 #>
 [CmdletBinding()]
-param(
-			[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-			[String]	$ArrayFQDNorIPAddress,
+param(	[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+		[String]	$ArrayFQDNorIPAddress,
 
-			[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
-			[String]	$SANUserName=$null,
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true)]
+		[String]	$SANUserName,
 
-			[String]	$SANPassword=$null ,
+		[Parameter(ValueFromPipeline=$true)]
+		[String]
+		$SANPassword=$null ,
 
-			[Parameter(Mandatory=$true, ValueFromPipeline=$true, HelpMessage="Enter array type : 3par, primera or alletra9000")]
-			[ValidateSet("3par", "primera", "alletra9000")]
-			[String]	$ArrayType
+		[Parameter(Mandatory=$true, ValueFromPipeline=$true, HelpMessage="Enter array type : 3par, primera or alletra9000")]
+		[ValidateSet("3par", "Primera", "Alletra9000")]
+		[String]	$ArrayType
 		)
-#(self-signed) certificate,
-
-if ($PSEdition -eq 'Core')	{	} 
-else 
-{
-add-type @" 
-using System.Net; 
-using System.Security.Cryptography.X509Certificates; 
-public class TrustAllCertsPolicy : ICertificatePolicy { 
-	public bool CheckValidationResult( 
-		ServicePoint srvPoint, X509Certificate certificate, 
-		WebRequest request, int certificateProblem) { 
-		return true; 
-	} 
-} 
+Process
+{	#(self-signed) certificate,
+	if ($PSEdition -eq 'Core')
+	{} 
+	else 
+	{	add-type @" 
+			using System.Net; 
+			using System.Security.Cryptography.X509Certificates; 
+			public class TrustAllCertsPolicy : ICertificatePolicy 	{ public bool CheckValidationResult	( 	ServicePoint srvPoint, X509Certificate certificate, 
+																										WebRequest request, int certificateProblem
+																										) 
+																		{ 	return true; 	} 
+																	} 
 "@  
-	[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-}
-
-#END of (self-signed) certificate,
+		[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+	}
+	#END of (self-signed) certificate,
 	if(!($SANPassword))
 		{	$SANPassword1 = Read-host "SANPassword" -assecurestring
-			#$globalpwd = $SANPassword1
 			$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($SANPassword1)
 			$SANPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
 		}
-		
-		#Write-DebugLog "start: Entering function New-WSAPIConnection. Validating IP Address format." $Debug	
-		#if(-not (Test-IPFormat $ArrayFQDNorIPAddress))		
-		#{
-		#	Write-DebugLog "Stop: Invalid IP Address $ArrayFQDNorIPAddress" "ERR:"
-		#	return "FAILURE : Invalid IP Address $ArrayFQDNorIPAddress"
-		#}
-		
-		<#
-		# -------- Check any active CLI/PoshSSH session exists ------------ starts		
-		if($global:SANConnection){
-			$confirm = Read-Host "An active CLI/PoshSSH session exists.`nDo you want to close the current CLI/PoshSSH session and start a new WSAPI session (Enter y=yes n=no)"
-			if ($confirm.tolower() -eq 'y') {
-				Close-Connection
-			}
-			elseif ($confirm.tolower() -eq 'n') {
-				return
-			}
-		}
-		# -------- Check any active CLI/PoshSSH session exists ------------ ends
-		
-		# -------- Check any active WSAPI session exists ------------------ starts
-		if($global:WsapiConnection){
-			$confirm = Read-Host "An active WSAPI session exists.`nDo you want to close the current WSAPI session and start a new WSAPI session (Enter y=yes n=no)"
-			if ($confirm.tolower() -eq 'y') {
-				Close-WSAPIConnection
-			}
-			elseif ($confirm.tolower() -eq 'n') {
-				return
-			}
-		}
-		# -------- Check any active WSAPI session exists ------------------ ends		
-		#>
-		
-		#Write-DebugLog "Running: Completed validating IP address format." $Debug		
-		#Write-DebugLog "Running: Authenticating credentials - Invoke-WSAPI for user $SANUserName and SANIP= $ArrayFQDNorIPAddress" $Debug
-		
-		#URL
 		$APIurl = $null
-		if($ArrayType -eq "3par")		{	$global:ArrayType = "3par" 
-											$APIurl = "https://$($ArrayFQDNorIPAddress):8080/api/v1" 	
-										}
-		if($ArrayType -eq "primera")	{	$global:ArrayType = "Primera" 
-											$APIurl = "https://$($ArrayFQDNorIPAddress):443/api/v1" 	
-										}
-		if($ArrayType -eq "alletra9000"){	$global:ArrayType = "Alletra9000" 
-											$APIurl = "https://$($ArrayFQDNorIPAddress):443/api/v1" 	
-										}		
+		$Global:ArrayType = $ArrayType
+		if($ArrayType -eq "3par")		{	$APIurl = "https://$($ArrayFQDNorIPAddress):8080/api/v1" 	}
+		if($ArrayType -eq "primera")	{	$APIurl = "https://$($ArrayFQDNorIPAddress):443/api/v1" 	}
+		if($ArrayType -eq "alletra9000"){	$APIurl = "https://$($ArrayFQDNorIPAddress):443/api/v1" 	}
 		#connect to WSAPI
 		$postParams = @{user=$SANUserName;password=$SANPassword} | ConvertTo-Json 
 		$headers = @{}  
 		$headers["Accept"] = "application/json" 
 		Try
-		{	Write-DebugLog "Running: Invoke-WebRequest for credential data." $Debug
-			if ($PSEdition -eq 'Core')
-				{	$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing -SkipCertificateCheck
-				} 
+		{	if ($PSEdition -eq 'Core')
+			{	$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing -SkipCertificateCheck
+			} 
 			else 
-				{	$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing 
-				}
+			{	$credentialdata = Invoke-WebRequest -Uri "$APIurl/credentials" -Body $postParams -ContentType "application/json" -Headers $headers -Method POST -UseBasicParsing 
+			}
 		}
 		catch
-		{	Write-DebugLog "Stop: Exception Occurs" $Debug
-			Show-RequestException -Exception $_
-			write-Error "`n FAILURE : While establishing the connection. `n "
-			Write-DebugLog "FAILURE : While establishing the connection " $Info
+		{	Show-RequestException -Exception $_
+			write-error "`nFAILURE : While establishing the connection.`n" 
 			throw
-		}		
-		#$global:3parArray = $ArrayFQDNorIPAddress
+		}
 		$key = ($credentialdata.Content | ConvertFrom-Json).key
-		#$global:3parKey = $key
 		if(!$key)
-			{	Write-DebugLog "Stop: No key Generated"
-				Write-Error "Error: No key Generated"
-				return 		
-			}
+			{	write-error "Error: No key Generated" 
+				return 
+			}		
 		$SANC1 = New-Object "WSAPIconObject"
 		$SANC1.IPAddress = $ArrayFQDNorIPAddress					
-		$SANC1.Key = $key
+		$SANC1.Key = $key				
 		$Result = Get-System_WSAPI -WsapiConnection $SANC1
-		$SANC = New-Object "WSAPIconObject"
+		$SANC = New-Object "WSAPIconObject"		
 		$SANC.Id = $Result.id
 		$SANC.Name = $Result.name
 		$SANC.SystemVersion = $Result.systemVersion
@@ -164,22 +132,27 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 		$SANC.TotalCapacityMiB = $Result.totalCapacityMiB
 		$SANC.AllocatedCapacityMiB = $Result.allocatedCapacityMiB
 		$SANC.FreeCapacityMiB = $Result.freeCapacityMiB					
-		$SANC.Key = $key
+		$SANC.Key = $key		
 		$global:WsapiConnection = $SANC
 		$global:ArrayName = $Result.name
-
-		# Set to the prompt as "Array Name:Connection Type (WSAPI|CLI)>"		
-		Function global:prompt 
-		{	if ($global:WsapiConnection -ne $null)	{	$global:ArrayName + ":WSAPI>" } 
-			else									{	(Get-Location).Path + ">"	}
-		}			
-		Write-DebugLog "End: If there are no errors reported on the console then the SAN connection object is set and ready to be used" $Info		
-		#Write-Verbose -Message "Acquired token: $global:3parKey"
-		Write-Verbose -Message 'You are now connected to the HPE Storage system'
-		Write-Verbose -Message 'Show array informations:'	
+		Write-Verbose "End: If there are no errors reported on the console then the SAN connection object is set and ready to be used."		
+		Write-Verbose 'You are now connected to the HPE Storage system. `n Show array informations:'
+	# Start PowerShell Transcript
+		[String]$temp 	= Get-Date -f s
+		$timeStamp 		= $temp.ToString().Replace(":","-")
+		$Global:TranscriptPath = ($pathLogs + '\Transcript_' + $timeStamp)
+		try {	$dumpresult = Stop-Transcript -erroraction SilentlyContinue }
+		catch { }
+		Start-Transcript -path $TranscriptPath
+	#end Start PowerShell Transcript
 		return $SANC
 }
+}
+#End of New-WSAPIConnection
 
+############################################################################################################################################
+## FUNCTION Close-WSAPIConnection
+############################################################################################################################################
 Function Close-WSAPIConnection
 {
 <#
@@ -192,43 +165,30 @@ Function Close-WSAPIConnection
     Close-WSAPIConnection
 	Delete a WSAPI session key.
 #>
-[CmdletBinding(SupportsShouldProcess = $True,ConfirmImpact = 'High')]
+[CmdletBinding()]
 Param()
 Begin 
-{	Test-WSAPIConnection
-}
+{}
 Process 
-{	if ($pscmdlet.ShouldProcess($h.name,"Disconnect from array")) 
-		{	#Build uri
-			#$ip = $WsapiConnection.IPAddress
-			$key = $WsapiConnection.Key
-			Write-DebugLog "Running: Building uri to close wsapi connection cmdlet." $Debug
-			$uri = '/credentials/'+$key
-			#init the response var
-			$data = $null
-			#Request
-			Write-DebugLog "Request: Request to close wsapi connection (Invoke-WSAPI)." $Debug
-			$data = Invoke-WSAPI -uri $uri -type 'DELETE'
-			$global:WsapiConnection = $null
-			# Set to the default prompt as current path
-			if ($global:WsapiConnection -eq $null)
-				{	Function global:prompt {(Get-Location).Path + ">"}
+{	if ( $WsapiConnection -ne $null )
+	{	write-Verbose "Connection to a system has been detected. "
+		$key = $WsapiConnection.Key
+		Write-Verbose "Running: Building uri to close wsapi connection cmdlet." 
+		$uri = '/credentials/'+$key
+		Write-Verbose "Request: Request to close wsapi connection (Invoke-WSAPI)."
+		$data = Invoke-WSAPI -uri $uri -type 'DELETE'
+		Clear-Variable  WsapiConnection
+		write-warning "Stopping any running transcript."
+		try 	{	$dumpresult = Stop-Transcript -erroraction SilentlyContinue 
+					Clear-Variable dumpresult
 				}
-			return $data
-			<#
-				If ($global:3parkey) 
-					{	Write-Verbose -Message "Delete key session: $global:3parkey"
-						Remove-Variable -name 3parKey -scope global
-						Write-DebugLog "End: Key Deleted" $Debug
-					}
-				If ($global:3parArray) 
-					{	Write-Verbose -Message "Delete Array: $global:3parArray"
-						Remove-Variable -name 3parArray -scope global
-						Write-DebugLog "End: Delete Array: $global:3parArray" $Debug
-					}
-			#>
-		}
-	Write-DebugLog "End: Close-WSAPIConnection" $Debug
+		catch 	{ }
+		return $data
+	} 
+	else 
+	{	Test-WSAPIConnection
+		return
+	}
 }
 }
 

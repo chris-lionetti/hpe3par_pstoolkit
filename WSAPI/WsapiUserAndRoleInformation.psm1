@@ -27,25 +27,21 @@ Process
 {	$Result = $null
 	$dataPS = $null	
 	if($UserName)
-		{	#Request
-			$uri = '/users/'+$UserName
+		{	$uri = '/users/'+$UserName
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}
 		}	
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/users' -type 'GET'
+		{	$Result = Invoke-WSAPI -uri '/users' -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 		}
 	if($Result.StatusCode -eq 200)
 		{	if($dataPS.Count -eq 0)	{	return "No data Fount."	}
-			write-host "`n Cmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-Users_WSAPI Successfully Executed" $Info
+			write-host "`n SUCCESS: Command Get-Users_WSAPI Successfully Executed.`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-Users_WSAPI.`n "
-			Write-DebugLog "FAILURE : While Executing Get-Users_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
@@ -77,14 +73,12 @@ Process
 {	$Result = $null
 	$dataPS = $null		
 	if($RoleName)
-		{	#Request
-			$uri = '/roles/'+$RoleName
+		{	$uri = '/roles/'+$RoleName
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}
 		}	
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/roles' -type 'GET'
+		{	$Result = Invoke-WSAPI -uri '/roles' -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 		}
 	if($Result.StatusCode -eq 200)
@@ -92,13 +86,11 @@ Process
 				{	Write-Warning "No Data Found."
 					return
 				}
-			write-host "`nCmdlet executed successfully.`n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-Roles_WSAPI Successfully Executed" $Info	
+			write-host "`n SUCCESS: Command Get-Roles_WSAPI Successfully Executed`n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-Error "`nFAILURE : While Executing Get-Roles_WSAPI." -foreground red
-			Write-DebugLog "FAILURE : While Executing Get-Roles_WSAPI." $Info
 			return $Result.StatusDescription
 	}
 }	

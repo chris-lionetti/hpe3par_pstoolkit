@@ -27,14 +27,12 @@ Process
 {	$Result = $null
 	$dataPS = $null	
 	if($AOconfigName)
-		{	#Request
-			$uri = '/aoconfigurations/'+$AOconfigName
+		{	$uri = '/aoconfigurations/'+$AOconfigName
 			$Result = Invoke-WSAPI -uri $uri -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = $Result.content | ConvertFrom-Json	}
 		}	
 	else
-		{	#Request
-			$Result = Invoke-WSAPI -uri '/aoconfigurations' -type 'GET'
+		{	$Result = Invoke-WSAPI -uri '/aoconfigurations' -type 'GET'
 			if($Result.StatusCode -eq 200)	{	$dataPS = ($Result.content | ConvertFrom-Json).members	}	
 		}
 	if($Result.StatusCode -eq 200)
@@ -42,13 +40,11 @@ Process
 				{	write-warning "No Data Found."
 					return
 				}
-			write-host "`n Cmdlet executed successfully `n" -foreground green
-			Write-DebugLog "SUCCESS: Command Get-AOConfiguration_WSAPI Successfully Executed." $Info
+			write-host "`n SUCCESS: Command Get-AOConfiguration_WSAPI Successfully Executed. `n" -foreground green
 			return $dataPS		
 		}
 	else
 		{	write-Error "`n FAILURE : While Executing Get-AOConfiguration_WSAPI. `n"
-			Write-DebugLog "FAILURE : While Executing Get-AOConfiguration_WSAPI." $Info
 			return $Result.StatusDescription
 		}
 }	
