@@ -1,13 +1,7 @@
 ﻿####################################################################################
 ## 	© 2020,2021 Hewlett Packard Enterprise Development LP
-##
-
-$Info = "INFO:"
-$Debug = "DEBUG:"
-$global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
-#$global:VSLibraries = $global:VSLibraries.Substring(0,$global:VSLibraries.Length-4)
-
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+##	Description: 	Adaptive Optimization(AO) cmdlets 
+##		
 
 Function Test-CLIObject 
 {
@@ -29,25 +23,38 @@ Param(
 	}
 	return $IsObjectExisted
 	
-} # End FUNCTION Test-CLIObject
+}
 
-##########################################################################
-######################### FUNCTION Get-AOConfigurations ##############
-##########################################################################
 Function Get-AOConfigurations()
 {
 <#
-.SYNOPSIS
-	Get-AOConfigurations - Show Adaptive Optimization configurations.
-.DESCRIPTION
-	The Get-AOConfigurations command shows Adaptive Optimization (AO) configurations in the system.
-.PARAMETER Domain
-	Shows only AO configurations that are in domains with names matching
-	one or more of the <domain_name_or_pattern> argument. This option
-	does not allow listing objects within a domain of which the user is
-	not a member. Patterns are glob-style (shell-style) patterns (see
-	help on sub,globpat)
-.PARAMETER AOConfigurationName
+  .SYNOPSIS
+   Get-AOConfigurations - Show Adaptive Optimization configurations.
+
+  .DESCRIPTION
+   The Get-AOConfigurations command shows Adaptive Optimization (AO) configurations in
+   the system.
+
+  .EXAMPLE
+
+  .PARAMETER Domain
+   Shows only AO configurations that are in domains with names matching
+   one or more of the <domain_name_or_pattern> argument. This option
+   does not allow listing objects within a domain of which the user is
+   not a member. Patterns are glob-style (shell-style) patterns (see
+   help on sub,globpat)
+
+  .PARAMETER AOConfigurationName
+   
+  .Notes
+    NAME: Get-AOConfigurations
+    LASTEDIT 17-10-2019 
+    KEYWORDS: Get-AOConfigurations
+  
+  .Link
+    http://www.hpe.com
+
+ #Requires PS -Version 3.0
 #>
 [CmdletBinding()]
  param(
@@ -153,11 +160,8 @@ Function Get-AOConfigurations()
  {
 	Return $Result
  }
-} ##  End-of Get-AOConfigurations
+}
 
-##########################################################################
-######################### FUNCTION New-AOConfiguration ###############
-##########################################################################
 Function New-AOConfiguration()
 {
 <#
@@ -387,11 +391,8 @@ Function New-AOConfiguration()
  $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
  Write-DebugLog "Executing function : New-AOConfiguration command -->" INFO: 
  Return $Result
-} ##  End-of New-AOConfiguration
+}
 
-##########################################################################
-######################### FUNCTION Remove-AOConfiguration ############
-##########################################################################
 Function Remove-AOConfiguration()
 {
 <#
@@ -481,11 +482,8 @@ Function Remove-AOConfiguration()
  Write-DebugLog "Executing function : Remove-AOConfiguration command -->" INFO: 
  
  Return $Result
-} ##  End-of Remove-AOConfiguration
+}
 
-##########################################################################
-################## FUNCTION Start-AO ###################
-##########################################################################
 Function Start-AO()
 {
 <#
@@ -825,11 +823,8 @@ Function Start-AO()
  Write-DebugLog "Executing function : Start-AO command -->" INFO: 
  
  Return $Result
-} ##  End-of Start-AO
+}
 
-##########################################################################
-######################### FUNCTION Update-AOConfiguration ############
-##########################################################################
 Function Update-AOConfiguration()
 {
 <#
@@ -1066,6 +1061,6 @@ Function Update-AOConfiguration()
  $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
  Write-DebugLog "Executing function : Update-AOConfiguration. command -->" INFO: 
  Return $Result
-} ##  End-of Update-AOConfiguration.
+}
 
-Export-ModuleMember Get-AOConfigurations , New-AOConfiguration , Remove-AOConfiguration , Start-AO , Update-AOConfiguration
+Export-ModuleMember Get-AOConfigurations , New-AOConfiguration , Remove-AOConfiguration , Start-AO , Update-AOConfiguration, Test-CLIObject

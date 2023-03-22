@@ -1,8 +1,6 @@
 ﻿####################################################################################
 ## 	© 2019,2020, 2023 Hewlett Packard Enterprise Development LP
 ##
-## 	See LICENSE.txt included in this package
-##
 ##	Description: 	Common Module functions.
 ##		
 ##	Pre-requisites: Needs HPE 3PAR cli.exe for New-CLIConnection
@@ -185,7 +183,7 @@ Function Invoke-CLICommand
 	Requires HP3PAR CLI -Version 3.2.2
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory = $true)]	$Connection,
+Param(	[Parameter(Mandatory = $false)]	$Connection = $global:SANConnection,
 			
 		[Parameter(Mandatory = $true)]	[string]$Cmds  
 	)
@@ -282,13 +280,6 @@ Function Invoke-CLI
     Specify the encrypted password file location
 .PARAMETER cmd 
     Specify the command to be run for Virtual Connect
-.Notes
-    NAME:  Invoke-CLI    
-    LASTEDIT: 04/04/2012
-    KEYWORDS: 3parCLI
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
 param(	[Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
@@ -378,13 +369,6 @@ Function Test-Network ([string]$IPAddress)
     Test-Network -IPAddress 10.1.1.
 .PARAMETER IPAddress 
     Specify the IP address which needs to be pinged.
-.Notes
-    NAME:  Test-Network 
-	LASTEDITED: May 9 2012
-    KEYWORDS: Test-Network
-.Link
-	http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 Process
 {	$Status = Test-IPFormat $IPAddress
@@ -395,10 +379,7 @@ Process
 			$result = $ping.Send($IPAddress)
 			$Status = $result.Status.ToString()
 		}
-	catch [Exception]
-		{	## Server does not exist - skip it
-			$Status = "Failed"
-		}
+	catch [Exception]	{	$Status = "Failed" }
 	return $Status
 }
 }
@@ -438,7 +419,7 @@ Process
 	# $Validate = "Success"	
 	if (($null -eq $WsapiConnection) -or (-not ($WsapiConnection.IPAddress)) -or (-not ($WsapiConnection.Key))) 
 		{	Write-DebugLog "Stop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back."
-			Write-Warning "`nStop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back." -foreground yellow
+			Write-Warning "`nStop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back."
 			throw 
 		}
 	else 
@@ -488,8 +469,6 @@ Process
 	$headers["Content-Type"] = "application/json"
 	$headers["X-HP3PAR-WSAPI-SessionKey"] = $key
 	$data = $null
-	#write-host "url = $url"
-	# Request
 	If ($type -eq 'GET') 
 		{	Try {	Write-DebugLog "Request: Invoke-WebRequest for Data, Request Type : $type" $Debug          
 					if ($PSEdition -eq 'Core') 
@@ -695,8 +674,7 @@ Function Test-SSHSession
     Test-SSHSession -SANConnection $SANConnection
 #> 
 [CmdletBinding()]
-param(	[Parameter(ValueFromPipeline = $true)]
-		$SANConnection = $global:SANConnection 
+param(	$SANConnection = $global:SANConnection 
 	)
 Process
 {	$Result = Get-SSHSession | format-list
@@ -798,4 +776,26 @@ Process{
 }
 }
 
-Export-ModuleMember Test-IPFormat , Test-WSAPIConnection , Invoke-WSAPI , Format-Result , Show-RequestException , Test-SSHSession , Set-DebugLog , Test-Network , Invoke-CLI , Invoke-CLICommand , Test-FilePath , Test-PARCli , Test-PARCliTest, Test-CLIConnection
+Function Test-CLIConnectionB 
+{
+<#
+.SYNOPSIS
+	Validate CLI connection object. For Internal Use only.
+.DESCRIPTION
+	Validates if CLI connection object for VC and OA are null/empty    
+.EXAMPLE
+    Test-CLIConnection -SANConnection
+.PARAMETER -SANConnection 
+    Specify the VC or OA connection object. Ideally VC or Oa connection object is obtained by executing New-VCConnection or New-OAConnection.
+#>
+Param(	$SanConnection = $Global:SanConnection	
+	)
+Process{
+	if ( ($SANConnection -eq $null)  ) 		{	$Validate = $False	}
+	if ( -not ($SANConnection.IPAddress) ) 	{	$Validate = $False	}
+	if ( $Validate -eq $false ) 
+		{ throw "`nThis command failed as you must first connect to the device using the New-POSHSSHConnection Command. No Valid connection detected.`n"	}
+	return 
+}
+}
+Export-ModuleMember Test-CLIConnectionB, Test-IPFormat , Test-WSAPIConnection , Invoke-WSAPI , Format-Result , Show-RequestException , Test-SSHSession , Set-DebugLog , Test-Network , Invoke-CLI , Invoke-CLICommand , Test-FilePath , Test-PARCli , Test-PARCliTest, Test-CLIConnection

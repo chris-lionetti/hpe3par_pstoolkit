@@ -1,19 +1,10 @@
-﻿####################################################################################
-## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
+﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
-## 	See LICENSE.txt included in this package
-##
-##	Description: 	Common Logger 
-##		
 
 $global:LogInfo 	= $true
 $global:DisplayInfo = $true
-if(!$global:VSVersion)
-	{	$global:VSVersion = "v3.0"
-	}
-if(!$global:ConfigDir) 
-	{	$global:ConfigDir = $null 
-	}
+if(!$global:VSVersion)	{	$global:VSVersion = "v3.0"	}
+if(!$global:ConfigDir) 	{	$global:ConfigDir = $null 	}
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $curPath  = Split-Path -Path $MyInvocation.MyCommand.Definition |Split-path  
 $pathLogs = join-path $curPath "X-Logs"
@@ -92,11 +83,7 @@ Function Write-LogFile
     Specify the exception message
 #>
 [cmdletbinding()]
-Param(	[parameter(Position=0, mandatory = $true)]   
-		$TextLog
-
-		#[parameter(Position=1 ,mandatory = $true)]		
-		#$LogDebugInfo
+Param(	[parameter(mandatory = $true)]   	$TextLog
 	)
 Process
 {	# Sometimes Logs folder is not getting created in a scenario where the modules are imported and then the Logs folder is deleted by the user.
@@ -134,30 +121,12 @@ Function Write-DebugLog
 	as seen in the expected values.
 #>	
 [cmdletbinding()]
-Param(	[parameter(Position=0, mandatory = $true)][System.String]		$Message,
-		[parameter(Position=1, mandatory = $false)][System.String]		$MessageType     
+Param(	[parameter(mandatory = $true)]	[String]		$Message,
+		[parameter(mandatory = $false)]	[String]		$MessageType     
 	)
 Process
 {	#User Preference if he wants to see the display on PS console. User can swith the Display on/off by calling Set-DebugInfo $true $true.
-	# Display is disabled by default. 
-	$datetimeMessage = "$(Get-Date) " + $Message
-	if ($global:DisplayInfo)	
-		{	If ($MessageType -match "ERR:") 		{	# write-host $datetimeMessage -ForegroundColor RED
-													} 
-			elseIf ($MessageType -match "WARN:") 	{	#write-host $datetimeMessage -ForegroundColor DARKYELLOW 
-													} 
-			elseIf ($MessageType -match "WARNING:") {	#write-host $datetimeMessage -ForegroundColor DARKYELLOW 
-													} 
-			elseIf ($MessageType -match "INFO:") 	{	#write-host $datetimeMessage -ForegroundColor DARKGRAY 
-													} 
-			elseIf ($MessageType -match "DEBUG:") 	{	#write-host $datetimeMessage -ForegroundColor DARKGREEN 
-					# dont write any DEBUG messages on the console. Let them only be written in the log file.
-													} 
-			elseIf ($MessageType -match "OTH:") 	{	#write-host $datetimeMessage -ForegroundColor BLACK 
-													} 
-			Else 									{	#write-host $datetimeMessage	
-													}
-		}
+	# $datetimeMessage = "$(Get-Date) " + $Message
 	# Write to the debug log file the error message if  Set-DebugLog is set to true
 	$LogMessage = $MessageType + " " + $Message
 	Write-LogFile -TextLog $LogMessage
