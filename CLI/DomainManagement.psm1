@@ -27,39 +27,6 @@
 ##	History:		v3.0 - Created	
 #####################################################################################
 
-$Info = "INFO:"
-$Debug = "DEBUG:"
-$global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-############################################################################################################################################
-## FUNCTION Test-CLIObject
-############################################################################################################################################
-Function Test-CLIObject 
-{
-Param( 	
-    [string]$ObjectType, 
-	[string]$ObjectName ,
-	[string]$ObjectMsg = $ObjectType, 
-	$SANConnection = $global:SANConnection
-	)
-
-	$IsObjectExisted = $True
-	$ObjCmd = $ObjectType -replace ' ', '' 
-	$Cmds = "show$ObjCmd $ObjectName"
-	
-	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmds
-	if ($Result -like "no $ObjectMsg listed")
-	{
-		$IsObjectExisted = $false
-	}
-	return $IsObjectExisted
-	
-} # End FUNCTION Test-CLIObject
-
-##########################################################################
-######################### FUNCTION Get-Domain #########################
-##########################################################################
 Function Get-Domain()
 {
 <#

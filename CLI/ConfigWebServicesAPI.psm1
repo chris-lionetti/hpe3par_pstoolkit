@@ -3,7 +3,7 @@
 ##
 ##	Description: 	Configure Web Services API cmdlets 
 
-Function Get-Wsapi()
+Function Get-Wsapi
 {
 <#
 .SYNOPSIS
@@ -13,19 +13,45 @@ Function Get-Wsapi()
   status as Active, Inactive or Error. It also displays the current status of the HTTP and HTTPS ports and their port numbers. WSAPI server URL is
   also displayed.
 .EXAMPLE
-  Get-Wsapi -D
-.PARAMETER D
-  Shows WSAPI information in table format.
+  PS:> Get-Wsapi -d
+
+  service State                       : Enabled
+  HPE Primera UI State                : Active
+  server State                        : Active
+  HTTPS Port                          : 443
+  Number of Sessions Created          : 1
+  System Resource Usage               : 96
+  Number of Sessions Active           : 0
+  Version                             : 1.10.0
+  Event Stream State                  : Enabled
+  Max Number of SSE Sessions Allowed  : 5
+  Number of SSE Sessions Created      : 0
+  Number of SSE Sessions Active       : 0
+  Session Timeout                     : 15 Minutes
+  Policy                              : tls_strict,no_per_user_limit
+  API URL                             : https://192.168.1.81/api/v1
+
+.EXAMPLE
+  PS:> Get-Wsapi
+
+  Service    : Enabled
+  State      : Active
+  HTTPS_Port : 443
+  Version    : 1.10.0
+  API_URL    : https://192.168.1.81/api/v1
+
+.PARAMETER Detailed
+  Shows detailed WSAPI information.
 #>
 [CmdletBinding()]
-param( [switch]  $D
+param( [switch]  $Detailed
   )
 Begin
 { Test-CLIConnectionB
 }
 Process
 {   $Cmd = " showwsapi "
-    if($D)    {	$Cmd += " -d "  }
+    if($Detailed)    {	$Cmd += " -d "  }
     $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
     $range = $Result.count
     if($Result -match "-Service-")
@@ -51,23 +77,28 @@ Process
           $s = $s.Replace(':',',')
           $s = $s.Replace('https,','https:')
           $x = $s.split(', ')
-          if ( $x[1] -ne '' )
-          { $numc +=1
-            $s =  $x[0].trim() + ', ' + $x[1].trim()
-            $z = "`'$($x[0].trim()) `' : `'$($x[1].trim())`'"
-            if ($range -ne $numc) { $z += ','}
-            $ObjBuild += $z
+          if ( $x.count -gt 1)
+          { if ( $x[1] -ne '') 
+            { $numc += 1
+              $s =  $x[0].trim() + ', ' + $x[1].trim()
+              $z = "`'$($x[0].trim()) `' : `'$($x[1].trim())`'"
+              if ($x[0] -contains '-')
+              {}
+              else
+              { if ($range -ne $numc) { $z += ','}
+                $ObjBuild += $z
+              }
+            }
           }
         }
       $ObjBuild += ' }'
       $ReturnObj = ( $ObjBuild | convertFrom-Json )
-      write-host $ObjBuild
       return $ReturnObj
     }
 }
 }
 
-Function Get-WsapiSession()
+Function Get-WsapiSession
 {
 <#
 .SYNOPSIS
@@ -106,7 +137,7 @@ Process
 }
 }
 
-Function Remove-WsapiSession()
+Function Remove-WsapiSession
 {
 <#
 .SYNOPSIS
@@ -114,48 +145,48 @@ Function Remove-WsapiSession()
 .DESCRIPTION
   The Remove-WsapiSession command removes the WSAPI user connections from the current system.
 .EXAMPLE
-	Remove-WsapiSession -Id "1537246327049685" -User_name 3parxyz -IP_address "10.10.10.10"
-.PARAMETER Pat
+	Remove-WsapiSession -Id "1537246327049685" -username 3parxyz -IPAddress "10.10.10.10"
+.PARAMETER Patern
   Specifies that the <id>, <user_name> and <IP_address> specifiers are treated as glob-style (shell-style) patterns and all WSAPI user
   connections matching those patterns are removed. By default, confirmation is required to proceed with removing each connection
   unless the -f option is specified.
-.PARAMETER Dr
+.PARAMETER DryRun
   Specifies that the operation is a dry run and no connections are removed.
-.PARAMETER Close_sse
+.PARAMETER CloseSse
   Specifies that the Server Sent Event (SSE) connection channel will be
   closed. WSAPI session credential for SSE will not be removed.
 .PARAMETER id
   Specifies the Id of the WSAPI session connection to be removed.
-.PARAMETER user_name
+.PARAMETER username
   Specifies the name of the WSAPI user to be removed.
-.PARAMETER IP_address
+.PARAMETER IPAddress
   Specifies the IP address of the WSAPI user to be removed.
 #>
 [CmdletBinding()]
-param(                                [switch]  $Pat,
-                                      [switch]  $Dr,
-                                      [switch]  $Close_sse,
+param(                                [switch]  $Patern,
+                                      [switch]  $DryRun,
+                                      [switch]  $CloseSse,
         [Parameter(Mandatory=$true)]  [String]  $Id,
-        [Parameter(Mandatory=$true)]  [String]  $User_name,
-        [Parameter(Mandatory=$true)]  [String]  $IP_address
+        [Parameter(Mandatory=$true)]  [String]  $username,
+        [Parameter(Mandatory=$true)]  [String]  $IPAddress
 )
 begin
 { Test-CLIConnectionB
 }
 Process
 { $Cmd = " removewsapisession -f"
-  if($Pat)      {  $Cmd += " -pat " }
-  if($Dr)       {  $Cmd += " -dr "  }
-  if($Close_sse){  $Cmd += " $Close_sse " }
-  if($Id)       {  $Cmd += " $Id "  }
-  if($User_name){  $Cmd += " $User_name "}
-  if($IP_address){ $Cmd += " IP_address " }
+  if($Patern)     {  $Cmd += " -pat " }
+  if($DryRun)     {  $Cmd += " -dr "  }
+  if($CloseSse)   {  $Cmd += " $CloseSse " }
+  if($Id)         {  $Cmd += " $Id "  }
+  if($username)   {  $Cmd += " $username "}
+  if($IPAddress)  { $Cmd += " IP_address " }
   $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
   Return $Result
 } 
 }
 
-Function Set-Wsapi()
+Function Set-Wsapi
 {
 <#
 .SYNOPSIS
@@ -165,9 +196,6 @@ Function Set-Wsapi()
   including options to enable or disable the HTTP and HTTPS ports.
 .EXAMPLE
 	Set-Wsapi -Force -Enable_Http
-.PARAMETER Force
-  Forces the operation of the setwsapi command, bypassing the typical confirmation message.
-  At least one of the following options are required:
 .PARAMETER Pol
   Sets the WSAPI server policy:
   tls_strict       - only TLS connections using TLS 1.2 with secure ciphers will be accepted if HTTPS is enabled. This is the default policy setting.
@@ -181,18 +209,19 @@ Function Set-Wsapi()
   The default value is enable.
 #>
 [CmdletBinding()]
-param(  [switch]  $Force,
-        [String]  $Pol,
+param(  [ValidateSet('tls_strict','no_tls_strict')]
+        [String]  $Policy,
+        [ValidateRange(3,1440)]
         [String]  $Timeout,
-        [String]  $Evtstream
+        [String]  $Evtstream = 'enable'
   )
 begin
 { Test-CLIConnectionB
 }
 Process
 { $Cmd = " setwsapi "
-  if($Force)    {	$Cmd += " -f " }
-  if($Pol)      {	$Cmd += " -pol $Pol " }
+  $Cmd += " -f "
+  if($Policy)   {	$Cmd += " -pol $Policy " }
   if($Timeout)  {	$Cmd += " -timeout $Timeout " }
   if($Evtstream){	$Cmd += " -evtstream $Evtstream " }
   $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
@@ -200,7 +229,7 @@ Process
 } 
 }
 
-Function Start-Wsapi()
+Function Start-Wsapi
 {
 <#
 .SYNOPSIS
@@ -223,7 +252,7 @@ Process
 }
 }
 
-Function Stop-Wsapi()
+Function Stop-Wsapi
 {
 <#
 .SYNOPSIS

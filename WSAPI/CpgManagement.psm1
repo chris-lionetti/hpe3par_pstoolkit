@@ -1,7 +1,7 @@
 ﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
 
-Function New-Cpg_WSAPI 
+Function New-Cpg
 {
 <#
 .SYNOPSIS
@@ -231,7 +231,7 @@ Process
 }
 }
 
-Function Update-Cpg_WSAPI 
+Function Update-Cpg 
 {
 <#
 .SYNOPSIS
@@ -457,7 +457,7 @@ Process
 }
 }
 
-Function Remove-Cpg_WSAPI
+Function Remove-Cpg
 {
 <#	
 .SYNOPSIS
@@ -472,8 +472,7 @@ Function Remove-Cpg_WSAPI
     Specify name of the CPG.
 #>
 [CmdletBinding()]
-Param(	[Parameter(ValueFromPipelinebyPropertyName=$True)]
-		[String]$CPGName
+Param(	[String]$CPGName
 	)
 Begin 
 { 	Test-WSAPIConnection
@@ -494,7 +493,7 @@ Process
 }
 }
 
-Function Get-Cpg_WSAPI 
+Function Get-Cpg 
 {
 <#
 .SYNOPSIS	
@@ -546,7 +545,7 @@ Process
 }	
 }
 
-Export-ModuleMember New-Cpg_WSAPI
-Export-ModuleMember Update-Cpg_WSAPI
-Export-ModuleMember Remove-Cpg_WSAPI
-Export-ModuleMember Get-Cpg_WSAPI
+Export-ModuleMember New-Cpg
+Export-ModuleMember Update-Cpg
+Export-ModuleMember Remove-Cpg
+Export-ModuleMember Get-Cpg

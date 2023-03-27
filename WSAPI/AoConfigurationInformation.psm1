@@ -1,7 +1,7 @@
 ﻿## 	© 2019,2020,2023 Hewlett Packard Enterprise Development LP
 ##
 
-Function Get-AOConfiguration_WSAPI 
+Function Get-AOConfiguration
 {
 <#
 .SYNOPSIS	
@@ -18,7 +18,7 @@ Function Get-AOConfiguration_WSAPI
 	AO configuration name.
 #>
 [CmdletBinding()]
-Param(	[Parameter(ValueFromPipeline=$true)][String]		$AOconfigName
+Param(	[String]		$AOconfigName
 	)
 Begin 
 {	Test-WSAPIConnection
@@ -50,4 +50,4 @@ Process
 }	
 }
 
-Export-ModuleMember Get-AOConfiguration_WSAPI
+Export-ModuleMember Get-AOConfiguration

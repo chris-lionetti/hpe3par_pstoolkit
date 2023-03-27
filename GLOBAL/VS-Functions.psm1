@@ -160,6 +160,176 @@ $Info 					= "INFO:"
 $Debug 					= "DEBUG:"
 $global:VSLibraries 	= Split-Path $MyInvocation.MyCommand.Path
 
+
+Function New-PWSHObjectFromCLIOutput
+{
+[CmdletBinding()]
+param 	(	$InterimResults
+		)
+Process
+{	# First lets split up the return data. I will first split the data using blank lines and recurse back to this function with the individual objects
+	##########################
+		write-host "Start of the New-PWSHObject"
+		$BlankLines = @()
+		$LineNum = 0
+		foreach( $testline in $InterimResults)
+		{	if ($testline.trim() -eq '')
+			{ 	write-verbose "Blankline is $LineNum "
+				$BlankLines += $LineNum
+				# This makes an array of the blanklines, i.e. ( 0, 4, 7, 9) would mean that line 4 is blank, as is 7 as it 9. We also artificially add the last line 
+			}
+			$LineNum += 1
+		}
+		# The blanklines needs to contain the last line of data.
+		$BlankLines += ( $LineNum -1 )
+		$ReturnObject = @()
+		$Startline = 0
+		$BlankLines = ( $BlankLines | sort-object )
+		write-host "Test blanklines = $BlankLines, Count =" -nonewline
+		$BlankLines.count | out-string
+		$BlankLines | out-string
+	if ( $Blanklines.count -gt 1 )
+	{	write-host "Entering the recursive part of New-PWSHObject function."
+		foreach ( $entry in $BlankLines)
+		{	write-verbose "Doing a recursive call on a sub-table from the main table"
+			# subdivideds the data into groups. i.e. If blanklines is 0,4,7,9 it will create 3 objects from line 0-4, another from line 4-7, another from 7-9. 
+			write-host "The start and finish will be $startline and $entry "
+			$SingleResult = $InterimResults[$startline,$entry]
+			$ReturnObject += New-PWSHObjectFromCLIOutput $SingleResult
+			$Startline = $entry
+		}
+		return $ReturnObject
+	}
+	######################### end of the Split object recursion
+	###########################################################
+	# first lets trim any lines at the start that are just blank
+	write-host "Entering the Non-recursive part of New-PWSHObject function."
+	$InterimResults | out-string
+
+	$TestData = $InterimResults 
+	if ( $TestData[0].trim -eq '' )
+		{	write-verbose "Trimmed a blank first line from a table"
+			$InterimResults = $TestData[1,($TestData.count -1)]
+		}
+	# At this point, we know only single tables should be coming in		
+	if ( $InterimResults[1].Indexof('-------') -eq '-1' )
+	{	# this will detect lines that start with things like '------------------------------------connectivity-------------------------------------'
+		write-verbose "Detected that this is a none titled response, calling to create a object without a title"
+		$MyResult = New-PWSHObjectFromCLIOutputWithoutTitle $InterimResults
+		return $MyResult
+	}
+
+	$ReturnObj = @()
+	# First lets look for the object title
+	$TitleNotFound = $true
+	$HeaderNotFound = $true
+	foreach($Line in $InterimResults)
+	{	Write-verbose "Inside Titled Loop"
+		$ShouldSkipLine = $False
+		if ( $Line.Startwith('Total') )
+			{ 	write-verbose "This line is a total line and should be skipped"
+				$ShouldSkipLine = $true
+			}
+		if ( $line.trim('-') -eq '' )
+			{	write-verbose "This line contains ONLY dash marks, must be a seperator line"
+				$ShouldSkipLine = $true
+			}
+		if ( $TitleNotFound -eq $False -and $HeaderNotFound -eq $True )
+			{	# Detecting if the title has a second line 
+				$SecondTitleLine = ($Line.trim()).trim('-')
+				if ( $SecontTitleLine.split() -eq $SecondTitleLine )
+					{	Write-Verbose "This line must be a second line to the title....i.e. '   -line2-    '"
+						write-verbose "IgnoredLine = $SecondTitleLine"
+						$ShouldSkipLine = $true
+					}
+			}
+		if ( $ShouldSkipLine -eq $false)
+		{
+			if ( $Line.indexof('-------') -eq 0 )
+			{	if ( $TitleNotFound -eq $False)
+					{	$Jc = $CurrentObject | convertto-json | convertfrom-json
+						$ReturnObj += @{ $CurrentTitle = $Jc }
+					}
+				$TitleNotFound = $False
+				$CurrentTitle = $Line.Trim('-')
+				$LenghtOfHeaderName = $HeaderName.$LenghtOfHeaderName	
+				# Since a new header is found, the existing table header is invalid
+				$HeaderNotFound = $true		
+			}
+			elseif ( $HeaderNotFound )
+			{	# No Header found, so the next line should be a header.
+				$UnsplitHeader = $Line
+				$HeaderRaw1 = $Line.Split()		# Split the headers into columns
+				$HeaderRaw2 = $HeaderRaw1.where({ $_ -ne ""})	# Trim the empty items from the list
+				$HeaderNotFound = $False
+				$CurrentObject = @()
+			}
+			elseif ( $TitleNotFound -eq $false -and $HeaderNotFound -eq $False )
+			{	# This must be a data line or empty line
+				if ( $line.trim() -ne '')
+				{ 	$MySingleRow = @{}
+					foreach( $HeaderName in $HeaderRaw2 )
+					{	# Some of the data fields have spaces in the values, so need to extract from the data line the location start and end from the header hint.
+						$LengthOfHeaderName = $HeaderName.Length
+						$startPositionOfHeaderName = $UnsplitHeader.indexof($HeaderName)
+						$MyDataPointRaw = $Line.Substring($StartPositionOfHeaderName, $LengthOfHeaderName)	
+						$MyDataPoint1 = $MyDataPointRaw.trim()
+						$FixedHeaderName = $HeaderName.trim('-')
+						$MySingleRow["$FixedHeaderName"] = $MyDataPoint1
+					}
+					$CurrentObject += $MySingleRow
+				}
+			}
+		}
+	# Producing last object addition
+	$ReturnObj += @{ $CurrentTitle = $CurrentObject }
+	return $ReturnObj
+	}	
+}
+}
+
+Function New-PWSHObjectFromCLIOutputWithoutTitle
+{
+[CmdletBinding()]
+param (	$InterimResults)
+Begin
+{}
+Process
+{	write-verbose " Starting Function"
+	$HeaderNotFound = $true
+	foreach($Line in $InterimResults)
+	{	write-verbose "Processing $Line"
+		if ( $HeaderNotFound )
+		{	Write-verbose "No Header found, so the first line should be a header. `n"
+			$UnsplitHeader = $Line
+			$HeaderRaw1 = $Line.Split()		# Split the headers into columns
+			$HeaderRaw2 = $HeaderRaw1.where({ $_ -ne ""})	# Trim the empty items from the list
+			$HeaderNotFound = $False
+			$CurrentObject = @()
+		}
+		else
+		{	write-verbose "This is a data line "
+			if ( $line.trim() -ne '')
+			{ 	write-verbose "This data line is not NULL"
+				$MySingleRow = @{}
+				foreach( $HeaderName in $HeaderRaw2 )
+				{	# Some of the data fields have spaces in the values, so need to extract from the data line the location start and end from the header hint.
+					$LengthOfHeaderName = $HeaderName.Length
+					$startPositionOfHeaderName = $UnsplitHeader.indexof($HeaderName)
+					$MyDataPointRaw = $Line.Substring($StartPositionOfHeaderName, $LengthOfHeaderName)	
+					$MyDataPoint1 = $MyDataPointRaw.trim()
+					$FixedHeaderName = $HeaderName.trim('-')
+					$MySingleRow["$FixedHeaderName"] = $MyDataPoint1
+					write-verbose "Dataline addeded using $FixedHeaderName and $MyDataPoint1"
+				}
+				$CurrentObject += $MySingleRow
+			}
+		}
+	}
+	# Producing last object addition
+	return ( $CurrentObject | convertto-json | convertfrom-json )
+}
+}
 Function Invoke-CLICommand 
 {
 <#
@@ -798,4 +968,8 @@ Process{
 	return 
 }
 }
-Export-ModuleMember Test-CLIConnectionB, Test-IPFormat , Test-WSAPIConnection , Invoke-WSAPI , Format-Result , Show-RequestException , Test-SSHSession , Set-DebugLog , Test-Network , Invoke-CLI , Invoke-CLICommand , Test-FilePath , Test-PARCli , Test-PARCliTest, Test-CLIConnection
+Export-ModuleMember Test-CLIConnectionB,  Test-CLIConnection, Test-SSHSession, Test-WSAPIConnection , Test-Network ,
+					Invoke-WSAPI , Invoke-CLI , Invoke-CLICommand,
+					New-PWSHObjectFromCLIOutput, New-PWSHObjectFromCLIOutputWithoutTitle, 
+					Format-Result , Show-RequestException , Set-DebugLog ,  Test-IPFormat , Test-FilePath , 
+					Test-PARCli , Test-PARCliTest

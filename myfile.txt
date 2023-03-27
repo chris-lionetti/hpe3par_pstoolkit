@@ -1,0 +1,14 @@
+--------------------------------------------------------------------------------Midplane---------------------------------------------------------------------------------
+Cage -Name- -Manufacturer- --Assem_Part--- -Assem_Serial- -Firmware- -Type- ------WWN------- -Saleable_SN-- -Saleable_PN- -Spare_PN- -------Model_Name------- -Assem_Rev-
+   0 cage0  HPE            N9Z56-63002     PWBUCA1LMCH00N n/a        DCN5   51402EC010A247C0 PWBUCA1LMCH00N N9Z47A        P04039-001 HPE     600 4N           n/a        
+                                                                                                                                                                         
+------------------------------------------------Interface Card-------------------------------------------------
+Cage -I/F_card- -Name- -Manufacturer- -Assem_Part- -Assem_Serial- -Firmware- -Spare_PN- -Model_Name- Assem_Rev-
+   0          0 IOM 0  HPE            n/a          n/a            0704       n/a        n/a          n/a       
+   0          1 IOM 1  HPE            n/a          n/a            0704       n/a        n/a          n/a       
+                                                                                                               
+------------------------------------------------Power Supply------------------------------------------------
+Cage PS -----Name----- -Manufacturer- -Assem_Part- -Assem_Serial- Spare_PN-  ----Model_Name----- -Assem_Rev-
+   0  0 Power Supply 0 CHCNY          n/a          5WRVBA28JCS05X P04041-001 HPE 1700W PCM W/BBU n/a        
+   0  1 Power Supply 1 CHCNY          n/a          5WRVBA28JCS05K P04041-001 HPE 1700W PCM W/BBU n/a        
+                                                                                                            

@@ -1,603 +1,228 @@
 ﻿####################################################################################
 ## 	© 2020,2021 Hewlett Packard Enterprise Development LP
-##
-## 	Permission is hereby granted, free of charge, to any person obtaining a
-## 	copy of this software and associated documentation files (the "Software"),
-## 	to deal in the Software without restriction, including without limitation
-## 	the rights to use, copy, modify, merge, publish, distribute, sublicense,
-## 	and/or sell copies of the Software, and to permit persons to whom the
-## 	Software is furnished to do so, subject to the following conditions:
-##
-## 	The above copyright notice and this permission notice shall be included
-## 	in all copies or substantial portions of the Software.
-##
-## 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-## 	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-## 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-## 	THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-## 	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-## 	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-## 	OTHER DEALINGS IN THE SOFTWARE.
-##
-##	File Name:		DiskEnclosureManagement.psm1
 ##	Description: 	Disk Enclosure Management cmdlets 
-##		
-##	Created:		October 2019
-##	Last Modified:	October 2019
-##	History:		v3.0 - Created	
-#####################################################################################
+##
 
-$Info = "INFO:"
-$Debug = "DEBUG:"
-$global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-############################################################################################################################################
-## FUNCTION Test-CLIObject
-############################################################################################################################################
-Function Test-CLIObject 
-{
-Param( 	
-    [string]$ObjectType, 
-	[string]$ObjectName ,
-	[string]$ObjectMsg = $ObjectType, 
-	$SANConnection = $global:SANConnection
-	)
 
-	$IsObjectExisted = $True
-	$ObjCmd = $ObjectType -replace ' ', '' 
-	$Cmds = "show$ObjCmd $ObjectName"
-	
-	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmds
-	if ($Result -like "no $ObjectMsg listed")
-	{
-		$IsObjectExisted = $false
-	}
-	return $IsObjectExisted
-	
-} # End FUNCTION Test-CLIObject
 
-####################################################################################################################
-## FUNCTION Set-AdmitsPD
-####################################################################################################################
+
 Function Set-AdmitsPD
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Set-AdmitsPD command creates and admits physical disk definitions to enable the use of those disks.
-	
-  .DESCRIPTION
+.DESCRIPTION
     The Set-AdmitsPD command creates and admits physical disk definitions to enable the use of those disks.
-	
-  .EXAMPLE
-   Set-AdmitsPD 
-   This example admits physical disks.
-   
-  .EXAMPLE
-   Set-AdmitsPD -Nold
-   Do not use the PD (as identified by the <world_wide_name> specifier) For logical disk allocation.
-   
-  .EXAMPLE
-   Set-AdmitsPD -NoPatch
-   Suppresses the check for drive table update packages for new hardware enablement.
+.EXAMPLE
+	PS:> Set-AdmitsPD 
 
-  .EXAMPLE  	
-	Set-AdmitsPD -Nold -wwn xyz
+	This example admits physical disks.
+.EXAMPLE
+	PS:> Set-AdmitsPD -Nold
+
 	Do not use the PD (as identified by the <world_wide_name> specifier) For logical disk allocation.
-		
-  .PARAMETER Nold
-	Do not use the PD (as identified by the <world_wide_name> specifier)
-	for logical disk allocation.
+.EXAMPLE
+	PS:> Set-AdmitsPD -NoPatch
 
-  .PARAMETER Nopatch
-	Suppresses the check for drive table update packages for new
-	hardware enablement.
+	Suppresses the check for drive table update packages for new hardware enablement.
+.EXAMPLE  	
+	PS:> Set-AdmitsPD -Nold -wwn xyz
 
-  .PARAMETER wwn
-	Indicates the World-Wide Name (WWN) of the physical disk to be admitted. If WWNs are
-	specified, only the specified physical disk(s) are admitted.	
-	 
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Set-AdmitsPD
-    LASTEDIT: 25/10/2019
-    KEYWORDS: Set-AdmitsPD
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+	Do not use the PD (as identified by the <world_wide_name> specifier) For logical disk allocation.
+.PARAMETER Nold
+	Do not use the PD (as identified by the <world_wide_name> specifier) for logical disk allocation.
+.PARAMETER Nopatch
+	Suppresses the check for drive table update packages for new hardware enablement.
+.PARAMETER wwn
+	Indicates the World-Wide Name (WWN) of the physical disk to be admitted. If WWNs are specified, only the specified physical disk(s) are admitted.	
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[switch]
-		$Nold,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[switch]
-		$NoPatch,
-				
-		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
-		$wwn,		
-		
-		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection 
-       
+param(	[switch]	$Nold,
+		[switch]	$NoPatch,
+		[String]	$wwn
 	)	
-	
-	Write-DebugLog "Start: In Set-AdmitsPD   - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Set-AdmitsPD since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Set-AdmitsPD since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}		
-	$cmd= "admitpd -f  "
-	
-	
-	if ($Nold)
-	{	
-		$cmd+=" -nold "		
-	}	
-	if ($NoPatch)
-	{	
-		$cmd+=" -nopatch "		
-	}
-	if($wwn)
-	{
-		$cmd += " $wwn"		
-	}
+begin
+{	Test-CLIConnection
+}	
+Process
+{	$cmd= "admitpd -f  "
+	if ($Nold)		{	$cmd+=" -nold "		}	
+	if ($NoPatch)	{	$cmd+=" -nopatch "	}
+	if($wwn)		{	$cmd += " $wwn"		}
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
-	write-debuglog " The Set-AdmitsPD command creates and admits physical disk definitions to enable the use of those disks  " "INFO:" 
 	return 	$Result	
-} # End Set-AdmitsPD
+}
+}
 
-####################################################################################################################
-## FUNCTION Find-Cage
-####################################################################################################################
 Function Find-Cage
 {
 <#
-  .SYNOPSIS
-   The Find-Cage command allows system administrators to locate a drive cage, drive magazine, or port in the system using the devices’ blinking LEDs.
- 
- .DESCRIPTION
-   The Find-Cage command allows system administrators to locate a drive cage, drive magazine, or port in the system using the devices’ blinking LEDs. 
+.SYNOPSIS
+	The Find-Cage command allows system administrators to locate a drive cage, drive magazine, or port in the system using the devices’ blinking LEDs.
+.DESCRIPTION
+	The Find-Cage command allows system administrators to locate a drive cage, drive magazine, or port in the system using the devices’ blinking LEDs. 
+.EXAMPLE
+	PS:> Find-Cage -Time 30 -CageName cage0	
 	
-  .EXAMPLE
-	Find-Cage -Time 30 -CageName cage0	
 	This example causes the Fibre Channel LEDs on the drive CageName cage0 to blink for 30 seconds.
-   
-  .EXAMPLE  
-	Find-Cage -Time 30 -CageName cage0 -mag 3	
-	This example causes the Fibre Channel LEDs on the drive CageName cage0 to blink for 30 seconds,Indicates the drive magazine by number 3.
-   
-  .EXAMPLE  
-	Find-Cage -Time 30 -CageName cage0 -PortName demo1	
-	This example causes the Fibre Channel LEDs on the drive CageName cage0 to blink for 30 seconds, If a port is specified, the port LED will oscillate between green and off.
+.EXAMPLE  
+	PS:> Find-Cage -Time 30 -CageName cage0 -mag 3	
 	
-  .EXAMPLE  	
-	Find-Cage -CageName cage1 -Mag 2	
+	This example causes the Fibre Channel LEDs on the drive CageName cage0 to blink for 30 seconds,Indicates the drive magazine by number 3.
+.EXAMPLE  
+	PS:> Find-Cage -Time 30 -CageName cage0 -PortName demo1	
+	
+	This example causes the Fibre Channel LEDs on the drive CageName cage0 to blink for 30 seconds, If a port is specified, the port LED will oscillate between green and off.
+.EXAMPLE  	
+	PS:> Find-Cage -CageName cage1 -Mag 2	
+	
 	This example causes the Fibre Channel LEDs on the drive CageName cage1 to blink, Indicates the drive magazine by number 2.	
-		
-  .PARAMETER Time 
+.PARAMETER Time 
 	Specifies the number of seconds, from 0 through 255 seconds, to blink the LED. 
 	If the argument is not specified, the option defaults to 60 seconds.
-  
-  .PARAMETER CageName 
+.PARAMETER CageName 
 	Specifies the drive cage name as shown in the Name column of Get-Cage command output.
-	
-  .PARAMETER ModuleName
+.PARAMETER ModuleName
 	Indicates the module name to locate. Accepted values are
 	pcm|iom|drive. The iom specifier is not supported for node enclosures.
-
-  .PARAMETER ModuleNumber
+.PARAMETER ModuleNumber
 	Indicates the module number to locate. The cage and module number can be found
 	by issuing showcage -d <cage_name>.
-	
-  .PARAMETER Mag 
+.PARAMETER Mag 
 	Indicates the drive magazine by number.
 	• For DC1 drive cages, accepted values are 0 through 4.
 	• For DC2 and DC4 drive cages, accepted values are 0 through 9.
 	• For DC3 drive cages, accepted values are 0 through 15.
-		
-  .PARAMETER PortName  
-	Indicates the port specifiers. Accepted values are A0|B0|A1|B1|A2|B2|A3|B3. 
-	If a port is specified, the port LED will oscillate between green and off.
-    
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-	NAME:  Find-Cage
-    LASTEDIT: 25/10/2019
-    KEYWORDS: Find-Cage
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
-[CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
-		$Time,
-		
-		[Parameter(Position=1, Mandatory=$true,ValueFromPipeline=$true)]
-		[System.String]
-		$CageName,
-		
-		[Parameter(Position=2, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
-		$ModuleName,
-		
-		[Parameter(Position=3, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
-		$ModuleNumber,
-		
-		[Parameter(Position=4, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
-		$Mag,
-		
-		[Parameter(Position=5, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
-		$PortName,
-				
-		[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+.PARAMETER PortName  
+	Indicates the port specifiers. Accepted values are A0|B0|A1|B1|A2|B2|A3|B3. If a port is specified, the port LED will oscillate between green and off.
+#>
+[CmdletBinding(DefaultParameterSetName='default')]
+param(	[ValidateRange(0,255)]
+		[int]	$Time = 60,
+		[Parameter(Mandatory)]
+		[String]	$CageName,
+		[String]	$ModuleName,
+		[ValidateSet('pcm','iom','drive')]
+		[String]	$ModuleNumber,
+		[Parameter(ParameterSetName='MAG',Mandatory)]
+		[ValidateRange(0,15)]
+		[int]	$Mag,
+		[Parameter(ParameterSetName='PORT',Mandatory)]
+		[ValidateSet('A0','A1','A2','A3','B0','B1','B2','B3')]
+		[String]	$PortName
 	)		
-	
-	Write-DebugLog "Start: In Find-Cage   - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{			
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Find-Cage since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Find-Cage since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	
-	$cmd= "locatecage "	
-	
-	if ($time)
-	{
-		$s = 0..255
-		$demo = $time
-		if($s -match $demo)
-		{
-			$str="time"
-			$cmd+=" -t $time"
-		}
-		else
-		{
-			return " Error : -time $time is Not valid use seconds, from 0 through 255 Only "
-		}
-	}
-	if ($CageName)
-	{
-		$cmd2="showcage "
-		$Result2 = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd2
-		if($Result2 -match $CageName)
-		{
-			$cmd+=" $CageName"
-		}
-		else
-		{
-		Write-DebugLog "Stop: Exiting Find-Cage $CageName Not available "
-		return "FAILURE : -CageName $CageName  is Unavailable `n Try using [Get-Cage] Command "
-		}
-	}
-	else
-	{
-		Write-DebugLog "Stop: CageName is mandatory" $Debug
-		return "Error :  -CageName is mandatory. "
-	}
-	if ($ModuleName)
-	{		
-		$cmd+=" $ModuleName"		
-	}	
-	if ($ModuleNumber)
-	{		
-		$cmd+=" $ModuleNumber"		
-	}
-	if ($Mag)
-	{
-		$a = 0..15
-		$demo = $Mag
-		if($a -match $demo)
-		{
-		$str="mag"
-		$cmd +=" $Mag"
-		}
-		else
-		{
-			return "Error : -Mag $Mag is Not valid use seconds,from 0 through 15 Only"		
-		}
-	}	
-	if ($PortName)
-	{
-		$s=$str
-		if ($s -match "mag" )
-		{
-			return "FAILURE : -Mag $Mag cannot be used along with  -PortName $PortName "
-		}
-		else
-		{	
-			$a = $PortName
-			$b = "A0","B0","A1","B1","A2","B2","A3","B3"
-			if($b -eq $a)
-			{
-				$cmd +=" $PortName"
-			}
-			else
-			{
-				return "Error : -PortName $PortName is invalid use [ A0| B0 | A1 | B1 | A2 | B2 | A3 | B3 ] only  "
-			}
-		}	
-	}	
+Begin	
+{	Test-CLIConnection
+}
+Process
+{	$cmd= "locatecage "	
+	$cmd+=" -t $time"
+	$Result2 = Invoke-CLICommand -Connection $SANConnection -cmds 'showcage'
+	if($Result2 -match $CageName)	{	$cmd+=" $CageName"	}
+	else 	{	throw "FAILURE : -CageName $CageName  is Unavailable `n Try using [Get-Cage] Command "	}
+	if ($ModuleName)	{	$cmd+=" $ModuleName"	}	
+	if ($ModuleNumber)	{	$cmd+=" $ModuleNumber"	}
+	if ($PSCmdlet.ParameterSetName -eq 'PORT')	{	$cmd +=" $Mag"	}	
+	if ($PSCmdlet.ParameterSetName -eq 'PORT')	{	$cmd +=" $PortName"	}	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
-	write-debuglog "  Executing Find-Cage Command , surface scans or diagnostics on physical disks with the command   " "INFO:" 	
 	if([string]::IsNullOrEmpty($Result))
-	{
-		return  "Success : Find-Cage Command Executed Successfully $Result"
+	{	write-host "Success : Find-Cage Command Executed Successfully $Result" -ForegroundColor Green
+		return  
 	}
 	else
-	{
-		return  "FAILURE : While Executing Find-Cage `n $Result"
+	{	throw  "FAILURE : While Executing Find-Cage `n $Result"
 	} 		
 }
-# End Find-Cage
-
-###################################################################################################################
-############################################ FUNCTION Get-Cage ################################################
-###################################################################################################################
+}
 
 Function Get-Cage
 {
 <#
-  .SYNOPSIS
-   The Get-Cage command displays information about drive cages.
-   
-  .DESCRIPTION
-   The Get-Cage command displays information about drive cages.    
+.SYNOPSIS
+	The Get-Cage command displays information about drive cages.
+.DESCRIPTION
+	The Get-Cage command displays information about drive cages.    
+.EXAMPLE
+	PS:> Get-Cage
 	
-  .EXAMPLE
-	Get-Cage
 	This examples display information for a single system’s drive cages.
-   
-  .EXAMPLE  
-	Get-Cage -D -CageName cage2
+.EXAMPLE  
+	PS:> Get-Cage -D -CageName cage2
+
 	Specifies that more detailed information about the drive cage is displayed
-	
-  .EXAMPLE  
-	Get-Cage -I -CageName cage2
+.EXAMPLE  
+	PS:> Get-Cage -I -CageName cage2
+
 	Specifies that inventory information about the drive cage is displayed. 
-   		 
-  .PARAMETER D
+	
+.PARAMETER D
 	Specifies that more detailed information about the drive cage is displayed. If this option is not
 	used, then only summary information about the drive cages is displayed. 
-		
-  .PARAMETER E  
+.PARAMETER E  
 	Displays error information.
-	
-  .PARAMETER C  
+.PARAMETER C  
 	Specifies to use cached information. This option displays information faster because the cage does
 	not need to be probed, however, some information might not be up-to-date without that probe.
-
-  .PARAMETER SFP  
+.PARAMETER SFP  
 	Specifies information about the SFP(s) attached to a cage. Currently, additional SFP information
 	can only be displayed for DC2 and DC4 cages.
-			
-  .PARAMETER I	
+.PARAMETER I	
 	Specifies that inventory information about the drive cage is displayed. If this option is not used,
 	then only summary information about the drive cages is displayed.
-
-  .PARAMETER DDm
+.PARAMETER DDm
 	Specifies the SFP DDM information. This option can only be used with the
 	-sfp option and cannot be used with the -d option.
-
-	
-  .PARAMETER SVC
-  Displays inventory information with HPE serial number, spare part number, and so on. it is supported only on HPE 3PAR Storage 7000 Storagesystems and  HPE 3PAR 8000 series systems"
-  
-  .PARAMETER CageName  
+.PARAMETER SVC
+	Displays inventory information with HPE serial number, spare part number, and so on. it is supported only on HPE 3PAR Storage 7000 Storagesystems and  HPE 3PAR 8000 series systems"
+.PARAMETER CageName  
 	Specifies a drive cage name for which information is displayed. This specifier can be repeated to display information for multiple cages
-      
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME: Get-Cage
-    LASTEDIT: 25/10/2019
-    KEYWORDS: Get-Cage
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
+#>
+[CmdletBinding(DefaultParameterSetName='NoArgs')]
+param(	[Parameter(ParameterSetName='ddm')]		[Switch]	$ddm,
+		[Parameter(ParameterSetName='i')]		[Switch]	$i,
+		[Parameter(ParameterSetName='svc')]		[Switch]	$svc,
+		[Parameter(ParameterSetName='state')] 	[Switch]	$state,
+		[Parameter(ParameterSetName='e')] 		[Switch]	$e,
+		[Parameter(ParameterSetName='c')] 		[Switch]	$c,
+		
+		[Parameter(ParameterSetName='details')]	
+		[ValidateSet('all','connector','cooling','enclosure','expander','iom','mag','power','temperature','enviornmentals','error','sep','sfp')]	
+												[String]	$details,
+												[String]	$cageName,
+												[switch]	$WhatIf,
+												[switch]	$ReturnRawResponse
 
- #>
-[CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[Switch]
-		$D,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[Switch]
-		$E,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[Switch]
-		$C,
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[Switch]
-		$SFP,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[Switch]
-		$DDM,
-		
-		[Parameter(Position=5, Mandatory=$false)]
-		[Switch]
-		$I,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[Switch]
-		$SVC,
-		
-		[Parameter(Position=7, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
-		$CageName,
-			
-		[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection 
-       
-	)		
-	Write-DebugLog "Start: In Get-Cage   - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{			
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Get-Cage since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Get-Cage since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
+	)
+Begin
+{	Test-CLIConnectionB
+}
+Process
+{	$cmd= "showcage "
+	switch ( $PSCmdlet.ParameterSetName)
+	{	'ddm'		{	$cmd += ' -ddm'		}
+		'i'			{	$cmd += ' -i'		}
+		'svc'		{	$cmd += ' -svc -i'	}
+		'state'		{	$cmd += ' -state '	}
+		'details'	{	$cmd += " -$details"}	
 	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}	
-	$cmd= "showcage "
-	$testCmd= "showcage "
-	
-	if($D)
-	{ 
-		$cmd +=" -d " 
-	}
-	if($E) 
-	{ 
-		$cmd +=" -e "
-	}
-	if($C) 
-	{ 
-		$cmd +=" -c "
-	}
-	if($SFP) 
-	{ 
-		$cmd +=" -sfp " 
-	}
-	if($DDM) 
-	{ 
-		$cmd +=" -ddm " 
-	}
-	if($I) 
-	{ 
-		$cmd +=" -i " 
-	}
-	if($SVC) 
-	{ 
-		$cmd +=" -svc -i" 
-	}
-	if ($CageName) 
-	{ 
-		$cmd+=" $CageName "
-		$testCmd+=" $CageName "
-	}
-	
+	if ($cageName) 			{ 	$cmd+=" $cageName "	}
+	if ( $WhatIf ) 			{ 	return $cmd}
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
-	write-debuglog "  Executing  Get-Cage command that displays information about drive cages. with the command   " "INFO:" 
-	
-	if($cmd -eq "showcage " -or ($cmd -eq $testCmd))
-	{
-		if($Result.Count -gt 1)
-		{	
-			$tempFile = [IO.Path]::GetTempFileName()
-			$LastItem = $Result.Count 
-			#Write-Host " Result Count =" $Result.Count
-			foreach ($s in  $Result[0..$LastItem] )
-			{		
-				$s= [regex]::Replace($s,"^ ","")			
-				$s= [regex]::Replace($s," +",",")	
-				#$s= [regex]::Replace($s,"-","")
-				$s= $s.Trim() 	
-				Add-Content -Path $tempFile -Value $s
-				#Write-Host	" First if statement $s"		
-			}
-			Import-Csv $tempFile 
-			del $tempFile
-			Return  " Success : Executing Get-Cage"
+	if ( $ReturnRawResponse) { 	return $Result }
+	if( $Result.Count -gt 1)
+		{	write-host "Inside first if"
+			$ReturnObject = New-PWSHObjectFromCLIOutput -InterimResults $Result -verbose
+			write-host " Success : Executing Get-Cage" -ForegroundColor Green
+			Return  $ReturnObject
 		}
 		else
 		{
 			Return  " FAILURE : While Executing Get-Cage `n $Result"		
 		}		
-	}
-	
-	if($Result -match "Cage" )
-	{
-		$result	
-		Return  " Success : Executing Get-Cage"
-	} 
-	else
-	{
-		Return  " FAILURE : While Executing Get-Cage `n $Result"
-	} 
- } # End Get-Cage
- 
- ####################################################################################################################
-## FUNCTION Show-PD
-####################################################################################################################
+} 
+}
+
 Function Show-PD
 {
 <#
@@ -842,19 +467,19 @@ Function Show-PD
 		$Degraded,
 		
 		[Parameter(Position=9, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$Node ,
 		
 		[Parameter(Position=10, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$Slots ,
 		
 		[Parameter(Position=11, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$Ports ,
 		
 		[Parameter(Position=12, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$WWN ,
 		
 		[Parameter(Position=13, Mandatory=$false)]
@@ -862,43 +487,43 @@ Function Show-PD
 		$Pattern,
 		
 		[Parameter(Position=14, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$ND ,
 		
 		[Parameter(Position=15, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$ST ,
 		
 		[Parameter(Position=16, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$PT ,
 		
 		[Parameter(Position=17, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$CG ,
 		
 		[Parameter(Position=18, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$MG ,
 		
 		[Parameter(Position=19, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$PN ,
 		
 		[Parameter(Position=20, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$DK ,
 		
 		[Parameter(Position=21, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$Devtype ,
 		
 		[Parameter(Position=22, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$RPM ,
 		
 		[Parameter(Position=23, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$PD_ID ,
 
 		[Parameter(Position=23, Mandatory=$false,ValueFromPipeline=$true)]
@@ -1196,11 +821,7 @@ Function Show-PD
 	{
 		return $Result		
 	} 	
-} # End Show-PD
-
-##########################################################################
-############################ FUNCTION Remove-PD ##########################
-##########################################################################
+} 
 Function Remove-PD()
 {
 <#
@@ -1230,7 +851,7 @@ Function Remove-PD()
 [CmdletBinding()]
  param(
 	[Parameter(Position=0, Mandatory=$True)]
-	[System.String]
+	[String]
 	$PDID,
 
 	[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
@@ -1274,11 +895,8 @@ Function Remove-PD()
  Write-DebugLog "Executing function : Remove-PD command -->" INFO: 
  
  Return $Result
-} ##  End-of Remove-PD
+} 
 
-####################################################################################################################
-################################################# FUNCTION Set-Cage ################################################
-####################################################################################################################
 Function Set-Cage
 {
 <#
@@ -1321,15 +939,15 @@ Function Set-Cage
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$Position,
 		
 		[Parameter(Position=1, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$PSModel,
 		
 		[Parameter(Position=2, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$CageName,
 			
 		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
@@ -1407,11 +1025,7 @@ Function Set-Cage
 	{
 		return  "FAILURE : While Executing Set-Cage $Result"
 	} 		
-} # End Set-Cage
-
-####################################################################################################################
-#################################################### FUNCTION Set-PD ###############################################
-####################################################################################################################
+}
 
 Function Set-PD
 {
@@ -1453,11 +1067,11 @@ Function Set-PD
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Ldalloc,
 		
 		[Parameter(Position=1, Mandatory=$true,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$PD_ID,
 			
 		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
@@ -1539,11 +1153,8 @@ Function Set-PD
 	{
 		return  "FAILURE : While Executing Set-PD $Result "
 	} 	
-} # End Set-PD	
+}
 
-##########################################################################
-######################### FUNCTION Switch-PD #########################
-##########################################################################
 Function Switch-PD()
 {
 <#
@@ -1600,7 +1211,7 @@ Function Switch-PD()
 	$Ovrd,	
 
 	[Parameter(Position=3, Mandatory=$True)]
-	[System.String]
+	[String]
 	$WWN,
 
 	[Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
@@ -1662,11 +1273,7 @@ Function Switch-PD()
  Write-DebugLog "Executing function : Switch-PD command -->" INFO: 
  
  Return $Result
-} ##  End-of Switch-PD
-	
-####################################################################################################################
-################################################ FUNCTION Test-PD ##################################################
-####################################################################################################################
+}
 
 Function Test-PD
 {
@@ -1751,51 +1358,51 @@ Function Test-PD
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$specifier,
 		
 		[Parameter(Position=1, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$ch,
 		
 		[Parameter(Position=2, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$count,
 		
 		[Parameter(Position=3, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$path,
 		
 		[Parameter(Position=4, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$test,
 		
 		[Parameter(Position=5, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$iosize,
 		
 		[Parameter(Position=6, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$range,
 		
 		[Parameter(Position=7, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$threads,
 		
 		[Parameter(Position=8, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$time,
 		
 		[Parameter(Position=9, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$total,
 		
 		[Parameter(Position=10, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$retry,
 		
 		[Parameter(Position=11, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$pd_ID,
 		
 		[Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
@@ -2003,6 +1610,6 @@ Function Test-PD
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
 	write-debuglog "  Executing surface scans or diagnostics on physical disks with the command  " "INFO:" 
 	return $Result	
-} # End Test-PD
+}
 
-Export-ModuleMember Set-AdmitsPD , Find-Cage , Get-Cage , Show-PD , Remove-PD , Set-Cage , Set-PD , Switch-PD , Test-PD
+Export-ModuleMember New-PWSHObjectFromCLIOutputWithoutTitle, New-PWSHObjectFromCLIOutput, Set-AdmitsPD , Find-Cage , Get-Cage , Show-PD , Remove-PD , Set-Cage , Set-PD , Switch-PD , Test-PD
