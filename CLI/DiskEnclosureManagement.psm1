@@ -211,9 +211,8 @@ Process
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
 	if ( $ReturnRawResponse) { 	return $Result }
 	if( $Result.Count -gt 1)
-		{	write-host "Inside first if"
-			$ReturnObject = New-PWSHObjectFromCLIOutput -InterimResults $Result -verbose
-			write-host " Success : Executing Get-Cage" -ForegroundColor Green
+		{	$ReturnObject = New-PWSHObjectFromCLIOutput -InterimResults $Result -verbose
+			# write-host " Success : Executing Get-Cage" -ForegroundColor Green
 			Return  $ReturnObject
 		}
 		else

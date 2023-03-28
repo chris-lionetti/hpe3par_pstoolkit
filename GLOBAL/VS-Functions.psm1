@@ -164,126 +164,142 @@ $global:VSLibraries 	= Split-Path $MyInvocation.MyCommand.Path
 Function New-PWSHObjectFromCLIOutput
 {
 [CmdletBinding()]
-param 	(	$InterimResults
+param 	(	$InterimResults,
+			$DeepRecurse = $false
 		)
 Process
-{	# First lets split up the return data. I will first split the data using blank lines and recurse back to this function with the individual objects
-	##########################
-		write-host "Start of the New-PWSHObject"
+{	if (-not $DeepRecurse )
+	{	$ReturnObject = @()
+		# First lets split up the return data. I will first split the data using blank lines and recurse back to this function with the individual objects
 		$BlankLines = @()
 		$LineNum = 0
+		if ( $InterimResults[0].trim() -eq '')
+			{	# If first line is blank, delete that line.
+				$InterimResults = $InterimResults[1..($InterimResults.count-1)]
+			}
+		$Temp=@()
+		foreach( $Line in $InterimResults)
+			{	$SkipLine=$false
+				# If a line is nothing but ------ marks, we can delete it.
+				if ( $Line.Trim('-') -eq '' -and $Line[0] -eq '-')		{	$SkipLine = $true	}
+				if ( $Line.StartsWith('total'))							{	$SkipLine = $true	}
+				if ( -not $SkipLine )									{	$Temp += $Line		}
+			}
+		$InterimResults = $Temp
 		foreach( $testline in $InterimResults)
 		{	if ($testline.trim() -eq '')
-			{ 	write-verbose "Blankline is $LineNum "
+			{ 	#write-verbose "Blankline is $LineNum "
 				$BlankLines += $LineNum
 				# This makes an array of the blanklines, i.e. ( 0, 4, 7, 9) would mean that line 4 is blank, as is 7 as it 9. We also artificially add the last line 
-			}
+			} 
 			$LineNum += 1
 		}
 		# The blanklines needs to contain the last line of data.
 		$BlankLines += ( $LineNum -1 )
 		$ReturnObject = @()
-		$Startline = 0
+		$Startline = -1
 		$BlankLines = ( $BlankLines | sort-object )
-		write-host "Test blanklines = $BlankLines, Count =" -nonewline
-		$BlankLines.count | out-string
-		$BlankLines | out-string
-	if ( $Blanklines.count -gt 1 )
-	{	write-host "Entering the recursive part of New-PWSHObject function."
+		#write-host "Test blanklines = $BlankLines, Count =" -nonewline
+		# $BlankLines.count | out-string
+		# $BlankLines | out-string
+	if ( $BlankLines.count -eq $InterminResults.count)
+	{	#write-host "Nothing but blanks"
+		return
+
+	}
+#	if ( $Blanklines.count -gt 2 )
+#	{	#write-host "Entering the recursive part of New-PWSHObject function."
 		foreach ( $entry in $BlankLines)
-		{	write-verbose "Doing a recursive call on a sub-table from the main table"
+		{	#write-verbose "Doing a recursive call on a sub-table from the main table"
 			# subdivideds the data into groups. i.e. If blanklines is 0,4,7,9 it will create 3 objects from line 0-4, another from line 4-7, another from 7-9. 
-			write-host "The start and finish will be $startline and $entry "
-			$SingleResult = $InterimResults[$startline,$entry]
-			$ReturnObject += New-PWSHObjectFromCLIOutput $SingleResult
+			#write-host "The start and finish will be $StartLine and $entry "
+			if ( $entry -ne ($StartLine+1) )
+			{	$SingleResult = $InterimResults[($StartLine+1)..($entry)]
+				#write-host "This is what is sent to the next call `n "
+				foreach ( $xline in $SingleResult)
+					{	# write-host "p->$xline"
+					}
+				if ($SingleResult.count -gt 1)
+				{	$ReturnObject += New-PWSHObjectFromCLIOutput $SingleResult -DeepRecurse $true
+				}
+				else 
+				{	#write-host "Nothing in this set to send. skipping it."
+				}
+			}
+			else
+			{	#write-host 'skipped double blank line'
+
+			}
 			$Startline = $entry
 		}
 		return $ReturnObject
-	}
+#	}
 	######################### end of the Split object recursion
 	###########################################################
 	# first lets trim any lines at the start that are just blank
-	write-host "Entering the Non-recursive part of New-PWSHObject function."
-	$InterimResults | out-string
-
-	$TestData = $InterimResults 
-	if ( $TestData[0].trim -eq '' )
-		{	write-verbose "Trimmed a blank first line from a table"
-			$InterimResults = $TestData[1,($TestData.count -1)]
+}
+else
+{	#write-host "Entering the Non-recursive part of New-PWSHObject function."
+	if ( $InterimResults[0].trim -eq '' )
+		{	#write-verbose "Trimmed a blank first line from a table"
+			$InterimResults = $InterimResults[1..($InterimResults.count -1)]
 		}
 	# At this point, we know only single tables should be coming in		
-	if ( $InterimResults[1].Indexof('-------') -eq '-1' )
-	{	# this will detect lines that start with things like '------------------------------------connectivity-------------------------------------'
-		write-verbose "Detected that this is a none titled response, calling to create a object without a title"
-		$MyResult = New-PWSHObjectFromCLIOutputWithoutTitle $InterimResults
-		return $MyResult
-	}
-
-	$ReturnObj = @()
-	# First lets look for the object title
-	$TitleNotFound = $true
-	$HeaderNotFound = $true
-	foreach($Line in $InterimResults)
-	{	Write-verbose "Inside Titled Loop"
-		$ShouldSkipLine = $False
-		if ( $Line.Startwith('Total') )
-			{ 	write-verbose "This line is a total line and should be skipped"
-				$ShouldSkipLine = $true
-			}
-		if ( $line.trim('-') -eq '' )
-			{	write-verbose "This line contains ONLY dash marks, must be a seperator line"
-				$ShouldSkipLine = $true
-			}
-		if ( $TitleNotFound -eq $False -and $HeaderNotFound -eq $True )
-			{	# Detecting if the title has a second line 
-				$SecondTitleLine = ($Line.trim()).trim('-')
-				if ( $SecontTitleLine.split() -eq $SecondTitleLine )
-					{	Write-Verbose "This line must be a second line to the title....i.e. '   -line2-    '"
-						write-verbose "IgnoredLine = $SecondTitleLine"
-						$ShouldSkipLine = $true
-					}
-			}
-		if ( $ShouldSkipLine -eq $false)
-		{
-			if ( $Line.indexof('-------') -eq 0 )
-			{	if ( $TitleNotFound -eq $False)
-					{	$Jc = $CurrentObject | convertto-json | convertfrom-json
-						$ReturnObj += @{ $CurrentTitle = $Jc }
-					}
-				$TitleNotFound = $False
-				$CurrentTitle = $Line.Trim('-')
-				$LenghtOfHeaderName = $HeaderName.$LenghtOfHeaderName	
-				# Since a new header is found, the existing table header is invalid
-				$HeaderNotFound = $true		
-			}
-			elseif ( $HeaderNotFound )
-			{	# No Header found, so the next line should be a header.
-				$UnsplitHeader = $Line
-				$HeaderRaw1 = $Line.Split()		# Split the headers into columns
-				$HeaderRaw2 = $HeaderRaw1.where({ $_ -ne ""})	# Trim the empty items from the list
-				$HeaderNotFound = $False
-				$CurrentObject = @()
-			}
-			elseif ( $TitleNotFound -eq $false -and $HeaderNotFound -eq $False )
-			{	# This must be a data line or empty line
-				if ( $line.trim() -ne '')
-				{ 	$MySingleRow = @{}
-					foreach( $HeaderName in $HeaderRaw2 )
-					{	# Some of the data fields have spaces in the values, so need to extract from the data line the location start and end from the header hint.
-						$LengthOfHeaderName = $HeaderName.Length
-						$startPositionOfHeaderName = $UnsplitHeader.indexof($HeaderName)
-						$MyDataPointRaw = $Line.Substring($StartPositionOfHeaderName, $LengthOfHeaderName)	
-						$MyDataPoint1 = $MyDataPointRaw.trim()
-						$FixedHeaderName = $HeaderName.trim('-')
-						$MySingleRow["$FixedHeaderName"] = $MyDataPoint1
-					}
-					$CurrentObject += $MySingleRow
+	#if ( $InterimResults[0].Indexof('-------') -eq '-1' )
+	#		{	# this will detect lines that start with things like '------------------------------------connectivity-------------------------------------'#
+	#			write-verbose "Detected that this is a none titled response, calling to create a object without a title"
+	#			$ReturnObj += New-PWSHObjectFromCLIOutputWithoutTitle $InterimResults
+	#	}
+	#else
+	#	{	# If a title exists it will be on line 1
+	$LineNum = 0
+	if ( $InterimResults[$LineNum].indexof('-------') -eq 0 )
+				{	$TitleFound = $True
+					$CurrentTitle = $InterimResults[$LineNum].Trim('-')
+					$LineNum += 1
+#					write-host "The Detected Title is $CurrentTitle"
+				}	
+	$Testline = $InterimResults[$LineNum].trim()
+	$Testline = $Testline.trim('-')
+	$Testline = $Testline.split()
+	if ( $Testline.count -eq 1 )
+				{	# If there is a second line to a title, it should be shorter than 10 charactors
+#					Write-host "The second title line is $TestLine"
+					$LineNum += 1
+				}					
+	$UnsplitHeader = $InterimResults[$LineNum]
+#	write-host "Unsplit Header = $UnsplitHeader"
+	$HeaderRaw1 = $UnsplitHeader.Split()		# Split the headers into columns
+	$HeaderRaw2 = $HeaderRaw1.where({ $_ -ne ""})	# Trim the empty items from the list
+	$LineNum += 1
+	$CurrentObject = @()		
+	foreach($Line in $InterimResults[$LineNum..($InterimResults.count-1)])
+				{	if ( $line.trim() -ne '')
+							{ 	# write-host "Processing a data line $line"
+								$MySingleRow = @{}
+								# write-host "My HeaderRaw2 = $HeaderRaw2"
+								foreach( $HeaderName in $HeaderRaw2 )
+									{	# Some of the data fields have spaces in the values, so need to extract from the data line the location start and end from the header hint.
+										$LengthOfHeaderName = $HeaderName.Length
+										$startPositionOfHeaderName = $UnsplitHeader.indexof($HeaderName)
+										$MyDataPointRaw = $Line.Substring($StartPositionOfHeaderName, $LengthOfHeaderName)	
+										$MyDataPoint1 = $MyDataPointRaw.trim()
+										$FixedHeaderName = $HeaderName.trim('-')
+										# write-host "Adding Datapoint $FixedHeaderName = $MyDataPoint1"
+										$MySingleRow["$FixedHeaderName"] += $MyDataPoint1
+									}
+								$CurrentObject += $MySingleRow
+							}
 				}
-			}
-		}
-	# Producing last object addition
-	$ReturnObj += @{ $CurrentTitle = $CurrentObject }
-	return $ReturnObj
+	if ( $TitleFound ) 
+				{	$ReturnObject = @{ $CurrentTitle = $CurrentObject } | convertto-json | convertfrom-json 
+					return $ReturnObject 
+				}
+			else 
+				{	$ReturnObject = $CurrentObject | convertTo-JSON | ConvertFrom-Json
+					return $ReturnObject
+				}
+#		}
 	}	
 }
 }
