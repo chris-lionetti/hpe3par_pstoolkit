@@ -160,20 +160,132 @@ $Info 					= "INFO:"
 $Debug 					= "DEBUG:"
 $global:VSLibraries 	= Split-Path $MyInvocation.MyCommand.Path
 
+Function New-PWSHObjectFromCLIOutputSingle
+{	
+Param (	$SingleTable 
+	)
+Process
+{	foreach( $Line in $SingleTable)
+	{	write-verbose "SO: $Line"
+	}
+	#write-host "Entering the Non-recursive part of New-PWSHObject function."
+	if ( $SingleTable[0].trim -eq '' )
+		{	#write-verbose "Trimmed a blank first line from a table"
+			$SingleTable = $SingleTable[1..($SingleTable.count -1)]
+		}
+	# At this point, we know only single tables should be coming in		
+	#		{	write-verbose "Detected that this is a none titled response, calling to create a object without a title"
+	$LineNum = 0
+	if ( $SingleTable[$LineNum].indexof('-------') -eq 0 )
+				{	# this will detect lines that start with things like '------------------------------------connectivity-------------------------------------'			
+					$TitleFound = $True
+					$CurrentTitle = $SingleTable[$LineNum].Trim('-')
+					$LineNum += 1
+					write-verbose "The Detected Title is $CurrentTitle"
+				}	
+	$Testline = $SingleTable[$LineNum].trim()		# On the next line we need to see if its a second title line
+	$Testline = $Testline.trim('-')					# a 2nd title will look like '                      ----(gbps)----                     '
+	$Testline = $Testline.split()					# After a trim. if its a second title if will not be splitable.
+	if ( $Testline.count -eq 1 )
+				{	Write-verbose "The second title line is $TestLine"
+					$LineNum += 1
+				}
+	# Now lets look for the header line. It may be a first line header, see the next two lines, the Ports and Size are considered parts of a 2 level header
+	# '                                -----Ports------          ------------Size-------------        '
+	# 'col1 ---col2------ ----col3---- col4 col5 -col6- --col7-- -----col8---- ----col9------- -col10-'	
+	# in the above case, col4 and col5 and col6 should be prefixed with Ports		
+	$Testline = $SingleTable[$LineNum].trim() 				# get rid of the spaces at the edges first
+	$TestlineSplit = $Testline.split()
+	$Testline1Length = $Testline.length
+	$NextLineLength = $SingleTable[$LineNum +1].length 		# if this is a header line then it will match the length of the next line.
+	write-verbose "Looking for double Header, Header1 length is $Testline1Length and next line length is $NextLineLength"
+	$C = $TestlineSplit.count
+	write-verbose "The double header count is $C"
+	$DoubleHeaderRaw = $SingleTable[$LineNum]
+	# This assumes that a double header line will be significantly shorte (more that 5) than the following full header
+	# Additionally a secondheader line will likely not be splitable to more than 4 sections
+	# Unlike a title, the second header will be splitable after a trim.
+	if ( ($NextLineLength -5) -gt $TestLineLength -and $TestlineSplit.count -gt 1 -and $TestlineSplit.count -lt 4)
+			{	write-verbose "Detected a Double Header"
+				$DoubleHeaderFound = $true
+				# The possible double header will contain more than a single entrie, and and if trimmed be much shorter than 
+				$LineNum += 1
+				# Now lets split and create the second header list
+				$DH = $DoubleHeaderRaw.trim()
+				$DHS = $DH.split()
+				$DoubleHeaderSet = @()
+				foreach ( $SDH in $DHS)
+				{	$DoubleHeaderSet += $SDH
+					write-verbose "Adding DoubleHeaderset member $SDH"
+				}
 
+			}	
+			else 
+			{	$DoubleHeaderFound = $false
+			}
+	$UnsplitHeader = $SingleTable[$LineNum]
+	#	write-host "Unsplit Header = $UnsplitHeader"
+	$HeaderRaw1 = $UnsplitHeader.Split()		# Split the headers into columns
+	$HeaderRaw2 = $HeaderRaw1.where({ $_ -ne ""})	# Trim the empty items from the list
+	$LineNum += 1
+	$CurrentObject = @()		
+	foreach($Line in $SingleTable[$LineNum..($SingleTable.count-1)])
+				{	if ( $line.trim() -ne '')
+							{ 	# write-host "Processing a data line $line"
+								$MySingleRow = @{}
+								# write-host "My HeaderRaw2 = $HeaderRaw2"
+								foreach( $HeaderName in $HeaderRaw2 )
+									{	# Some of the data fields have spaces in the values, so need to extract from the data line the location start and end from the header hint.
+										$LengthOfHeaderName = $HeaderName.Length
+										$startPositionOfHeaderName = $UnsplitHeader.indexof($HeaderName)
+										$MyDataPointRaw = $Line.Substring($StartPositionOfHeaderName, $LengthOfHeaderName)	
+										$MyDataPoint1 = $MyDataPointRaw.trim()
+										$FixedHeaderName = $HeaderName.trim('-')
+										# Now lets see if I should prefix the Header name with a 2nd header line addition
+										if ( $DoubleHeaderFound )
+											{	foreach ( $SingleDoubleHeadername in $DoubleHeaderSet)
+													{
+														$DHLocation = $DoubleHeaderRaw.indexof($SingleDoubleHeadername)	
+														$HLocation = $UnsplitHeader.indexof($FixedHeaderName)
+														# write-host "The double header for $singleDoubleHeaderName occurs at location $DHLocation"
+														# write-host "The header for $FixedHeader is found at location $HLocation"
+														$endloc = $DHLocation + $singleDoubleHeaderName.length
+														if ( $HLocation -ge $DHLocation -and $HLocation -le $endloc )
+															{	write-verbose "Found a included doubleheader"
+																write-verbose "The double header for $singleDoubleHeaderName occurs at location $DHLocation"
+																write-verbose "The header for $FixedHeaderName is found at location $HLocation"
+																$FixedHeaderName = $SingleDoubleHeadername.trim('-') + '-' + $FixedHeaderName
+															}
+													}
+
+											}
+										# write-host "Adding Datapoint $FixedHeaderName = $MyDataPoint1"
+										$MySingleRow["$FixedHeaderName"] += $MyDataPoint1
+									}
+								$CurrentObject += $MySingleRow
+							}
+				}
+	if ( $TitleFound ) 
+				{	$ReturnObject = @{ $CurrentTitle = $CurrentObject } | convertto-json | convertfrom-json 
+					return $ReturnObject 
+				}
+			else 
+				{	$ReturnObject = $CurrentObject | convertTo-JSON | ConvertFrom-Json
+					return $ReturnObject
+				}
+	}	
+}
 Function New-PWSHObjectFromCLIOutput
 {
 [CmdletBinding()]
-param 	(	$InterimResults,
-			$DeepRecurse = $false
+param 	(	$InterimResults
 		)
 Process
-{	if (-not $DeepRecurse )
-	{	$ReturnObject = @()
+{		$ReturnObject = @()
 		# First lets split up the return data. I will first split the data using blank lines and recurse back to this function with the individual objects
 		$BlankLines = @()
 		$LineNum = 0
-		if ( $InterimResults[0].trim() -eq '')
+		while ( $InterimResults[0].trim() -eq '')
 			{	# If first line is blank, delete that line.
 				$InterimResults = $InterimResults[1..($InterimResults.count-1)]
 			}
@@ -182,7 +294,7 @@ Process
 			{	$SkipLine=$false
 				# If a line is nothing but ------ marks, we can delete it.
 				if ( $Line.Trim('-') -eq '' -and $Line[0] -eq '-')		{	$SkipLine = $true	}
-				if ( $Line.StartsWith('total'))							{	$SkipLine = $true	}
+				if ( $Line.contains('total'))							{	$SkipLine = $true	}
 				if ( -not $SkipLine )									{	$Temp += $Line		}
 			}
 		$InterimResults = $Temp
@@ -202,17 +314,14 @@ Process
 		#write-host "Test blanklines = $BlankLines, Count =" -nonewline
 		# $BlankLines.count | out-string
 		# $BlankLines | out-string
-	if ( $BlankLines.count -eq $InterminResults.count)
-	{	#write-host "Nothing but blanks"
-		return
-
-	}
-#	if ( $Blanklines.count -gt 2 )
-#	{	#write-host "Entering the recursive part of New-PWSHObject function."
+		if ( $BlankLines.count -eq $InterminResults.count)
+			{	#write-host "Nothing but blanks"
+				return
+			}
 		foreach ( $entry in $BlankLines)
-		{	#write-verbose "Doing a recursive call on a sub-table from the main table"
+		{	# write-verbose "Doing a recursive call on a sub-table from the main table"
 			# subdivideds the data into groups. i.e. If blanklines is 0,4,7,9 it will create 3 objects from line 0-4, another from line 4-7, another from 7-9. 
-			#write-host "The start and finish will be $StartLine and $entry "
+			# write-host "The start and finish will be $StartLine and $entry "
 			if ( $entry -ne ($StartLine+1) )
 			{	$SingleResult = $InterimResults[($StartLine+1)..($entry)]
 				#write-host "This is what is sent to the next call `n "
@@ -220,7 +329,7 @@ Process
 					{	# write-host "p->$xline"
 					}
 				if ($SingleResult.count -gt 1)
-				{	$ReturnObject += New-PWSHObjectFromCLIOutput $SingleResult -DeepRecurse $true
+				{	$ReturnObject += New-PWSHObjectFromCLIOutputSingle $SingleResult 
 				}
 				else 
 				{	#write-host "Nothing in this set to send. skipping it."
@@ -228,83 +337,14 @@ Process
 			}
 			else
 			{	#write-host 'skipped double blank line'
-
 			}
 			$Startline = $entry
 		}
 		return $ReturnObject
-#	}
-	######################### end of the Split object recursion
-	###########################################################
-	# first lets trim any lines at the start that are just blank
-}
-else
-{	#write-host "Entering the Non-recursive part of New-PWSHObject function."
-	if ( $InterimResults[0].trim -eq '' )
-		{	#write-verbose "Trimmed a blank first line from a table"
-			$InterimResults = $InterimResults[1..($InterimResults.count -1)]
-		}
-	# At this point, we know only single tables should be coming in		
-	#if ( $InterimResults[0].Indexof('-------') -eq '-1' )
-	#		{	# this will detect lines that start with things like '------------------------------------connectivity-------------------------------------'#
-	#			write-verbose "Detected that this is a none titled response, calling to create a object without a title"
-	#			$ReturnObj += New-PWSHObjectFromCLIOutputWithoutTitle $InterimResults
-	#	}
-	#else
-	#	{	# If a title exists it will be on line 1
-	$LineNum = 0
-	if ( $InterimResults[$LineNum].indexof('-------') -eq 0 )
-				{	$TitleFound = $True
-					$CurrentTitle = $InterimResults[$LineNum].Trim('-')
-					$LineNum += 1
-#					write-host "The Detected Title is $CurrentTitle"
-				}	
-	$Testline = $InterimResults[$LineNum].trim()
-	$Testline = $Testline.trim('-')
-	$Testline = $Testline.split()
-	if ( $Testline.count -eq 1 )
-				{	# If there is a second line to a title, it should be shorter than 10 charactors
-#					Write-host "The second title line is $TestLine"
-					$LineNum += 1
-				}					
-	$UnsplitHeader = $InterimResults[$LineNum]
-#	write-host "Unsplit Header = $UnsplitHeader"
-	$HeaderRaw1 = $UnsplitHeader.Split()		# Split the headers into columns
-	$HeaderRaw2 = $HeaderRaw1.where({ $_ -ne ""})	# Trim the empty items from the list
-	$LineNum += 1
-	$CurrentObject = @()		
-	foreach($Line in $InterimResults[$LineNum..($InterimResults.count-1)])
-				{	if ( $line.trim() -ne '')
-							{ 	# write-host "Processing a data line $line"
-								$MySingleRow = @{}
-								# write-host "My HeaderRaw2 = $HeaderRaw2"
-								foreach( $HeaderName in $HeaderRaw2 )
-									{	# Some of the data fields have spaces in the values, so need to extract from the data line the location start and end from the header hint.
-										$LengthOfHeaderName = $HeaderName.Length
-										$startPositionOfHeaderName = $UnsplitHeader.indexof($HeaderName)
-										$MyDataPointRaw = $Line.Substring($StartPositionOfHeaderName, $LengthOfHeaderName)	
-										$MyDataPoint1 = $MyDataPointRaw.trim()
-										$FixedHeaderName = $HeaderName.trim('-')
-										# write-host "Adding Datapoint $FixedHeaderName = $MyDataPoint1"
-										$MySingleRow["$FixedHeaderName"] += $MyDataPoint1
-									}
-								$CurrentObject += $MySingleRow
-							}
-				}
-	if ( $TitleFound ) 
-				{	$ReturnObject = @{ $CurrentTitle = $CurrentObject } | convertto-json | convertfrom-json 
-					return $ReturnObject 
-				}
-			else 
-				{	$ReturnObject = $CurrentObject | convertTo-JSON | ConvertFrom-Json
-					return $ReturnObject
-				}
-#		}
-	}	
 }
 }
 
-Function New-PWSHObjectFromCLIOutputWithoutTitle
+<# Function New-PWSHObjectFromCLIOutputWithoutTitle
 {
 [CmdletBinding()]
 param (	$InterimResults)
@@ -346,58 +386,34 @@ Process
 	return ( $CurrentObject | convertto-json | convertfrom-json )
 }
 }
+#>
+
 Function Invoke-CLICommand 
 {
 <#
 .SYNOPSIS
-	Execute a command against a device using HP3PAR CLI
+	Execute a command against a device using HP3PAR SSH 
 .DESCRIPTION
-	Execute a command against a device using HP3PAR CLI
+	Execute a command against a device using HP3PAR SSH
 .PARAMETER Connection
-	Pointer to an object that contains passwordfile, HP3parCLI installed path and IP address
+	Pointer to an connection object which is autogenerated when the Connect command is used. This will default to the last connection command value.
 .PARAMETER Cmds
 	Command to be executed
 .EXAMPLE		
-	Invoke-CLICommand -Connection $global:SANConnection -Cmds "showsysmgr"
+	Invoke-CLICommand -Cmds "showsysmgr"
 	The command queries a array to get the system information
-	$global:SANConnection is created wiith the cmdlet New-CLIConnection or New-PoshSshConnection			
-.Notes
-    NAME:  Invoke-CLICommand
-    LASTEDIT: June 2012
-    KEYWORDS: Invoke-CLICommand
-.Link
-	Requires HP3PAR CLI -Version 3.2.2
+	$global:SANConnection is created wiith the cmdlet New-PoshSshConnection			
 #>
 [CmdletBinding()]
-Param(	[Parameter(Mandatory = $false)]	$Connection = $global:SANConnection,
-			
+Param(											$Connection = $global:SANConnection,
 		[Parameter(Mandatory = $true)]	[string]$Cmds  
 	)
+Begin
+{	Test-CLIConnectionB	
+}
 Process
-{	Write-DebugLog "Start: In Invoke-CLICommand - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if (!$Connection) 
-		{	$connection = [_Connection]$Connection	
-			#check if connection object contents are null/empty
-			$Validate1 = Test-CLIConnection $Connection
-			if ($Validate1 -eq "Failed") 
-				{	Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-*Connection and pass it as parameter" "ERR:"
-					Write-DebugLog "Stop: Exiting Invoke-CLICommand since connection object values are null/empty" "ERR:"
-					return
-				}
-		}
-	#check if cmd is null/empty
-	if (!$Cmds) 
-		{	Write-DebugLog "No command is passed to the Invoke-CLICommand." "ERR:"
-			Write-DebugLog "Stop: Exiting Invoke-CLICommand since command parameter is null/empty null/empty" "ERR:"
-			return
-		}
-	$clittype = $Connection.cliType
-	if ($clittype -eq "3parcli") 
-		{	#write-host "In Invoke-CLICommand -> entered in clitype $clittype"
-			Invoke-CLI  -DeviceIPAddress  $Connection.IPAddress -epwdFile $Connection.epwdFile -CLIDir $Connection.CLIDir -cmd $Cmds
-		}
-	elseif ($clittype -eq "SshClient") 
+{	$clittype = $Connection.cliType
+	if ($clittype -eq "SshClient") 
 		{	$Result = Invoke-SSHCommand -Command $Cmds -SessionId $Connection.SessionId
 			if ($Result.ExitStatus -eq 0) 
 				{	return $Result.Output
@@ -408,7 +424,7 @@ Process
 				}		
 		}
 	else 
-		{	return "FAILURE : Invalid cliType option selected/chosen"
+		{	Throw "FAILURE : Invalid cliType option selected/chosen"
 		}
 }
 }
@@ -427,25 +443,15 @@ Function Set-DebugLog
     Specify the LogDebugInfo value to $true to see the debug log files to be created or $false if no debug log files are needed.	
 .PARAMETER Display 
     Specify the value to $true. This will enable seeing messages on the PS console. This switch is set to true by default. Turn it off by setting it to $false. Look at examples.
-.Notes
-    NAME:  Set-DebugLog
-    LASTEDIT: 04/18/2012
-    KEYWORDS: DebugLog
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #>
 [CmdletBinding()]
-param(	[Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
-		[System.Boolean]	$LogDebugInfo = $false,		
-		
-		[parameter(Position = 2, Mandatory = $true, ValueFromPipeline = $true)]
-		[System.Boolean]	$Display = $true
+param(	[Boolean]	$LogDebugInfo = $false,		
+		[Boolean]	$Display = $true
 	)
 Process
 {	$global:LogInfo = $LogDebugInfo
 	$global:DisplayInfo = $Display	
-	Write-DebugLog "Exiting function call Set-DebugLog. The value of logging debug information is set to $global:LogInfo and the value of Display on console is $global:DisplayInfo" $Debug
+	Write-warning "The value of logging debug information is set to $global:LogInfo and the value of Display on console is $global:DisplayInfo" 
 }
 }
 
@@ -468,18 +474,10 @@ Function Invoke-CLI
     Specify the command to be run for Virtual Connect
 #>
 [CmdletBinding()]
-param(	[Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
-		[System.String]		$DeviceIPAddress = $null,
-		
-		[Parameter(Position = 1)]
-		[System.String]		$CLIDir = "C:\Program Files (x86)\Hewlett Packard Enterprise\HPE 3PAR CLI\bin",	
-		#$CLIDir="C:\Program Files (x86)\Hewlett-Packard\HP 3PAR CLI\bin",
-		
-		[Parameter(Position = 2)]
-		[System.String]		$epwdFile = "C:\HP3PARepwdlogin.txt",
-		
-		[Parameter(Position = 3)]
-		[System.String]		$cmd = "show -help"
+param(	[String]		$DeviceIPAddress = $null,	
+		[String]		$CLIDir = "C:\Program Files (x86)\Hewlett Packard Enterprise\HPE 3PAR CLI\bin",	
+		[String]		$epwdFile = "C:\HP3PARepwdlogin.txt",
+		[String]		$cmd = "show -help"
 	)
 Process
 {	#write-host  "Password in Invoke-CLI = ",$password	
@@ -487,8 +485,7 @@ Process
 	if (Test-Path -Path $CLIDir) 
 		{	$clifile = $CLIDir + "\cli.exe"
 			if ( -not (Test-Path $clifile)) 
-				{	Write-DebugLog "Stop: HP3PAR cli.exe file not found. Make sure the cli.exe file present in $CLIDir." "ERR:"			
-					return "HP3PAR cli.exe file not found. Make sure the cli.exe file present in $CLIDir. "
+				{	return "HP3PAR cli.exe file not found. Make sure the cli.exe file present in $CLIDir. "
 				}
 		}
 	else 
@@ -496,18 +493,15 @@ Process
 			$CLIDir = $SANCObj.CLIDir
 		}
 	if (-not (Test-Path -Path $CLIDir )) 
-		{	Write-DebugLog "Stop: HP3PAR cli.exe not found. Make sure the HP3PAR CLI installed" "ERR:"			
-			return "FAILURE : HP3PAR cli.exe not found. Make sure the HP3PAR CLI installed"
+		{	return "FAILURE : HP3PAR cli.exe not found. Make sure the HP3PAR CLI installed"
 		}		
-	Write-DebugLog "Running: Calling function Invoke-CLI. Calling Test Network with IP Address $DeviceIPAddress" $Debug	
+	Write-verbose "Running: Calling function Invoke-CLI. Calling Test Network with IP Address $DeviceIPAddress" 	
 	$Status = Test-Network $DeviceIPAddress
 	if ($null -eq $Status) 
-		{	Write-DebugLog "Stop: Calling function Invoke-CLI. Invalid IP Address"  "ERR:"
-			Throw "Invalid IP Address"
+		{	Throw "Invalid IP Address"
 		}
 	if ($Status -eq "Failed") 
-		{	Write-DebugLog "Stop:Calling function Invoke-CLI. Unable to ping the device with IP $DeviceIPAddress. Check the IP address and try again."  "ERR:"
-			Throw "Unable to ping the device with IP $DeviceIPAddress. Check the IP address and try again."
+		{	Throw "Unable to ping the device with IP $DeviceIPAddress. Check the IP address and try again."
 		}
 	Write-DebugLog "Running: Calling function Invoke-CLI. Check the Test Network with IP Address = $DeviceIPAddress. Invoking the HP3par cli...." $Debug	
 	try {	#if(!($global:epwdFile)){
@@ -540,7 +534,6 @@ Process
 			Write-Exception $msg -error
 			Throw $msg
 		}	
-	Write-DebugLog "End:Invoke-CLI called. If no errors reported on the console, the HP3par cli with the cmd = $cmd for user $username completed Successfully" $Debug
 }
 }
 
@@ -581,13 +574,6 @@ Function Test-IPFormat
     Test-IPFormat -Address
 .PARAMETER Address 
     Specify the Address which will be validated to check if its a valid IP format.
-.Notes
-    NAME:  Test-IPFormat
-    LASTEDIT: 05/09/2012
-    KEYWORDS: Test-IPFormat
-.Link
-    http://www.hpe.com
-	#Requires PS -Version 3.0
 #>
 param(	[string]$Address = $(throw "Missing IP address parameter"))
 		trap { $false; continue; }
@@ -600,41 +586,34 @@ Function Test-WSAPIConnection
 Param(	$WsapiConnection = $global:WsapiConnection
 	)
 Process
-{	Write-DebugLog "Request: Test-WSAPIConnection to Test if the session key exists." $Debug  
-	Write-DebugLog "Running: Validate the session key" $Debug  
-	# $Validate = "Success"	
-	if (($null -eq $WsapiConnection) -or (-not ($WsapiConnection.IPAddress)) -or (-not ($WsapiConnection.Key))) 
-		{	Write-DebugLog "Stop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back."
-			Write-Warning "`nStop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back."
+{	if (($null -eq $WsapiConnection) -or (-not ($WsapiConnection.IPAddress)) -or (-not ($WsapiConnection.Key))) 
+		{	Write-Warning "`nStop: No active WSAPI connection to an HPE Alletra 9000 or Primera or 3PAR storage system or the current session key is expired. Use New-WSAPIConnection cmdlet to connect back."
 			throw 
 		}
 	else 
 		{	Write-DebugLog " End: Connected" $Info
 		}
 	Write-DebugLog "End: Test-WSAPIConnection" $Debug  
+	# Returning without an error indicates it worked
 }
 }
 
 function Invoke-WSAPI 
 {
 [CmdletBinding()]
-Param (	[parameter(Position = 0, Mandatory = $true, HelpMessage = "Enter the resource URI (ex. /volumes)")]
+Param (	[parameter(Mandatory = $true)]
 		[ValidateScript( { if ($_.startswith('/')) { $true } else { throw "-URI must begin with a '/' (eg. /volumes) in its value. Correct the value and try again." } })]
 		[string]	$uri,
 		
-		[parameter(Position = 1)]
 		[ValidateSet('GET','PUT','DELETE')]
 		[string]	$type,
 		
-		[parameter(Position = 2, HelpMessage = "Body of the message")]
 		[array]		$body,
 		
-		[Parameter(Position = 0, ValueFromPipeline = $true)]
-		$WsapiConnection = $global:WsapiConnection
+					$WsapiConnection = $global:WsapiConnection
 	)
 Process
-{	Write-DebugLog "Request: Request Invoke-WSAPI URL : $uri TYPE : $type " $Debug  
-	$ip = $WsapiConnection.IPAddress
+{	$ip = $WsapiConnection.IPAddress
 	$key = $WsapiConnection.Key
 	$arrtyp = $global:ArrayType
 	if ($arrtyp.ToLower() -eq "3par") 
@@ -656,7 +635,7 @@ Process
 	$headers["X-HP3PAR-WSAPI-SessionKey"] = $key
 	$data = $null
 	If ($type -eq 'GET') 
-		{	Try {	Write-DebugLog "Request: Invoke-WebRequest for Data, Request Type : $type" $Debug          
+		{	Try {	Write-verbose "Request: Invoke-WebRequest for Data, Request Type : $type"
 					if ($PSEdition -eq 'Core') 
 						{	$data = Invoke-WebRequest -Uri "$url" -Headers $headers -Method $type -UseBasicParsing -SkipCertificateCheck
 						}		 
@@ -665,15 +644,14 @@ Process
 						}
 					return $data
 				}
-			Catch {	Write-DebugLog "Stop: Exception Occurs" $Debug
+			Catch {	Write-error "Stop: Exception Occurs" 
 					Show-RequestException -Exception $_
 					return
 				}
 		}
 	If (($type -eq 'POST') -or ($type -eq 'PUT')) 
-		{	Try 	{	Write-DebugLog "Request: Invoke-WebRequest for Data, Request Type : $type" $Debug
+		{	Try 	{	Write-verbose "Request: Invoke-WebRequest for Data, Request Type : $type"
 						$json = $body | ConvertTo-Json  -Compress -Depth 10	
-						#write-host "Invoke json = $json"		       
 						if ($PSEdition -eq 'Core') 
 							{    $data = Invoke-WebRequest -Uri "$url" -Body $json -Headers $headers -Method $type -UseBasicParsing -SkipCertificateCheck
 							} 
@@ -682,13 +660,13 @@ Process
 							}
 						return $data
 					}
-			Catch 	{	Write-DebugLog "Stop: Exception Occurs" $Debug
+			Catch 	{	Write-error "Stop: Exception Occurs"
 						Show-RequestException -Exception $_
 						return
 					}
 		}
 	If ($type -eq 'DELETE') 
-		{	Try 	{	Write-DebugLog "Request: Invoke-WebRequest for Data, Request Type : $type" $Debug
+		{	Try 	{	Write-verbose "Request: Invoke-WebRequest for Data, Request Type : $type" 
 						if ($PSEdition -eq 'Core') 
 							{    $data = Invoke-WebRequest -Uri "$url" -Headers $headers -Method $type -UseBasicParsing -SkipCertificateCheck
 							} 
@@ -697,23 +675,19 @@ Process
 							}
 						return $data
 					}
-			Catch 	{	Write-DebugLog "Stop: Exception Occurs" $Debug
+			Catch 	{	Write-error "Stop: Exception Occurs" 
 						Show-RequestException -Exception $_
 						return
 					}
 		}
-	Write-DebugLog "End: Invoke-WSAPI" $Debug
 }
 }
 
 function Format-Result 
 {
 [CmdletBinding()]
-Param (	[parameter(Mandatory = $true)]
-		$dataPS,
-		
-		[parameter(Mandatory = $true)]
-		[string]$TypeName
+Param (	[parameter(Mandatory = $true)]				$dataPS,
+		[parameter(Mandatory = $true)]	[string]	$TypeName
 	)
 Begin 
 { 	$AlldataPS = @() 
@@ -726,9 +700,7 @@ Process
 				}		
 			$AlldataPS += $data
 		}
-}
-End 
-{ 	return $AlldataPS 
+	return $AlldataPS
 }
 }
 
@@ -741,36 +713,22 @@ Param(	[parameter(Mandatory = $true)]
 Protect-CmsMessage
 {	#Exception catch when there's a connectivity problem with the array
 	If ($Exception.Exception.InnerException) 
-		{	Write-Host "Please verify the connectivity with the array. Retry with the parameter -Verbose for more informations" -foreground yellow
-			Write-Host
+		{	Write-Host "Please verify the connectivity with the array. Retry with the parameter -Verbose for more informations.`n" -foreground yellow
 			Write-Host "Status: $($Exception.Exception.Status)" -foreground yellow
 			Write-Host "Error code: $($Exception.Exception.Response.StatusCode.value__)" -foreground yellow
-			Write-Host "Message: $($Exception.Exception.InnerException.Message)" -foreground yellow
-			Write-Host	
-			Write-DebugLog "Stop: Please verify the connectivity with the array. Retry with the parameter -Verbose for more informations." $Debug
-			Write-DebugLog "Stop: Status: $($Exception.Exception.Status)" $Debug
-			Write-DebugLog "Stop: Error code: $($Exception.Exception.Response.StatusCode.value__)" $Debug
-			Write-DebugLog "Stop: Message: $($Exception.Exception.InnerException.Message)" $Debug
+			Write-Host "Message: $($Exception.Exception.InnerException.Message) `n" -foreground yellow
 			Return $Exception.Exception.Status
 		}
 	#Exception catch when the rest request return an error
 	If ($_.Exception.Response) 
 		{	$result = ConvertFrom-Json -InputObject $Exception.ErrorDetails.Message	
-			Write-Host "The array sends an error message: $($result.desc)." -foreground yellow 
-			Write-Host
+			Write-Host "The array sends an error message: $($result.desc). `n" -foreground yellow 
 			Write-Host "Status: $($Exception.Exception.Status)" -foreground yellow
 			Write-Host "Error code: $($result.code)" -foreground yellow
 			Write-Host "HTTP Error code: $($Exception.Exception.Response.StatusCode.value__)" -foreground yellow
-			Write-Host "Message: $($result.desc)" -foreground yellow
-			Write-Host
-			Write-DebugLog "Stop:The array sends an error message: $($Exception.Exception.Message)." $Debug
-			Write-DebugLog "Stop: Status: $($Exception.Exception.Status)" $Debug
-			Write-DebugLog "Stop: Error code: $($result.code)" $Debug
-			Write-DebugLog "Stop: HTTP Error code: $($Exception.Exception.Response.StatusCode.value__)" $Debug
-			Write-DebugLog "Stop: Message: $($result.desc)" $Debug
+			Write-Host "Message: $($result.desc) `n" -foreground yellow
 			Return $result.code
 		}
-	Write-DebugLog "End: Show-RequestException" $Debug
 }
 }
 
@@ -779,26 +737,17 @@ Function Test-FilePath ([String[]]$ConfigFiles)
 <#
 .SYNOPSIS
     Validate an array of file paths. For Internal Use only.
-
 .DESCRIPTION
 	Validates if a path specified in the array is valid.   
 .EXAMPLE
     Test-FilePath -ConfigFiles
 .PARAMETER -ConfigFiles 
     Specify an array of config files which need to be validated.	
-.Notes
-    NAME:  Test-FilePath
-    LASTEDIT: 05/30/2012
-    KEYWORDS: Test-FilePath
-.Link
-	http://www.hpe.com
-	#Requires PS -Version 3.0
 #>
 Process
-{	Write-DebugLog "Start: Entering function Test-FilePath." $Debug
-	$Validate = @()	
+{	$Validate = @()	
 	if (-not ($global:ConfigDir)) 
-		{	Write-DebugLog "STOP: Configuration Directory path is not set. Run scripts Init-PS-Session.ps1 OR import module VS-Functions.psm1 and run cmdlet Set-ConfigDirectory" "ERR:"
+		{	Write-warning "STOP: Configuration Directory path is not set. Run scripts Init-PS-Session.ps1 OR import module VS-Functions.psm1 and run cmdlet Set-ConfigDirectory" "ERR:"
 			$Validate = @("Configuration Directory path is not set. Run scripts Init-PS-Session.ps1 OR import module VS-Functions.psm1 and run cmdlet Set-ConfigDirectory.")
 			return $Validate
 		}
@@ -810,7 +759,6 @@ Process
 						}				
 				}
 		}	
-	Write-DebugLog "End: Leaving function Test-FilePath." $Debug
 	return $Validate
 }
 }
@@ -822,13 +770,6 @@ Function Test-PARCLi
     Test-PARCli object path
 .EXAMPLE
     Test-PARCli t
-.Notes
-    NAME:  Test-PARCli
-    LASTEDIT: 06/16/2015
-    KEYWORDS: Test-PARCli
-.Link
-    http://www.hpe.com
-	Requires PS -Version 3.0
 #> 
 [CmdletBinding()]
 param (	[Parameter(Position = 0, Mandatory = $false, ValueFromPipeline = $true)]
@@ -837,15 +778,11 @@ param (	[Parameter(Position = 0, Mandatory = $false, ValueFromPipeline = $true)]
 Process
 {	$SANCOB = $SANConnection 
 	$clittype = $SANCOB.CliType
-	Write-DebugLog "Start : in Test-PARCli function " "INFO:"
-	if ($clittype -eq "3parcli") 
-		{	Test-PARCliTest -SANConnection $SANConnection
-		}
-	elseif ($clittype -eq "SshClient") 
+	if ($clittype -eq "SshClient") 
 		{	Test-SSHSession -SANConnection $SANConnection
 		}
 	else 
-		{	return "FAILURE : Invalid cli type"
+		{	throw "FAILURE : Invalid cli type"
 		}	
 }
 }
@@ -885,19 +822,12 @@ Function Test-PARCliTest
     Test-PARCli path -pathFolder c:\test
 #> 
 [CmdletBinding()]
-param(	[Parameter(Position = 0, Mandatory = $false)]
-		[System.String]
-		#$pathFolder = "C:\Program Files (x86)\Hewlett-Packard\HP 3PAR CLI\bin\",
-		$pathFolder = "C:\Program Files (x86)\Hewlett Packard Enterprise\HPE 3PAR CLI\bin",
-		
-		[Parameter(Position = 1, Mandatory = $false, ValueFromPipeline = $true)]
-		$SANConnection = $global:SANConnection 
+param(	[String]	$pathFolder = "C:\Program Files (x86)\Hewlett Packard Enterprise\HPE 3PAR CLI\bin",
+					$SANConnection = $global:SANConnection 
 	)
 process
 {	$SANCOB = $SANConnection 
 	$DeviceIPAddress = $SANCOB.IPAddress
-	Write-DebugLog "Start : in Test-PARCli function " "INFO:"
-	#Write-host "Start : in Test-PARCli function "
 	$CLIDir = $pathFolder
 	if (Test-Path -Path $CLIDir) 
 		{	$clitestfile = $CLIDir + "\cli.exe"
@@ -906,9 +836,7 @@ process
 				}
 			$pwfile = $SANCOB.epwdFile
 			$cmd2 = "help.bat"
-			#$cmdFinal = "$cmd2 -sys $DeviceIPAddress -pwf $pwfile"
 			& $cmd2 -sys $DeviceIPAddress -pwf $pwfile
-			#Invoke-Expression $cmdFinal
 			if (!($?)) 
 				{	return "`nFAILURE : FATAL ERROR"
 				}
@@ -922,14 +850,12 @@ process
 				}
 			$pwfile = $SANCObj.epwdFile
 			$cmd2 = "help.bat"
-			#$cmdFinal = "$cmd2 -sys $DeviceIPAddress -pwf $pwfile"
-			#Invoke-Expression $cmdFinal
 			& $cmd2 -sys $DeviceIPAddress -pwf $pwfile
 			if (!($?)) 
 				{	return "`nFAILURE : FATAL ERROR"
 				}
 		}
-	Write-DebugLog "Stop : in Test-PARCli function " "INFO:"
+	Write-error "Stop : in Test-PARCli function " 
 }
 }
 
@@ -984,8 +910,9 @@ Process{
 	return 
 }
 }
+
 Export-ModuleMember Test-CLIConnectionB,  Test-CLIConnection, Test-SSHSession, Test-WSAPIConnection , Test-Network ,
 					Invoke-WSAPI , Invoke-CLI , Invoke-CLICommand,
-					New-PWSHObjectFromCLIOutput, New-PWSHObjectFromCLIOutputWithoutTitle, 
+					New-PWSHObjectFromCLIOutput, 
 					Format-Result , Show-RequestException , Set-DebugLog ,  Test-IPFormat , Test-FilePath , 
 					Test-PARCli , Test-PARCliTest
