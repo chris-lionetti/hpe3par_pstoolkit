@@ -1,1057 +1,460 @@
 ﻿####################################################################################
-## 	© 2020,2021 Hewlett Packard Enterprise Development LP
-##
-## 	Permission is hereby granted, free of charge, to any person obtaining a
-## 	copy of this software and associated documentation files (the "Software"),
-## 	to deal in the Software without restriction, including without limitation
-## 	the rights to use, copy, modify, merge, publish, distribute, sublicense,
-## 	and/or sell copies of the Software, and to permit persons to whom the
-## 	Software is furnished to do so, subject to the following conditions:
-##
-## 	The above copyright notice and this permission notice shall be included
-## 	in all copies or substantial portions of the Software.
-##
-## 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-## 	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-## 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-## 	THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-## 	OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-## 	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-## 	OTHER DEALINGS IN THE SOFTWARE.
-##
-##	File Name:		PerformanceManagement.psm1
+## 	© 2020,2021, 2023 Hewlett Packard Enterprise Development LP
 ##	Description: 	Performance Management cmdlets 
 ##		
-##	Created:		October 2019
-##	Last Modified:	October 2019
-##	History:		v3.0 - Created	
-#####################################################################################
-
-$Info = "INFO:"
-$Debug = "DEBUG:"
-$global:VSLibraries = Split-Path $MyInvocation.MyCommand.Path
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-############################################################################################################################################
-## FUNCTION Test-CLIObject
-############################################################################################################################################
-Function Test-CLIObject 
-{
-Param( 	
-    [string]$ObjectType, 
-	[string]$ObjectName ,
-	[string]$ObjectMsg = $ObjectType, 
-	$SANConnection = $global:SANConnection
-	)
-
-	$IsObjectExisted = $True
-	$ObjCmd = $ObjectType -replace ' ', '' 
-	$Cmds = "show$ObjCmd $ObjectName"
-	
-	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmds
-	if ($Result -like "no $ObjectMsg listed")
-	{
-		$IsObjectExisted = $false
-	}
-	return $IsObjectExisted
-	
-} # End FUNCTION Test-CLIObject
-
-######################################################################################################################
-## FUNCTION Compress-VV
-######################################################################################################################
 Function Compress-VV
 {
 <#
-  .SYNOPSIS   
-	The Compress-VV command is used to change the properties of a virtual volume that
-	was created with the createvv command by associating it with a different CPG.
-	
-  .DESCRIPTION  
-	The Compress-VV command is used to change the properties of a virtual volume that
-    was created with the createvv command by associating it with a different CPG.
-	
-  .EXAMPLE	
+.SYNOPSIS   
+	The Compress-VV command is used to change the properties of a virtual volume that was created with the createvv command by associating it with a different CPG.
+.DESCRIPTION  
+	The Compress-VV command is used to change the properties of a virtual volume that was created with the createvv command by associating it with a different CPG.
+.EXAMPLE	
 	Compress-VV -SUBCommand usr_cpg -CPGName XYZ
-		
-  .EXAMPLE
+.EXAMPLE
 	Compress-VV -SUBCommand usr_cpg -CPGName XYZ -VVName XYZ
-	
-  .EXAMPLE
+.EXAMPLE
 	Compress-VV -SUBCommand usr_cpg -CPGName XYZ -Option XYZ -VVName XYZ
-	
-  .EXAMPLE
+.EXAMPLE
 	Compress-VV -SUBCommand usr_cpg -CPGName XYZ -Option keepvv -KeepVVName XYZ -VVName XYZ
-		
-  .EXAMPLE
+.EXAMPLE
 	Compress-VV -SUBCommand snp_cpg -CPGName XYZ -VVName XYZ
-	
-  .PARAMETER SUBCommand
+.PARAMETER SUBCommand
 	usr_cpg <cpg>
 		Moves the logical disks being used for user space to the specified CPG.
 		
 	snp_cpg <cpg>
-		Moves the logical disks being used for snapshot space to the specified
-		CPG.
+		Moves the logical disks being used for snapshot space to the specified CPG.
 		
 	restart
-		Restarts a tunevv command call that was previously interrupted because
-		of component failure, or because of user initiated cancellation. This
-		cannot be used on TPVVs or TDVVs.
+		Restarts a tunevv command call that was previously interrupted because of component failure, or because of user initiated 
+		cancellation. This cannot be used on TPVVs or TDVVs.
 		
 	rollback
-		Returns to a previously issued tunevv operation call that was
-		interrupted. The canceltask command needs to run before the rollback.
+		Returns to a previously issued tunevv operation call that was interrupted. The canceltask command needs to run before the rollback.
 		This cannot be used on TPVVs or TDVVs.
-	
-  .PARAMETER CPGName
-	Indicates that only regions of the VV which are part of the the specified
-	CPG should be tuned to the destination USR or SNP CPG.
-	
-  .PARAMETER VVName
-	 Specifies the name of the existing virtual volume.
-
-  .PARAMETER WaitTask
-	Specifies that the command will wait for any created tasks to
-	complete.
-
-  .PARAMETER DryRun
-	Specifies that the command is a dry run and that no logical disks or
-	virtual volumes are actually tuned.  Cannot be used with the -tpvv,
+.PARAMETER CPGName
+	Indicates that only regions of the VV which are part of the the specified CPG should be tuned to the destination USR or SNP CPG.
+.PARAMETER VVName
+	Specifies the name of the existing virtual volume.
+.PARAMETER WaitTask
+	Specifies that the command will wait for any created tasks to complete.
+.PARAMETER DryRun
+	Specifies that the command is a dry run and that no logical disks or virtual volumes are actually tuned.  Cannot be used with the -tpvv,
 	-dedup, -full, or -compr options.
-
-  .PARAMETER Count
-	Specifies the number of identical virtual volumes to tune using an
-	integer from 1 through 999. If not specified, one virtual volume
-	is tuned. If the '-cnt' option is specified, then the subcommands,
-	"restart" and "rollback" are not permitted.
-
-  .PARAMETER TPVV
-	Indicates that the VV should be converted to a thin provision virtual
-	volume.  Cannot be used with the -dedup or -full options.
-
-  .PARAMETER TDVV
+.PARAMETER Count
+	Specifies the number of identical virtual volumes to tune using an integer from 1 through 999. If not specified, one virtual volume
+	is tuned. If the '-cnt' option is specified, then the subcommands, "restart" and "rollback" are not permitted.
+.PARAMETER TPVV
+	Indicates that the VV should be converted to a thin provision virtual volume.  Cannot be used with the -dedup or -full options.
+.PARAMETER TDVV
 	This option is deprecated, see -dedup.
-
-  .PARAMETER DeDup
-	Indicates that the VV should be converted to a thin provision virtual
-	volume that shares logical disk space with other instances of this
+.PARAMETER DeDup
+	Indicates that the VV should be converted to a thin provision virtual volume that shares logical disk space with other instances of this
 	volume type.  Cannot be used with the -tpvv or -full options.
-
-  .PARAMETER Full
-	Indicates that the VV should be converted to a fully provisioned virtual
-	volume.  Cannot be used with the -tpvv, -dedup, or -compr options.
-
-  .PARAMETER Compr
-	Indicates that the VV should be converted to a compressed virtual
-	volume.  Cannot be used with the -full option.
-
-  .PARAMETER KeepVV
-	Indicates that the original logical disks should be saved under a new
-	virtual volume with the given name.  Can only be used with the -tpvv,
+.PARAMETER Full
+	Indicates that the VV should be converted to a fully provisioned virtual volume.  Cannot be used with the -tpvv, -dedup, or -compr options.
+.PARAMETER Compr
+	Indicates that the VV should be converted to a compressed virtual volume.  Cannot be used with the -full option.
+.PARAMETER KeepVV
+	Indicates that the original logical disks should be saved under a new virtual volume with the given name.  Can only be used with the -tpvv,
 	-dedup, -full, or -compr options.
-
-  .PARAMETER Src_Cpg 
-	Indicates that only regions of the VV which are part of the the specified
-	CPG should be tuned to the destination USR or SNP CPG. This option is
-	recommended when a VV belongs to an AO configuration and will avoid
-	disrupting any optimizations already performed.
-
-  .PARAMETER Threshold 
-	Slice threshold. Volumes above this size will be tuned in slices.
-	<threshold> must be in multiples of 128GiB. Minimum is 128GiB.
-	Default is 16TiB. Maximum is 16TiB.
-
-  .PARAMETER SliceSize
-	Slice size. Size of slice to use when volume size is greater than
-	<threshold>. <size> must be in multiples of 128GiB. Minimum is 128GiB.
-	 Default is 2TiB. Maximum is 16TiB.
-	
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-	NAME: Compress-VV
-	LASTEDIT: November 2019
-	KEYWORDS: Compress-VV
-   
-	.Link
-		http://www.hpe.com
- 
- #Requires PS -Version 3.0
- #>
+.PARAMETER Src_Cpg 
+	Indicates that only regions of the VV which are part of the the specified CPG should be tuned to the destination USR or SNP CPG. This option is
+	recommended when a VV belongs to an AO configuration and will avoid disrupting any optimizations already performed.
+.PARAMETER Threshold 
+	Slice threshold. Volumes above this size will be tuned in slices. <threshold> must be in multiples of 128GiB. Minimum is 128GiB. Default is 16TiB. Maximum is 16TiB.
+.PARAMETER SliceSize
+	Slice size. Size of slice to use when volume size is greater than <threshold>. <size> must be in multiples of 128GiB. Minimum is 128GiB. Default is 2TiB. Maximum is 16TiB.
+#>
 [CmdletBinding()]
-	param(	
-		[Parameter(Position=0, Mandatory=$true)]
-		[System.String]
-		$SUBCommand ,
-		
-		[Parameter(Position=1, Mandatory=$true)]
-		[System.String]
-		$VVName ,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
-        $CPGName ,	
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[switch]
-		$WaitTask ,		
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[switch]
-		$DryRun ,		
-		
-		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
-		$Count ,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[switch]
-		$TPVV ,
-		
-		[Parameter(Position=7, Mandatory=$false)]
-		[switch]
-		$TDVV ,
-		
-		[Parameter(Position=8, Mandatory=$false)]
-		[switch]
-		$DeDup ,
-		
-		[Parameter(Position=9, Mandatory=$false)]
-		[switch]
-		$Full ,
-		
-		[Parameter(Position=10, Mandatory=$false)]
-		[switch]
-		$Compr ,
-		
-		[Parameter(Position=11, Mandatory=$false)]
-		[System.String]
-		$KeepVV ,		
-		
-		[Parameter(Position=13, Mandatory=$false)]
-		[System.String]
-		$Threshold , 
-		
-		[Parameter(Position=14, Mandatory=$false)]
-		[System.String]
-		$SliceSize , 
-		
-		[Parameter(Position=15, Mandatory=$false)]
-		[System.String]
-		$Src_Cpg ,
-				
-		[Parameter(Position=16, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+param(	[Parameter(Mandatory=$true)][ValidateSet("usr_cpg","snp_cpg","restart","rollback")]
+		[String]	$SUBCommand ,
+		[String]	$VVName ,
+		[String]	$CPGName ,	
+		[switch]	$WaitTask ,		
+		[switch]	$DryRun ,		
+		[String]	$Count ,
+		[switch]	$TPVV ,
+		[switch]	$TDVV ,
+		[switch]	$DeDup ,
+		[switch]	$Full ,
+		[switch]	$Compr ,
+		[String]	$KeepVV ,		
+		[String]	$Threshold , 
+		[String]	$SliceSize , 
+		[String]	$Src_Cpg
 	)		
-	
-	Write-DebugLog "Start: In Compress-VV - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Compress-VV since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Compress-VV since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
+begin	
+{	Test-CLIConnectionB
+}
+Process
+{	$Cmd = " tunevv "
+	$Cmd += " $SUBCommand"			
+	if($SUBCommand -eq "usr_cpg" -Or $SUBCommand -eq "snp_cpg")
+		{	if( $CPGName )		{	$Cmd += " $CPGName" }
+			else				{	return "SubCommand : $SUBCommand,Must Require CPG Name."}
 		}
-	}
-	$plinkresult = Test-PARCli -SANConnection $SANConnection
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	
-	$Cmd = " tunevv "
-	
-	if($SUBCommand)
-	{
-		$test="usr_cpg","snp_cpg","restart","rollback"
-		$SbCmd = $SUBCommand.toLower()
-		if ($test -eq $SbCmd)
-		{
-			$Cmd += " $SUBCommand"			
-		}
-		else
-		{
-			return "SubCommand Should be [usr_cpg | snp_cpg | restart | rollback]"
-		}
-		if($SUBCommand -eq "usr_cpg" -Or $SUBCommand -eq "snp_cpg")
-		{
-			if($CPGName)
-			{
-				$Cmd += " $CPGName"
-			}
-			else
-			{
-				return "SubCommand : $SUBCommand,Must Require CPG Name."
-			}
-		}
-	}
 	$Cmd += " -f "
-	
-	if($WaitTask)
-	{
-		$Cmd += " -waittask "
-	}
-	if($DryRun)
-	{
-		$Cmd += " -dr "
-	}
-	if($Count)
-	{
-		$Cmd += " -cnt $Count"
-	}
-	if($TPVV)
-	{
-		$Cmd += " -tpvv "
-	}
-	if($TDVV)
-	{
-		$Cmd += " -tdvv "
-	}
-	if($DeDup)
-	{
-		$Cmd += " -dedup "
-	}
-	if($Full)
-	{
-		$Cmd += " -full "
-	}
-	if($Compr)
-	{
-		$Cmd += " -compr "
-	}
-	if($KeepVV)
-	{
-		$Cmd += " -keepvv $KeepVV"
-	}
-	if($Src_Cpg)
-	{
-		$Cmd += " -src_cpg $Src_Cpg"
-	}
-	if($Threshold)
-	{
-		$Cmd += " -slth $Threshold"
-	}
-	if($SliceSize)
-	{
-		$Cmd += " -slsz $SliceSize"
-	}
-	if($VVName)
-	{					
-		$Cmd += " $VVName"			
-	}
-	
-	#write-host "Command = $Cmd"
-	
+	if($WaitTask)	{	$Cmd += " -waittask "		}
+	if($DryRun)		{	$Cmd += " -dr "				}
+	if($Count)		{	$Cmd += " -cnt $Count"		}
+	if($TPVV)		{	$Cmd += " -tpvv "			}
+	if($TDVV)		{	$Cmd += " -tdvv "			}
+	if($DeDup)		{	$Cmd += " -dedup "			}
+	if($Full)		{	$Cmd += " -full "			}
+	if($Compr)		{	$Cmd += " -compr "			}
+	if($KeepVV)		{	$Cmd += " -keepvv $KeepVV"	}
+	if($Src_Cpg)	{	$Cmd += " -src_cpg $Src_Cpg"}
+	if($Threshold)	{	$Cmd += " -slth $Threshold"	}
+	if($SliceSize)	{	$Cmd += " -slsz $SliceSize"	}
+	if($VVName)		{	$Cmd += " $VVName"			}
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
-	write-debuglog "  Executing Compress-VV for tuning virtual volume.-->  " "INFO:" 
 	return  $Result
-
-} ##  End-of  Compress-VV
-
-####################################################################################################################
-## FUNCTION Get-HistChunklet
-#####################################################################################################################
+}
+}
 
 Function Get-HistChunklet  
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Get-HistChunklet command displays a histogram of service times in a timed loop for individual chunklets
-  
-  .DESCRIPTION
+.DESCRIPTION
 	The Get-HistChunklet command displays a histogram of service times in a timed loop for individual chunklets
-        
-  .EXAMPLE
-  
-    Get-HistChunklet -Iteration 1 
-	This example displays one iteration of a histogram of service
-		
-  .EXAMPLE
-    Get-HistChunklet –LDname dildil -Iteration 1 
-	identified by name, from which chunklet statistics are sampled.
+.EXAMPLE
+	Get-HistChunklet -Iteration 1 
 	
-  .EXAMPLE
+	This example displays one iteration of a histogram of service
+.EXAMPLE
+    Get-HistChunklet –LDname dildil -Iteration 1 
+
+	identified by name, from which chunklet statistics are sampled.
+.EXAMPLE
 	Get-HistChunklet -Iteration 1 -Previous
-
-  .PARAMETER Chunklet_num
-	Specifies that statistics are limited to only the specified chunklet, identified
-	by number.
-
-  .PARAMETER Metric both|time|size
+.PARAMETER Chunklet_num
+	Specifies that statistics are limited to only the specified chunklet, identified by number.
+.PARAMETER Metric both|time|size
 	Selects which metric to display. Metrics can be one of the following:
 		both - (Default)Display both I/O time and I/O size histograms
 		time - Display only the I/O time histogram
 		size - Display only the I/O size histogram
-
-  .PARAMETER Percentage
-	Shows the access count in each bucket as a percentage. If this option is
-	not specified, the histogram shows the access counts.
-
-  .PARAMETER Previous
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Percentage
+	Shows the access count in each bucket as a percentage. If this option is not specified, the histogram shows the access counts.
+.PARAMETER Previous
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-		
-  .PARAMETER Beginning
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Beginning
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-
-  .PARAMETER RW
-	Specifies that the display includes separate read and write data. If not
-	specified, the total is displayed.
-
-  .PARAMETER Interval
-	Specifies the interval in seconds that statistics are sampled from
-	using an integer from 1 through 2147483. If no count is specified, the
+.PARAMETER RW
+	Specifies that the display includes separate read and write data. If not specified, the total is displayed.
+.PARAMETER Interval
+	Specifies the interval in seconds that statistics are sampled from using an integer from 1 through 2147483. If no count is specified, the
 	command defaults to 2 seconds.
-
-  .PARAMETER Iteration
-	Specifies that the histogram is to stop after the indicated number of
-	iterations using an integer from 1 through 2147483647.
-		
-  .PARAMETER NI
-	Specifies that histograms for only non-idle devices are displayed. This
-	option is shorthand for the option -filt t,0,0.
-
-  .PARAMETER LDname 
+.PARAMETER Iteration
+	Specifies that the histogram is to stop after the indicated number of iterations using an integer from 1 through 2147483647.
+.PARAMETER NI
+	Specifies that histograms for only non-idle devices are displayed. This option is shorthand for the option -filt t,0,0.
+.PARAMETER LDname 
     Specifies the Logical Disk (LD), identified by name, from which chunklet statistics are sampled.
- 
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Get-HistChunklet
-    LASTEDIT: November 2019
-    KEYWORDS: Get-HistChunklet
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+#>
 [CmdletBinding()]
-	param(	
-	    [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
-		$LDname,
-		
-		[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
-		$Chunklet_num,
-		
-		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
-		$Metric,
-		
-		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
-		$Iteration,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[switch]
-		$Percentage,
-		
-		[Parameter(Position=5, Mandatory=$false)]
-		[switch]
-		$Previous,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[switch]
-		$Beginning,
-		
-		[Parameter(Position=7, Mandatory=$false)]
-		[switch]
-		$RW,
-		
-		[Parameter(Position=8, Mandatory=$false)]
-		[System.String]
-		$Interval,
-		
-		[Parameter(Position=9, Mandatory=$false)]
-		[switch]
-		$NI,
-			
-		[Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+param(	[String]	$LDname,
+		[String]	$Chunklet_num,
+		[String]	$Metric,
+		[Parameter(Mandatory)]
+		[String]	$Iteration,
+		[switch]	$Percentage,
+		[switch]	$Previous,
+		[switch]	$Beginning,
+		[switch]	$RW,
+		[String]	$Interval,
+		[switch]	$NI
 	)		
-	
-	Write-DebugLog "Start: In Get-HistChunklet - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{ 
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Get-HistChunklet since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Get-HistChunklet since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli 
-	
-	if($plinkresult -match "FAILURE :")	
-	{
-		Write-DebugLog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	
-	$histchCMD = "histch"
-	
-	if($Iteration )
-	{
-		$histchCMD+=" -iter $iteration"
-	}
-	else
-	{
-		return "Iteration is mandatory..."
-	}
-	if($LDname)
-	{
-		$histchCMD +=" -ld $LDname "
-	}
-	if($Chunklet_num)
-	{
-		$histchCMD +=" -ch $Chunklet_num "
-	} 
-	if($Metric)
-	{
-		$histchCMD +=" -metric $Metric "
-	}
-	if($Percentage)
-	{
-		$histchCMD +=" -pct "
-	}
-	if($Previous)
-	{
-		$histchCMD +=" -prev "
-	}
-	if($Beginning)
-	{
-		$histchCMD +=" -begin "
-	}
-	if($RW)
-	{
-		$histchCMD +=" -rw "
-	}
-	if($Interval)
-	{
-		$histchCMD +=" -d $Interval "
-	}
-	if($NI)
-	{
-		$histchCMD +=" -ni "
-	}	
-	
-	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $histchCMD
-	
-	$range1 = $Result.count
-	
-	if($range1 -le "5")
-	{
-		return "No data available Please try with valid input."
-	}
-	Write-DebugLog " displays a histogram of service -->$histchCMD "INFO:"" 
-	
-	if ( $Result.Count -gt 1)
-	{
-		$tempFile = [IO.Path]::GetTempFileName()
-		
-		$LastItem = $Result.Count		
-		if($RW)
-		{
-			$LastItem = $LastItem - 4			
-		}		
-		Add-Content -Path $tempFile -Value 'Ldid,Ldname,logical_Disk_CH,Pdid,PdCh,0.5,1.0,2.0,4.0,8.0,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
-		foreach ($s in  $Result[0..$LastItem] )
-		{
-			if ($s -match "millisec")
-			{
-				$s= [regex]::Replace($s,"^ +","")
-				$s= [regex]::Replace($s," +"," ")
-				$s= [regex]::Replace($s," ",",")
-				$split1=$s.split(",")
-				$global:time1 = $split1[0]
-				$global:date1 = $split1[1]
-				continue
-			}
-			if (($s -match "----") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "Ldname"))
-			{
-				continue
-			}
-			$s= [regex]::Replace($s,"^ +","")
-			$s= [regex]::Replace($s," +"," ")
-			$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line
-			$aa=$s.split(",").length
-			if ($aa -eq "20")
-			{
-				continue
-			}
-			$s +=",$global:time1,$global:date1"
-			Add-Content -Path $tempFile -Value $s
-		}
-		Import-Csv $tempFile
-		del $tempFile
-	}	
+begin
+{	Test-CLIConnectionB
 }
-#END Get-HistChunklet
+Process	
+{	$histchCMD = "histch"
+						$histchCMD+=" -iter $iteration"	
+	if($LDname)		{	$histchCMD +=" -ld $LDname "	}
+	if($Chunklet_num){	$histchCMD +=" -ch $Chunklet_num "	} 
+	if($Metric)		{	$histchCMD +=" -metric $Metric "	}
+	if($Percentage)	{	$histchCMD +=" -pct "	}
+	if($Previous)	{	$histchCMD +=" -prev "	}
+	if($Beginning)	{	$histchCMD +=" -begin "	}
+	if($RW)			{	$histchCMD +=" -rw "	}
+	if($Interval)	{	$histchCMD +=" -d $Interval "	}
+	if($NI)			{	$histchCMD +=" -ni "	}	
+	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $histchCMD	
+	$range1 = $Result.count
+	if($range1 -le "5")	{	return "No data available Please try with valid input."	}
+	Write-verbose " displays a histogram of service -->$histchCMD " 	
+	if ( $Result.Count -gt 1)
+		{	$tempFile = [IO.Path]::GetTempFileName()
+			$LastItem = $Result.Count		
+			if($RW)	{	$LastItem = $LastItem - 4	}		
+			Add-Content -Path $tempFile -Value 'Ldid,Ldname,logical_Disk_CH,Pdid,PdCh,0.5,1.0,2.0,4.0,8.0,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
+			foreach ($s in  $Result[0..$LastItem] )
+				{	if ($s -match "millisec")
+						{	$s= [regex]::Replace($s,"^ +","")
+							$s= [regex]::Replace($s," +"," ")
+							$s= [regex]::Replace($s," ",",")
+							$split1=$s.split(",")
+							$global:time1 = $split1[0]
+							$global:date1 = $split1[1]
+							continue
+						}
+					if (($s -match "----") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "Ldname"))	{	continue	}
+					$s= [regex]::Replace($s,"^ +","")
+					$s= [regex]::Replace($s," +"," ")
+					$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line
+					$aa=$s.split(",").length
+					if ($aa -eq "20")	{	continue	}
+					$s +=",$global:time1,$global:date1"
+					Add-Content -Path $tempFile -Value $s
+				}
+			Import-Csv $tempFile
+			remove-item $tempFile
+		}	
+}
+}
 
-####################################################################################################################
-## FUNCTION Get-HistLD
-####################################################################################################################
 Function Get-HistLD
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Get-HistLD command displays a histogram of service times for Logical Disks (LDs) in a timed loop.
-  
-  .DESCRIPTION
+.DESCRIPTION
     The Get-HistLD command displays a histogram of service times for Logical Disks (LDs) in a timed loop.
-        
-  .EXAMPLE
+.EXAMPLE
     Get-HistLD -Iteration 1
-	displays a histogram of service Iteration number of times
-	
-	 
-  .EXAMPLE
+
+	displays a histogram of service Iteration number of times	
+.EXAMPLE
 	Get-HistLD -LdName abcd -Iteration 1
+
 	displays a histogram of service linked with LD_NAME on  Iteration number of times
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-HistLD -Iteration 1 -VV_Name ZXZX
-	Shows only logical disks that are mapped to virtual volumes with names
-	matching any of the names or patterns specified.
-	
-  .EXAMPLE
+
+	Shows only logical disks that are mapped to virtual volumes with names matching any of the names or patterns specified.
+.EXAMPLE
 	Get-HistLD -Iteration 1 -Domain ZXZX
-    Shows only logical disks that are in domains with names matching any
-	of the names or patterns specified.
-	
-  .EXAMPLE
+
+	Shows only logical disks that are in domains with names matching any of the names or patterns specified.
+.EXAMPLE
 	Get-HistLD -Iteration 1 -Percentage
+
 	Shows the access count in each bucket as a percentage.
+.PARAMETER Timecols
+	For the I/O time histogram, shows the columns from the first column <fcol> through last column <lcol>. The available columns range from 0 through 31.
 
-  .PARAMETER Timecols
-	For the I/O time histogram, shows the columns from the first column
-	<fcol> through last column <lcol>. The available columns range from 0
-	through 31.
-
-	The first column (<fcol>) must be a value greater than or equal to 0,
-	but less than the value of the last column (<lcol>).
+	The first column (<fcol>) must be a value greater than or equal to 0, but less than the value of the last column (<lcol>).
 
 	The last column (<lcol>) must be less than or equal to 31.
 
-	The first column includes all data accumulated for columns less than the
-	first column and the last column includes accumulated data for all
-	columns greater than the last column.
+	The first column includes all data accumulated for columns less than the first column and the last column includes accumulated data for all columns greater than the last column.
 
 	The default value of <fcol> is 6.
 	The default value of <lcol> is 15.
+.PARAMETER Sizecols
+	For the I/O size histogram, shows the columns from the first column (<fcol>) through the last column (<lcol>). Available columns range from 0 through 15.
 
-  .PARAMETER Sizecols
-	For the I/O size histogram, shows the columns from the first column
-	(<fcol>) through the last column (<lcol>). Available columns range from
-	0 through 15.
-
-	The first column (<fcol>) must be a value greater than or equal to 0,
-	but less than the value of the last column (<lcol>) (default value of 3).
-	The last column (<lcol>) must be less than or equal to 15 (default value
-	of 11).
+	The first column (<fcol>) must be a value greater than or equal to 0, but less than the value of the last column (<lcol>) (default value of 3).
+	The last column (<lcol>) must be less than or equal to 15 (default value of 11).
 
 	The default value of <fcol> is 3.
 	The default value of <lcol> is 11.
-
-  .PARAMETER Percentage
-	Shows the access count in each bucket as a percentage. If this option is
-	not specified, the histogram shows the access counts.
-
-  .PARAMETER Secs
-	Specifies the interval in seconds that statistics are sampled from
-	using an integer from 1 through 2147483. If no count is specified, the
+.PARAMETER Percentage
+	Shows the access count in each bucket as a percentage. If this option is not specified, the histogram shows the access counts.
+.PARAMETER Secs
+	Specifies the interval in seconds that statistics are sampled from using an integer from 1 through 2147483. If no count is specified, the
 	command defaults to 2 seconds.
-
-  .PARAMETER NI
-	Specifies that histograms for only non-idle devices are displayed. This
-	option is shorthand for the option -filt t,0,0.	
-	
-  .PARAMETER Iteration 
+.PARAMETER NI
+	Specifies that histograms for only non-idle devices are displayed. This option is shorthand for the option -filt t,0,0.	
+.PARAMETER Iteration 
     displays a histogram of service Iteration number of times
-  
-  .PARAMETER LdName 
+.PARAMETER LdName 
     displays a histogram of service linked with LD_NAME
-	
-  .PARAMETER VV_Name
-	Shows only logical disks that are mapped to virtual volumes with names
-	matching any of the names or patterns specified. Multiple volumes or
+.PARAMETER VV_Name
+	Shows only logical disks that are mapped to virtual volumes with names matching any of the names or patterns specified. Multiple volumes or
 	patterns can be repeated using a comma separated list.
-
-  .PARAMETER Domain
-	Shows only logical disks that are in domains with names matching any
-	of the names or patterns specified. Multiple domain names or patterns
+.PARAMETER Domain
+	Shows only logical disks that are in domains with names matching any of the names or patterns specified. Multiple domain names or patterns
 	can be repeated using a comma separated list.
-
-  .PARAMETER Metric
+.PARAMETER Metric
 	Selects which metric to display. Metrics can be one of the following:
 	both - (Default)Display both I/O time and I/O size histograms
 	time - Display only the I/O time histogram
 	size - Display only the I/O size histogram
-
-  .PARAMETER Previous 
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Previous 
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-		
-  .PARAMETER Beginning
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Beginning
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-  
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Get-HistLD
-    LASTEDIT: November 2019
-    KEYWORDS: Get-HistLD
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+#>
 [CmdletBinding()]
-	param(	
-		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
-		$Iteration,	
-
-		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
-		$Metric,
-
-		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
-		$VV_Name,
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
-		$Domain,
-				
-		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
-		$Timecols,
-		
-		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
-		$Sizecols, 
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[Switch]
-		$Percentage,
-		
-		[Parameter(Position=7, Mandatory=$false)]
-		[Switch]
-		$Previous,
-		
-		[Parameter(Position=8, Mandatory=$false)]
-		[Switch]
-		$Beginning,
-		
-		[Parameter(Position=9, Mandatory=$false)]
-		[Switch]
-		$NI,
-		
-		[Parameter(Position=10, Mandatory=$false)]
-		[System.String]
-		$Secs,
-				
-		[Parameter(Position=11, Mandatory=$false)]
-		[System.String]
-		$LdName,
-		
-		[Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+param(	[Parameter(Mandatory)]
+		[String]	$Iteration,	
+		[ValidateSet('both','time','size')]
+		[String]	$Metric,
+		[String]	$VV_Name,
+		[String]	$Domain,
+		[String]	$Timecols,
+		[String]	$Sizecols, 
+		[Switch]	$Percentage,
+		[Switch]	$Previous,
+		[Switch]	$Beginning,
+		[Switch]	$NI,
+		[String]	$Secs,
+		[String]	$LdName
 	)		
-	
-	Write-DebugLog "Start: In Get-HistLD - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Get-HistLD since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Get-HistLD since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	$histldCmd = "histld "
-	if ($Iteration)
-	{
-		$histldCmd += " -iter $Iteration "
-	}
-	else
-	{
-		Write-DebugLog "Stop: Iteration is mandatory" $Debug
-		return "Error :  -Iteration is mandatory. "		
-	}
-	if ($Metric)
-	{
-		$a = "both","time","size"
-		$l=$Metric
-		if($a -eq $l)
-		{
-			$histldCmd+=" -metric $Metric "						
-		}
-		else
-		{ 			
-			Return "FAILURE : -Metric $Metric is an Invalid Value Please used only [ both|time|size ]. "
-		}
-	}
+begin
+{	Test-CLIConnectionB
+}
+Process	
+{	$histldCmd = "histld "
+	if ($Iteration)	{	$histldCmd += " -iter $Iteration "	}
+	if ($Metric)	{	$histldCmd+=" -metric $Metric "	}
 	if($VV_Name)
-	{
-		$cmd= "showvv "
-		$demo = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
-		if($demo -match $VV_Name )
-		{
-			$histldCmd+=" -vv $VV_Name"
-		}
-		else
-		{ 
-			return  "FAILURE : No Virtual Volume : $VV_Name found, Please try with valid input."
-		}		
-	} 
+		{	$cmd= "showvv "
+			$demo = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
+			if($demo -match $VV_Name )
+				{	$histldCmd+=" -vv $VV_Name"
+				}
+			else
+				{ 	return  "FAILURE : No Virtual Volume : $VV_Name found, Please try with valid input."
+				}			
+		} 
 	if($Domain)
-	{		
-		$cmd= "showdomain "
-		$demo = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
-		if($demo -match $Domain )
-		{
-			$histldCmd+=" -domain $Domain"
-		}
-		else
-		{ 
-			return  "FAILURE : No Domain : $Domain found, Please try with valid input."
-		}
-	}	
-	if($Timecols)
-	{
-		$histldCmd+=" -timecols $Timecols"
-	}
-	if($Sizecols)
-	{
-		$histldCmd+=" -sizecols $Sizecols"
-	}	
-	if ($Percentage)
-	{
-		$histldCmd += " -pct "
-	}
-	if ($Previous)
-	{
-		$histldCmd += " -prev "
-	}	
-	if ($Beginning)
-	{
-		$histldCmd += " -begin "
-	}
-	if($Secs)
-	{
-		$histldCmd+=" -d $Secs"
-	}
-	if ($NI)
-	{
-		$histldCmd += " -ni "
-	}
+		{	$cmd= "showdomain "
+			$demo = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
+			if($demo -match $Domain )
+				{	$histldCmd+=" -domain $Domain"
+				}
+			else
+				{ 	return  "FAILURE : No Domain : $Domain found, Please try with valid input."
+				}
+		}	
+	if($Timecols)		{	$histldCmd+=" -timecols $Timecols"	}
+	if($Sizecols)		{	$histldCmd+=" -sizecols $Sizecols"	}	
+	if ($Percentage)	{	$histldCmd += " -pct "	}
+	if ($Previous)		{	$histldCmd += " -prev "	}	
+	if ($Beginning)		{	$histldCmd += " -begin "	}
+	if($Secs)			{	$histldCmd+=" -d $Secs"	}
+	if ($NI)			{	$histldCmd += " -ni "	}
 	if ($LdName)
-	{
-		#check wether ld is available or not 
-		$cmd= "showld "
-		$demo = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
-		if($demo -match $LdName )
-		{
-			$histldCmd += "  $LdName"
+		{	$cmd= "showld "
+			$demo = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
+			if($demo -match $LdName )
+				{	$histldCmd += "  $LdName"
+				}
+			else
+				{ 	return  "FAILURE : No LD_name $LdName found "
+				}
 		}
-		else
-		{ 
-			return  "FAILURE : No LD_name $LdName found "
-		}
-	}
-	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $histldCmd
-	write-debuglog "  The Get-HistLD command displays a histogram of service times for Logical Disks (LDs) in a timed loop.->$cmd" "INFO:"	
 	$range1 = $Result.count
-	#write-host "count = $range1"
-	if($range1 -lt "5")
-	{
-		write-host ""
-		return "No data available Please Try With Valid Data. `n"
-	}	
+	if($range1 -lt "5")	{	return "No data available Please Try With Valid Data. `n"	}	
 	if ( $Result.Count -gt 1)
-	{
-		$tempFile = [IO.Path]::GetTempFileName()
-		$LastItem = $Result.Count
-		if ($Metric -eq "time")
-		{
-			Add-Content -Path $tempFile -Value  'Logical_Disk_Name,0.50,1,2,4,8,16,32,64,128,256,time,date'
+		{	$tempFile = [IO.Path]::GetTempFileName()
+			$LastItem = $Result.Count
+			if ($Metric -eq "time")
+				{	Add-Content -Path $tempFile -Value  'Logical_Disk_Name,0.50,1,2,4,8,16,32,64,128,256,time,date'
+				}
+			if ($Metric -eq "size")
+				{	Add-Content -Path $tempFile -Value  'Logical_Disk_Name,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date' 
+				}
+			else
+				{	Add-Content -Path $tempFile -Value  'Logical_Disk_Name,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date' 
+				}
+			foreach ($s in  $Result[0..$LastItem] )
+				{	if ($s -match "millisec")
+						{	$s= [regex]::Replace($s,"^ +","")
+							$s= [regex]::Replace($s," +"," ")
+							$s= [regex]::Replace($s," ",",")
+							$split1=$s.split(",")
+							$global:time1 = $split1[0]
+							$global:date1 = $split1[1]
+							continue
+						}
+					if (($s -match "-------") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "Ldname"))
+						{	continue
+						}
+					$s= [regex]::Replace($s,"^ +","")
+					$s= [regex]::Replace($s," +"," ")
+					$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line
+					$s +=",$global:time1,$global:date1"
+					Add-Content -Path $tempFile -Value $s
+				}
+			Import-Csv $tempFile
+			remove-item $tempFile
 		}
-		if ($Metric -eq "size")
-		{
-			Add-Content -Path $tempFile -Value  'Logical_Disk_Name,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date' 
-		}
-		else
-		{
-			Add-Content -Path $tempFile -Value  'Logical_Disk_Name,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date' 
-		}
-		foreach ($s in  $Result[0..$LastItem] )
-		{			
-			if ($s -match "millisec")
-			{
-				$s= [regex]::Replace($s,"^ +","")
-				$s= [regex]::Replace($s," +"," ")
-				$s= [regex]::Replace($s," ",",")
-				$split1=$s.split(",")
-				$global:time1 = $split1[0]
-				$global:date1 = $split1[1]
-				continue
-			}
-			if (($s -match "-------") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "Ldname"))
-			{
-				#write-host " s equal-1 $s"
-				continue
-			}
-			#write-host "s = $s"
-			$s= [regex]::Replace($s,"^ +","")
-			$s= [regex]::Replace($s," +"," ")
-			$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line
-			$s +=",$global:time1,$global:date1"
-			Add-Content -Path $tempFile -Value $s
-			#write-host "s final $s"
-		}
-		Import-Csv $tempFile
-		del $tempFile
-	}
 	else
-	{
-		return $Result
-	}
-} # End Get-HistLD
+		{	return $Result
+		}
+} 
+}
 
-####################################################################################################################
-## FUNCTION Get-HistPD
-###################################################################################################################
 Function Get-HistPD
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Get-HistPD command displays a histogram of service times for Physical Disks (PDs).
-  
-  .DESCRIPTION
+.DESCRIPTION
     The Get-HistPD command displays a histogram of service times for Physical Disks (PDs).
-       
-  .EXAMPLE
+.EXAMPLE
     Get-HistPD  -iteration 1 -WWN abcd
+
 	Specifies the world wide name of the PD for which service times are displayed.
-	 
-  .EXAMPLE
+.EXAMPLE
 	Get-HistPD -iteration 1
-	The Get-HistPD displays a histogram of service iteration number of times
-	Histogram displays data from when the system was last started (–begin).
-	
-  .EXAMPLE	
+
+	The Get-HistPD displays a histogram of service iteration number of times Histogram displays data from when the system was last started (–begin).
+.EXAMPLE	
 	Get-HistPD -iteration 1 -Devinfo
+
 	Indicates the device disk type and speed.
-	
-  .EXAMPLE	
+.EXAMPLE	
 	Get-HistPD -iteration 1 -Metric both
+
 	(Default)Display both I/O time and I/O size histograms
-
-  .PARAMETER WWN
+.PARAMETER WWN
 	Specifies the world wide name of the PD for which service times are displayed.
-
-  .PARAMETER Nodes
-	Specifies that the display is limited to specified nodes and physical
-	disks connected to those nodes. The node list is specified as a series
-	of integers separated by commas (e.g. 1,2,3). The list can also consist
-	of a single integer. If the node list is not specified, all disks on all
-	nodes are displayed.
-
-  .PARAMETER Slots
+.PARAMETER Nodes
+	Specifies that the display is limited to specified nodes and physical disks connected to those nodes. The node list is specified as a series of integers 
+	separated by commas (e.g. 1,2,3). The list can also consist of a single integer. If the node list is not specified, all disks on all nodes are displayed.
+.PARAMETER Slots
 	Specifies that the display is limited to specified PCI slots and
 	physical disks connected to those PCI slots. The slot list is specified
 	as a series of integers separated by commas (e.g. 1,2,3). The list can
 	also consist of a single integer. If the slot list is not specified, all
 	disks on all slots are displayed.
-
-  .PARAMETER Ports
-	Specifies that the display is limited to specified ports and
-	physical disks connected to those ports. The port list is specified
-	as a series of integers separated by commas (e.g. 1,2,3). The list can
-	also consist of a single integer. If the port list is not specified, all
-	disks on all ports are displayed.
-		
-  .PARAMETER Percentage
-	Shows the access count in each bucket as a percentage. If this option is
-	not specified, the histogram shows the access counts.
-
-  .PARAMETER Previous 
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Ports
+	Specifies that the display is limited to specified ports and physical disks connected to those ports. The port list is specified as a series of integers 
+	separated by commas (e.g. 1,2,3). The list can also consist of a single integer. If the port list is not specified, all disks on all ports are displayed.
+.PARAMETER Percentage
+	Shows the access count in each bucket as a percentage. If this option is not specified, the histogram shows the access counts.
+.PARAMETER Previous 
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-	
-  .PARAMETER Beginning
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Beginning
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-
-  .PARAMETER Devinfo
+.PARAMETER Devinfo
 	Indicates the device disk type and speed.
-
-  .PARAMETER Metric both|time|size
+.PARAMETER Metric both|time|size
 	Selects which metric to display. Metrics can be one of the following:
 		both - (Default)Display both I/O time and I/O size histograms
 		time - Display only the I/O time histogram
 		size - Display only the I/O size histogram
-		
-  .PARAMETER Iteration 
+.PARAMETER Iteration 
     Specifies that the histogram is to stop after the indicated number of iterations using an integer from 1 up-to 2147483647.
-  
-  .PARAMETER FSpec
-	Specifies that histograms below the threshold specified by the <fspec>
-	argument are not displayed. The <fspec> argument is specified in the
-	syntax of <op>,<val_ms>, <count>.
-	<op>
+.PARAMETER FSpec
+	Specifies that histograms below the threshold specified by the <fspec> argument are not displayed. The <fspec> argument is specified in the
+	syntax of <op>,<val_ms>, <count>. <op>
 		The <op> argument can be specified as one of the following:
 			r - Specifies read statistics.
 			w - Specifies write statistics.
@@ -1060,965 +463,399 @@ Function Get-HistPD
 	<val_ms>
 		Specifies the threshold service time in milliseconds.
 	<count>
-	Specifies the minimum number of access above the threshold service
-	time. When filtering is done, the <count> is compared with the sum
-	of all columns starting with the one which corresponds to the
-	threshold service time. For example, -t,8,100 means to only display
-	the rows where the 8ms column and all columns to the right adds
-	up to more than 100.
-  
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME: Get-HistPD
-    LASTEDIT: November 2019
-    KEYWORDS: Get-HistPD
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+		Specifies the minimum number of access above the threshold service time. When filtering is done, the <count> is compared with the sum
+		of all columns starting with the one which corresponds to the threshold service time. For example, -t,8,100 means to only display
+		the rows where the 8ms column and all columns to the right adds up to more than 100.
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
-		$Iteration,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
-		$WWN,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
-		$Nodes,
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
-		$Slots,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
-		$Ports,
-		
-		[Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Devinfo,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
-		$Metric,
-		
-		[Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Percentage,
-		
-		[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Previous,
-		
-		[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Beginning,	
-			
-		[Parameter(Position=10, Mandatory=$false)]
-		[System.String]
-		$FSpec,
-		
-		[Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+param(	[Parameter(Mandatory)]
+		[String]	$Iteration,
+		[String]	$WWN,
+		[String]	$Nodes,
+		[String]	$Slots,
+		[String]	$Ports,
+		[Switch]	$Devinfo,
+		[ValidateSet("both","time","size")]
+		[String]	$Metric,
+		[Switch]	$Percentage,
+		[Switch]	$Previous,
+		[Switch]	$Beginning,	
+		[String]	$FSpec
 	)		
-	
-	Write-DebugLog "Start: In Get-HistPD - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Get-HistPD since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Get-HistPD since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	$Cmd = "histpd "
-	if($Iteration)
-	{
-		$Cmd += "-iter $Iteration"	
-	}
-	else
-	{
-		Write-DebugLog "Stop: Iteration is mandatory" $Debug
-		return "Error :  -Iteration is mandatory. "
-	}	
-		
-	if ($WWN)
-	{
-		$Cmd += " -w $WWN"
-	}
-	if ($Nodes)
-	{
-		$Cmd += " -nodes $Nodes"
-	}
-	if ($Slots)
-	{
-		$Cmd += " -slots $Slots"
-	}
-	if ($Ports)
-	{
-		$Cmd += " -ports $Ports"
-	}
-	if ($Devinfo)
-	{
-		$Cmd += " -devinfo "
-	}
-	if($Metric)
-	{
-		$Met = $Metric
-		$c = "both","time","size"
-		$Metric = $metric.toLower()
-		if($c -eq $Met)
-		{
-			$Cmd += " -metric $Metric "
-		}
-		else
-		{
-			return "FAILURE: -Metric $Metric is Invalid. Use only [ both | time | size ]."
-		}
-	}
-	if ($Previous)
-	{
-		$Cmd += " -prev "
-	}
-	if ($Beginning)
-	{
-		$Cmd += " -begin "
-	}
-	if ($Percentage)
-	{
-		$Cmd += " -pct "
-	}	
-	if ($FSpec)
-	{
-		$Cmd += " -filt $FSpec"
-	}
+Begin	
+{	Test-CLIConnectionB
+}
+Process	
+{	$Cmd = "histpd "
+	if($Iteration)	{	$Cmd += "-iter $Iteration"		}
+	if ($WWN)		{	$Cmd += " -w $WWN"	}
+	if ($Nodes)		{	$Cmd += " -nodes $Nodes"		}
+	if ($Slots)		{	$Cmd += " -slots $Slots"	}
+	if ($Ports)		{	$Cmd += " -ports $Ports"	}
+	if ($Devinfo)	{	$Cmd += " -devinfo "	}
+	if ($Metric)	{	$Cmd += " -metric $Metric "	}
+	if ($Previous)	{	$Cmd += " -prev "	}
+	if ($Beginning)	{	$Cmd += " -begin "	}
+	if ($Percentage){	$Cmd += " -pct "	}	
+	if ($FSpec)		{	$Cmd += " -filt $FSpec"	}
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd 
-	write-debuglog " The Get-HistPD command displays a histogram of service times for Physical Disks (PDs). " "INFO:" 
 	$range1 = $Result.count
-	#write-host "count = $range1"
-	if($range1 -lt "5")
-	{
-		return "No data available"
-	}		
+	if($range1 -lt "5")	{	return "No data available"	}		
 	if ( $Result.Count -gt 1)
-	{
-		$tempFile = [IO.Path]::GetTempFileName()
-
+	{	$tempFile = [IO.Path]::GetTempFileName()
 		$LastItem = $Result.Count
-		
 		if("time" -eq $Metric.trim().tolower())
-		{
-			#write-host " in time"
-			Add-Content -Path $tempFile -Value 'ID,Port,0.50,1,2,4,8,16,32,64,128,256,time,date'
-			$LastItem = $Result.Count - 3
-		}
+			{	Add-Content -Path $tempFile -Value 'ID,Port,0.50,1,2,4,8,16,32,64,128,256,time,date'
+				$LastItem = $Result.Count - 3
+			}
 		elseif("size" -eq $Metric.trim().tolower())
-		{
-			#write-host " in size"
-			Add-Content -Path $tempFile -Value 'ID,Port,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'	
-			$LastItem = $Result.Count - 3
-		}
+			{	Add-Content -Path $tempFile -Value 'ID,Port,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'	
+				$LastItem = $Result.Count - 3
+			}
 		elseif ($Devinfo)
-		{	
-			Add-Content -Path $tempFile -Value  'ID,Port,Type,K_RPM,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
-		}
+			{	Add-Content -Path $tempFile -Value  'ID,Port,Type,K_RPM,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
+			}
 		else
-		{
-			Add-Content -Path $tempFile -Value  'ID,Port,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'			
-		}
+			{	Add-Content -Path $tempFile -Value  'ID,Port,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'			
+			}
 		foreach ($s in  $Result[0..$LastItem] )
-		{
-			if ($s -match "millisec")
-			{
+			{	if ($s -match "millisec")
+					{	$s= [regex]::Replace($s,"^ +","")
+						$s= [regex]::Replace($s," +"," ")
+						$s= [regex]::Replace($s," ",",")
+						$split1=$s.split(",")
+						$global:time1 = $split1[0]
+						$global:date1 = $split1[1]
+						continue
+					}
+				if (($s -match "----") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "ID"))	{	continue	}
 				$s= [regex]::Replace($s,"^ +","")
-				$s= [regex]::Replace($s," +"," ")
-				$s= [regex]::Replace($s," ",",")
-				$split1=$s.split(",")
-				$global:time1 = $split1[0]
-				$global:date1 = $split1[1]
-				continue
+				$s= [regex]::Replace($s,"-+","-")
+				$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line			
+				$aa=$s.split(",").length
+				if ($aa -eq "20") 	{	continue	}
+				$s +=",$global:time1,$global:date1"
+				Add-Content -Path $tempFile -Value $s
 			}
-			if (($s -match "----") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "ID"))
-			{
-				continue
-			}
-			$s= [regex]::Replace($s,"^ +","")
-			$s= [regex]::Replace($s,"-+","-")
-			$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line			
-			$aa=$s.split(",").length
-			if ($aa -eq "20") 
-			{
-				continue
-			}
-			$s +=",$global:time1,$global:date1"
-			Add-Content -Path $tempFile -Value $s
-		}
 		Import-Csv $tempFile
-		del $tempFile
+		remove-item $tempFile
 	}
 	else
-	{
-		return $Result
-	}
-} # End Get-HistPD
+		{	return $Result
+		}
+}
+}
 
-####################################################################################################################
-## FUNCTION Get-HistPort
-####################################################################################################################
 Function Get-HistPort
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Get-HistPort command displays a histogram of service times for ports within the system.
-  
-  .DESCRIPTION
-   The Get-HistPort command displays a histogram of service times for ports within the system.
-      
-  .EXAMPLE
+.DESCRIPTION
+	The Get-HistPort command displays a histogram of service times for ports within the system.
+.EXAMPLE
     Get-HistPort -iteration 1
+
 	displays a histogram of service times with option it can be one of these [both|ctrl|data].
-	 
-  .EXAMPLE
+.EXAMPLE
 	Get-HistPort -iteration 1 -Both
+
 	Specifies that both control and data transfers are displayed(-both)
-	
-  .EXAMPLE
+.EXAMPLE
 	Get-HistPort -iteration 1 -Nodes nodesxyz
+
 	Specifies that the display is limited to specified nodes and physical disks connected to those nodes.
-	
-  .EXAMPLE	
+.EXAMPLE	
 	Get-HistPort –Metric both -iteration 1
+
 	displays a histogram of service times with -metric option. metric can be one of these –metric [both|time|size]
-	
-  .PARAMETER Both 
-	Specifies that both control and data transfers are displayed(-both),
-	only control transfers are displayed (-ctl), or only data transfers are
-	displayed (-data). If this option is not specified, only data transfers
-	are displayed.
-
-  .PARAMETER CTL 
-	Specifies that both control and data transfers are displayed(-both),
-	only control transfers are displayed (-ctl), or only data transfers are
-	displayed (-data). If this option is not specified, only data transfers
-	are displayed.
-		
-  .PARAMETER Data
-	Specifies that both control and data transfers are displayed(-both),
-	only control transfers are displayed (-ctl), or only data transfers are
-	displayed (-data). If this option is not specified, only data transfers
-	are displayed.
-		
-  .PARAMETER Nodes
-	Specifies that the display is limited to specified nodes and physical
-	disks connected to those nodes. The node list is specified as a series
-	of integers separated by commas (e.g. 1,2,3). The list can also consist
-	of a single integer. If the node list is not specified, all disks on all
+.PARAMETER Both 
+	Specifies that both control and data transfers are displayed(-both), only control transfers are displayed (-ctl), or only data transfers are
+	displayed (-data). If this option is not specified, only data transfers are displayed.
+.PARAMETER CTL 
+	Specifies that both control and data transfers are displayed(-both), only control transfers are displayed (-ctl), or only data transfers are
+	displayed (-data). If this option is not specified, only data transfers are displayed.
+.PARAMETER Data
+	Specifies that both control and data transfers are displayed(-both), only control transfers are displayed (-ctl), or only data transfers are
+	displayed (-data). If this option is not specified, only data transfers are displayed.
+.PARAMETER Nodes
+	Specifies that the display is limited to specified nodes and physical disks connected to those nodes. The node list is specified as a series
+	of integers separated by commas (e.g. 1,2,3). The list can also consist of a single integer. If the node list is not specified, all disks on all
 	nodes are displayed.
-
-  .PARAMETER Slots
-	Specifies that the display is limited to specified PCI slots and
-	physical disks connected to those PCI slots. The slot list is specified
-	as a series of integers separated by commas (e.g. 1,2,3). The list can
-	also consist of a single integer. If the slot list is not specified, all
+.PARAMETER Slots
+	Specifies that the display is limited to specified PCI slots and physical disks connected to those PCI slots. The slot list is specified
+	as a series of integers separated by commas (e.g. 1,2,3). The list can also consist of a single integer. If the slot list is not specified, all
 	disks on all slots are displayed.
-
-  .PARAMETER Ports
-	Specifies that the display is limited to specified ports and
-	physical disks connected to those ports. The port list is specified
-	as a series of integers separated by commas (e.g. 1,2,3). The list can
-	also consist of a single integer. If the port list is not specified, all
+.PARAMETER Ports
+	Specifies that the display is limited to specified ports and physical disks connected to those ports. The port list is specified
+	as a series of integers separated by commas (e.g. 1,2,3). The list can also consist of a single integer. If the port list is not specified, all
 	disks on all ports are displayed.
-	
-  .PARAMETER Host
-	Specifies to display only host ports (target ports), only disk ports
-	(initiator ports), only Fibre Channel Remote Copy configured ports, or
-	only Fibre Channel ports for Data Migration.
-	If no option is specified, all ports are displayed.
-		
-  .PARAMETER Disk 
-	Specifies to display only host ports (target ports), only disk ports
-	(initiator ports), only Fibre Channel Remote Copy configured ports, or
-	only Fibre Channel ports for Data Migration.
-	If no option is specified, all ports are displayed.
-		
-  .PARAMETER RCFC 
-	Specifies to display only host ports (target ports), only disk ports
-	(initiator ports), only Fibre Channel Remote Copy configured ports, or
-	only Fibre Channel ports for Data Migration.
-	If no option is specified, all ports are displayed.
-		
-  .PARAMETER PEER
-	Specifies to display only host ports (target ports), only disk ports
-	(initiator ports), only Fibre Channel Remote Copy configured ports, or
-	only Fibre Channel ports for Data Migration.
-	If no option is specified, all ports are displayed.
-
-  .PARAMETER Metric
+.PARAMETER HostObj
+	Specifies to display only host ports (target ports), only disk ports (initiator ports), only Fibre Channel Remote Copy configured ports, or
+	only Fibre Channel ports for Data Migration. If no option is specified, all ports are displayed.
+.PARAMETER Disk 
+	Specifies to display only host ports (target ports), only disk ports (initiator ports), only Fibre Channel Remote Copy configured ports, or
+	only Fibre Channel ports for Data Migration. If no option is specified, all ports are displayed.
+.PARAMETER RCFC 
+	Specifies to display only host ports (target ports), only disk ports (initiator ports), only Fibre Channel Remote Copy configured ports, or
+	only Fibre Channel ports for Data Migration. If no option is specified, all ports are displayed.
+.PARAMETER PEER
+	Specifies to display only host ports (target ports), only disk ports (initiator ports), only Fibre Channel Remote Copy configured ports, or
+	only Fibre Channel ports for Data Migration. If no option is specified, all ports are displayed.
+.PARAMETER Metric
 	Selects which metric to display. Metrics can be one of the following:
 		both - (Default)Display both I/O time and I/O size histograms
 		time - Display only the I/O time histogram
 		size - Display only the I/O size histogram
-	
-  .PARAMETER Iteration 
+.PARAMETER Iteration 
     Specifies that the histogram is to stop after the indicated number of iterations using an integer from 1 up-to 2147483647.
-
-  .PARAMETER Percentage
-	Shows the access count in each bucket as a percentage. If this option is
-	not specified, the histogram shows the access counts.
-
-  .PARAMETER Previous 
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Percentage
+	Shows the access count in each bucket as a percentage. If this option is not specified, the histogram shows the access counts.
+.PARAMETER Previous 
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-	
-  .PARAMETER Beginning
-	Histogram displays data either from a previous sample(-prev) or from
-	when the system was last started(-begin). If no option is specified, the
+.PARAMETER Beginning
+	Histogram displays data either from a previous sample(-prev) or from when the system was last started(-begin). If no option is specified, the
 	histogram shows data from the beginning of the command's execution.
-
-  .PARAMETER RW	
-	Specifies that the display includes separate read and write data. If not
-	specified, the total is displayed.
-		
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME: Get-HistPort
-    LASTEDIT: November 2019
-    KEYWORDS: Get-HistPort
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+.PARAMETER RW	
+	Specifies that the display includes separate read and write data. If not specified, the total is displayed.
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
-		$Iteration,	
-		
-		[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Both,
-		
-		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$CTL,
-		
-		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Data,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
-		$Nodes,
-		
-		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
-		$Slots,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
-		$Ports,
-		
-		[Parameter(Position=7, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Host,
-		
-		[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$PEER,
-		
-		[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Disk,
-		
-		[Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$RCFC,
-		
-		[Parameter(Position=11, Mandatory=$false)]
-		[System.String]
-		$Metric,		
-		
-		[Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Percentage,
-		
-		[Parameter(Position=13, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Previous,
-		
-		[Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$Beginning,
-		
-		[Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
-		[Switch]
-		$RW,
-		
-		[Parameter(Position=15, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection 
-       
+param(	[Parameter(Mandatory)]
+		[String]	$Iteration,	
+		[Switch]	$Both,
+		[Switch]	$CTL,
+		[Switch]	$Data,
+		[String]	$Nodes,
+		[String]	$Slots,
+		[String]	$Ports,
+		[Switch]	$HostObj,
+		[Switch]	$PEER,
+		[Switch]	$Disk,
+		[Switch]	$RCFC,
+		[ValidateSet("both","time","size")]
+		[String]	$Metric,		
+		[Switch]	$Percentage,
+		[Switch]	$Previous,
+		[Switch]	$Beginning,
+		[Switch]	$RW
 	)		
-	Write-DebugLog "Start: In Get-HistPort - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{				
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Get-HistPort since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Get-HistPort since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	$Cmd = "histport "
-	if($Iteration)
-	{	
-		$Cmd +=" -iter $Iteration"
-	}
-	else
-	{
-		write-debuglog "Get-HistPort parameter is empty. Simply return  " "INFO:"
-		return "Error: -Iteration mandatory"
-	}
-	if($Both)
-	{	
-		$Cmd +=" -both "
-	}
-	if($CTL)
-	{	
-		$Cmd +=" -ctl "
-	}
-	if($Data)
-	{	
-		$Cmd +=" -data "
-	}
-	if ($Nodes)
-	{
-		$Cmd += " -nodes $Nodes"
-	}
-	if ($Slots)
-	{
-		$Cmd += " -slots $Slots"
-	}
-	if ($Ports)
-	{
-		$Cmd += " -ports $Ports"
-	}
-	if($Host)
-	{	
-		$Cmd +=" -host "
-	}
-	if($Disk)
-	{	
-		$Cmd +=" -disk "
-	}
-	if($RCFC)
-	{	
-		$Cmd +=" -rcfc "
-	}
-	if($PEER)
-	{	
-		$Cmd +=" -peer "
-	}
-	if ($Metric)
-	{
-		$Cmd += " -metric "
-		$a1="both","time","size"
-		$Metric = $Metric.toLower()
-		if($a1 -eq $Metric )
-		{
-			$Cmd += "$Metric "
-		}		
-		else
-		{
-			return "FAILURE:  -Metric $Metric  is Invalid. Only [ both | time | size ] can be used."
-		}
-	}	
-	if ($Previous)
-	{
-		$Cmd += " -prev "
-	}
-	if ($Beginning)
-	{
-		$Cmd += " -begin "
-	}
-	if ($Percentage)
-	{
-		$Cmd += " -pct "
-	}
-	if ($RW)
-	{
-		$Cmd += " -rw "
-	}
+Begin
+{	Test-CLIConnectionB
+}
+Process
+{	$Cmd = "histport "
+	if($Iteration)	{	$Cmd +=" -iter $Iteration"	}
+	else			{	return "Error: -Iteration mandatory"	}
+	if($Both)		{	$Cmd +=" -both "	}
+	if($CTL)		{	$Cmd +=" -ctl "		}
+	if($Data)		{	$Cmd +=" -data "	}
+	if ($Nodes)		{	$Cmd += " -nodes $Nodes"	}
+	if ($Slots)		{	$Cmd += " -slots $Slots"	}
+	if ($Ports)		{	$Cmd += " -ports $Ports"	}
+	if($HostObj)		{	$Cmd +=" -host "	}
+	if($Disk)		{	$Cmd +=" -disk "	}
+	if($RCFC)		{	$Cmd +=" -rcfc "	}
+	if($PEER)		{	$Cmd +=" -peer "	}
+	if ($Metric)	{	$Cmd += " -metric $Metric "	}		
+	if ($Previous)	{	$Cmd += " -prev "	}
+	if ($Beginning)	{	$Cmd += " -begin "	}
+	if ($Percentage){	$Cmd += " -pct "	}
+	if ($RW)		{	$Cmd += " -rw "		}
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd 
-	
 	$range1 = $Result.count
-	#write-host "count = $range1"
-	if($range1 -lt "5")
-	{
-		return "No data available"
-	}		
+	if($range1 -lt "5")	{	return "No data available"	}		
 	if ( $Result.Count -gt 1)
-	{
-		$tempFile = [IO.Path]::GetTempFileName()
-		
-		$LastItem = $Result.Count
-		
-		if("time" -eq $Metric.trim().tolower())
-		{
-			Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,0.50,1,2,4,8,16,32,64,128,256,time,date'
+		{	$tempFile = [IO.Path]::GetTempFileName()
+			$LastItem = $Result.Count
+			if("time" -eq $Metric.trim().tolower())
+				{		Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,0.50,1,2,4,8,16,32,64,128,256,time,date'
+				}
+			elseif("size" -eq $Metric.trim().tolower())
+				{	Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
+				}
+			elseif($RW)
+				{	Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,R/W,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
+				}
+			else
+				{	Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
+				}
+			foreach ($s in  $Result[0..$LastItem] )
+				{	if ($s -match "millisec")
+						{	$s= [regex]::Replace($s,"^ +","")
+							$s= [regex]::Replace($s," +"," ")
+							$s= [regex]::Replace($s," ",",")
+							$split1=$s.split(",")
+							$global:time1 = $split1[0]
+							$global:date1 = $split1[1]
+							continue
+						}
+					if (($s -match "----") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "Ldname"))	{	continue	}
+					$s= [regex]::Replace($s,"^ +","")
+					$s= [regex]::Replace($s,"-+","-")
+					$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line
+					$s +=",$global:time1,$global:date1"	
+					Add-Content -Path $tempFile -Value $s
+				}
+			Import-Csv $tempFile
+			remove-item $tempFile
 		}
-		elseif("size" -eq $Metric.trim().tolower())
-		{
-			#write-host " in size"
-			Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
-		}
-		elseif($RW)
-		{
-			#write-host " in else"
-			Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,R/W,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
-		}
-		else
-		{
-			#write-host " in else"
-			Add-Content -Path $tempFile -Value 'Port,Data/Ctrl,0.50,1,2,4,8,16,32,64,128,256,4k,8k,16k,32k,64k,128k,256k,512k,1m,time,date'
-		}
-		
-		foreach ($s in  $Result[0..$LastItem] )
-		{		
-			if ($s -match "millisec")
-			{
-				$s= [regex]::Replace($s,"^ +","")
-				$s= [regex]::Replace($s," +"," ")
-				$s= [regex]::Replace($s," ",",")
-				$split1=$s.split(",")
-				$global:time1 = $split1[0]
-				$global:date1 = $split1[1]
-				continue
-			}
-			if (($s -match "----") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "Ldname"))
-			{
-				continue
-			}
-			$s= [regex]::Replace($s,"^ +","")
-			$s= [regex]::Replace($s,"-+","-")
-			$s= [regex]::Replace($s," +",",")			# Replace one or more spaces with comma to build CSV line
-			$s +=",$global:time1,$global:date1"	
-			Add-Content -Path $tempFile -Value $s
-		}
-		Import-Csv $tempFile
-		del $tempFile
-	}
 	else
-	{
-		return $Result
-	}
-} # End Get-HistPort
+		{	return $Result
+		}
+}
+}
 
-####################################################################################################################
-## FUNCTION Get-HistRCopyVv
-###################################################################################################################
 Function Get-HistRCopyVv
 {
 <#
-  .SYNOPSIS
-   The Get-HistRCopyVv command shows a histogram of total remote-copy service times and backup system remote-copy service times in a timed loop.
-	
-  .DESCRIPTION
-   The Get-HistRCopyVv command shows a histogram of total remote-copy service times and backup system 	remote-copy service times in a timed loop        
-  
-  .EXAMPLE
+.SYNOPSIS
+	The Get-HistRCopyVv command shows a histogram of total remote-copy service times and backup system remote-copy service times in a timed loop.
+.DESCRIPTION
+	The Get-HistRCopyVv command shows a histogram of total remote-copy service times and backup system 	remote-copy service times in a timed loop        
+.EXAMPLE
 	Get-HistRCopyVv -iteration 1
+
 	The Get-HistRCopyVv command shows a histogram of total remote-copy service iteration number of times
-  
-  .EXAMPLE
+.EXAMPLE
     Get-HistRCopyVv -iteration 1 -Sync
-	The Get-HistRCopyVv command shows a histogram of total remote-copy service iteration number of times
-	with option sync
-	
-  .EXAMPLE	
+
+	The Get-HistRCopyVv command shows a histogram of total remote-copy service iteration number of times with option sync
+.EXAMPLE	
 	Get-HistRCopyVv -group groupvv_1 -iteration
-
-  .EXAMPLE	
+.EXAMPLE	
 	Get-HistRCopyVv -iteration 1 -Periodic
-	
-  .EXAMPLE	
+.EXAMPLE	
 	Get-HistRCopyVv -iteration 1 -PortSum
-	
-  .EXAMPLE	
+.EXAMPLE	
 	Get-HistRCopyVv -target name_vv1 -iteration 1
+
 	The Get-HistRCopyVv command shows a histogram of total remote-copy service with specified target name.
-	
-  .EXAMPLE	
+.EXAMPLE	
 	Get-HistRCopyVv -group groupvv_1 -iteration   
+	
 	The Get-HistRCopyVv command shows a histogram of total remote-copy service with specified Group name.
-	
-  .PARAMETER Async - Show only volumes which are being copied in asynchronous mode.
-
-  .PARAMETER sync - Show only volumes that are being copied in synchronous mode.
-  
-  .PARAMETER periodic- Show only volumes which are being copied in asynchronous periodic mode.
-  
-  .PARAMETER primary - Show only virtual volumes in the primary role.
-  
-  .PARAMETER secondary - Show only virtual volumes in the secondary role.
-  
-  .PARAMETER targetsum - Displays the sums for all volumes of a target.
-  
-  .PARAMETER portsum - Displays the sums for all volumes on a port.
-  
-  .PARAMETER groupsum - Displays the sums for all volumes of a volume group.
-  
-  .PARAMETER vvsum - Displays the sums for all targets and links of a virtual volume.
-  
-  .PARAMETER domainsum - Displays the sums for all volumes of a domain.
-
-  .PARAMETER VV_Name
-	Displays statistics only for the specified virtual volume or volume name
-    pattern. Multiple volumes or patterns can be repeated (for example,
-    <VV_name> <VV_name>). If not specified, all virtual volumes that are
-    configured for remote copy are listed.
-  
-  .PARAMETER interval 
+.PARAMETER Async
+	Show only volumes which are being copied in asynchronous mode.
+.PARAMETER sync
+	Show only volumes that are being copied in synchronous mode.
+.PARAMETER periodic
+	Show only volumes which are being copied in asynchronous periodic mode.
+.PARAMETER primary
+	Show only virtual volumes in the primary role.
+.PARAMETER secondary
+	Show only virtual volumes in the secondary role.
+.PARAMETER targetsum
+	Displays the sums for all volumes of a target.
+.PARAMETER portsum
+	Displays the sums for all volumes on a port.
+.PARAMETER groupsum
+	Displays the sums for all volumes of a volume group.
+.PARAMETER vvsum
+	Displays the sums for all targets and links of a virtual volume.
+.PARAMETER domainsum
+	Displays the sums for all volumes of a domain.
+.PARAMETER VV_Name
+	Displays statistics only for the specified virtual volume or volume name pattern. Multiple volumes or patterns can be repeated (for example,
+    <VV_name> <VV_name>). If not specified, all virtual volumes that are configured for remote copy are listed.
+.PARAMETER interval 
     <secs>  Specifies the interval in seconds that statistics are sampled from using an integer from 1 through 2147483. If no count is specified, the  command defaults to 2 seconds. 
-  
-  .PARAMETER Pct
-	Shows the access count in each bucket as a percentage. If this option is
-	not specified, the histogram shows the access counts.
-
-  .PARAMETER Prev
-	Specifies that the histogram displays data from a previous sample.
-	If no option is specified, the histogram shows data from the beginning
-	of the command's execution.
-  
-  .PARAMETER domain
+.PARAMETER Pct
+	Shows the access count in each bucket as a percentage. If this option is not specified, the histogram shows the access counts.
+.PARAMETER Prev
+	Specifies that the histogram displays data from a previous sample. If no option is specified, the histogram shows data from the beginning of the command's execution.
+.PARAMETER domain
 	Shows only the virtual volumes that are in domains with names that match the specified domain name(s) or pattern(s).
-	
-  .PARAMETER target
-   Shows only volumes whose group is copied to the specified target name or pattern. Multiple target names or patterns may be specified using a comma-separated list.
-   
-  .PARAMETER group
-    Shows only volumes whose volume group matches the specified group name or pattern of names.
-	Multiple group names or patterns may be specified using a comma-separated list.
-  
-  .PARAMETER iteration
-    Specifies that the statistics are to stop after the indicated number of iterations using an integer from
-	1 through 2147483647.
-	
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Get-HistRCopyVv
-    LASTEDIT: November 2019
-    KEYWORDS: Get-HistRCopyVv
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+.PARAMETER target
+	Shows only volumes whose group is copied to the specified target name or pattern. Multiple target names or patterns may be specified using a comma-separated list.
+.PARAMETER group
+    Shows only volumes whose volume group matches the specified group name or pattern of names. Multiple group names or patterns may be specified using a comma-separated list.
+.PARAMETER iteration
+    Specifies that the statistics are to stop after the indicated number of iterations using an integer from 1 through 2147483647.
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[switch]
-		$ASync,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[switch]
-		$Sync,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[switch]
-		$Periodic,
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[switch]
-		$Primary,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[switch]
-		$Secondary,
-		
-		[Parameter(Position=5, Mandatory=$false)]
-		[switch]
-		$TargetSum,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[switch]
-		$PortSum,
-		
-		[Parameter(Position=7, Mandatory=$false)]
-		[switch]
-		$GroupSum,
-		
-		[Parameter(Position=8, Mandatory=$false)]
-		[switch]
-		$VVSum,
-		
-		[Parameter(Position=9, Mandatory=$false)]
-		[switch]
-		$DomainSum,
-		
-		[Parameter(Position=10, Mandatory=$false)]
-		[switch]
-		$Pct,
-		
-		[Parameter(Position=11, Mandatory=$false)]
-		[switch]
-		$Prev,
-
-		[Parameter(Position=12, Mandatory=$false)]
-		[System.String]
-		$VV_Name,
-		
-		[Parameter(Position=13, Mandatory=$false)]
-		[System.String]
-		$interval,	
-		
-		[Parameter(Position=14, Mandatory=$false)]
-		[System.String]
-		$domain,
-		
-		[Parameter(Position=15, Mandatory=$false)]
-		[System.String]
-		$group,
-		
-		[Parameter(Position=16, Mandatory=$false)]
-		[System.String]
-		$target,
-		
-		[Parameter(Position=17, Mandatory=$false)]
-		[System.String]
-		$iteration,		
-		
-		[Parameter(Position=18, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection 
-       
+param(	[switch]	$ASync,
+		[switch]	$Sync,
+		[switch]	$Periodic,
+		[switch]	$Primary,
+		[switch]	$Secondary,
+		[switch]	$TargetSum,
+		[switch]	$PortSum,
+		[switch]	$GroupSum,
+		[switch]	$VVSum,
+		[switch]	$DomainSum,
+		[switch]	$Pct,
+		[switch]	$Prev,
+		[String]	$VV_Name,
+		[String]	$interval,	
+		[String]	$domain,
+		[String]	$group,
+		[String]	$target,
+		[Parameter(Mandatory)]
+		[String]	$iteration		
 	)	
-	Write-DebugLog "Start: In Get-HistRCopyVv - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{				
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Get-HistRCopyVv since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Get-HistRCopyVv since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}	
-	$Cmd = "histrcvv "
-	
-	if($ASync)	
-	{
-		$Cmd += " -async "
-	}
-	if($Sync)	
-	{
-		$Cmd += " -sync "
-	}
-	if($Periodic)	
-	{
-		$Cmd += " -periodic "
-	}
-	if($Primary)	
-	{
-		$Cmd += " -primary "
-	}
-	if($Secondary)	
-	{
-		$Cmd += " -secondary "
-	}
-	if($TargetSum)	
-	{
-		$Cmd += " -targetsum "
-	}
-	if($PortSum)	
-	{
-		$Cmd += " -portsum "
-	}
-	if($GroupSum)	
-	{
-		$Cmd += " -groupsum "
-	}
-	if($VVSum)	
-	{
-		$Cmd += " -vvsum "
-	}
-	if($DomainSum)	
-	{
-		$Cmd += " -domainsum "
-	}
-	if($Pct)	
-	{
-		$Cmd += " -pct "
-	}
-	if($Prev)	
-	{
-		$Cmd += " -prev "
-	}	
-	if($interval)
-	{
-		$Cmd += " -d $interval"
-	}
-	if ($domain)
-	{ 
-		$Cmd += " -domain  $domain"
-	}
-	if ($group)
-	{ 
-		$Cmd += " -g $group"			
-	}
-	if ($target)
-	{ 
-		$Cmd += " -t $target"			
-	}
-	if ($VV_Name)
-	{ 
-		$Cmd += " $VV_Name"			
-	}
-	if ($iteration)
-	{ 
-		$Cmd += " -iter $iteration "			
-	}	
-	else
-	{
-		Write-DebugLog "Stop: Iteration is mandatory" $Debug
-		return "Error :  -Iteration is mandatory. "		
-	}
-	
+Begin
+{	Test-CLIConnectionB
+}
+Process
+{	$Cmd = "histrcvv "
+	if($ASync)		{	$Cmd += " -async "		}
+	if($Sync)		{	$Cmd += " -sync "		}
+	if($Periodic)	{	$Cmd += " -periodic "	}
+	if($Primary)	{	$Cmd += " -primary "	}
+	if($Secondary)	{	$Cmd += " -secondary "	}
+	if($TargetSum)	{	$Cmd += " -targetsum "	}
+	if($PortSum)	{	$Cmd += " -portsum "	}
+	if($GroupSum)	{	$Cmd += " -groupsum "	}
+	if($VVSum)		{	$Cmd += " -vvsum "		}
+	if($DomainSum)	{	$Cmd += " -domainsum "	}
+	if($Pct)		{	$Cmd += " -pct "		}
+	if($Prev)		{	$Cmd += " -prev "		}	
+	if($interval)	{	$Cmd += " -d $interval"	}
+	if ($domain)	{ 	$Cmd += " -domain  $domain"	}
+	if ($group)		{ 	$Cmd += " -g $group"	}
+	if ($target)	{ 	$Cmd += " -t $target"	}
+	if ($VV_Name)	{ 	$Cmd += " $VV_Name"		}
+	if ($iteration)	{ 	$Cmd += " -iter $iteration "}	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
-	write-debuglog " histograms sums for all synchronous remote - copy volumes" "INFO:" 
-	
 	if ( $Result.Count -gt 1)
-	{
-		$tempFile = [IO.Path]::GetTempFileName()
-		$LastItem = $Result.Count - 2
-		if($VVSum)
-		{
-			Add-Content -Path $tempFile -Value "VVname,RCGroup,Target,Mode,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date" 
+		{	$tempFile = [IO.Path]::GetTempFileName()
+			$LastItem = $Result.Count - 2
+			if($VVSum)		{	Add-Content -Path $tempFile -Value "VVname,RCGroup,Target,Mode,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date" 	}
+			elseif($PortSum){	Add-Content -Path $tempFile -Value "Link,Target,Type,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"	}
+			elseif($GroupSum){	Add-Content -Path $tempFile -Value "Group,Target,Mode,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"	}
+			elseif($TargetSum){	Add-Content -Path $tempFile -Value "Target,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"}
+			elseif($DomainSum){	Add-Content -Path $tempFile -Value "Domain,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"}
+			else			{	Add-Content -Path $tempFile -Value "VVname,RCGroup,Target,Mode,Port,Type,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"	}
+			foreach($s in  $Result[0..$LastItem] )
+				{	$s= [regex]::Replace($s,"^ +","")
+					$s= [regex]::Replace($s," +"," ")
+					$s= [regex]::Replace($s," ",",")	
+					if($s -match "millisec")
+						{	$split1=$s.split(",")
+							$global:time1 = $split1[0]
+							$global:date1 = $split1[1]
+							continue
+						}
+					$lent=$s.split(",").length
+					$var2 = $lent[0]
+					if( "total" -eq $var2)	{	continue	}	
+					if(($s -match "-------") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "RCGroup"))	{	continue	}	
+					$s +=",$global:time1,$global:date1"	
+					Add-Content -Path $tempFile -Value $s
+				}
+			Import-Csv $tempFile
+			remove-item $tempFile
 		}
-		elseif($PortSum) 
-		{
-			Add-Content -Path $tempFile -Value "Link,Target,Type,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"
-		}
-		elseif($GroupSum) 
-		{
-			Add-Content -Path $tempFile -Value "Group,Target,Mode,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"
-		}
-		elseif($TargetSum)
-		{
-			Add-Content -Path $tempFile -Value "Target,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"
-		}
-		elseif($DomainSum)
-		{
-			Add-Content -Path $tempFile -Value "Domain,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"
-		}
-		else 
-		{
-			Add-Content -Path $tempFile -Value "VVname,RCGroup,Target,Mode,Port,Type,Svt_0.50,Svt_1,Svt_2,Svt_4,Svt_8,Svt_16,Svt_32,Svt_64,Svt_128,Svt_256,Rmt_0.50,Rmt_1,Rmt_2,Rmt_4,Rmt_8,Rmt_16,Rmt_32,Rmt_64,Rmt_128,Rmt_256,Time,Date"
-		}
-		foreach($s in  $Result[0..$LastItem] )
-		{
-			$s= [regex]::Replace($s,"^ +","")
-			$s= [regex]::Replace($s," +"," ")
-			$s= [regex]::Replace($s," ",",")
-			
-			if($s -match "millisec")
-			{			 
-				$split1=$s.split(",")
-				$global:time1 = $split1[0]
-				$global:date1 = $split1[1]
-				continue
-			}
-			$lent=$s.split(",").length
-			
-			$var2 = $lent[0]
-			if( "total" -eq $var2)
-			{
-				continue
-			}	
-			if(($s -match "-------") -or ([string]::IsNullOrEmpty($s)) -or ($s -match "RCGroup"))
-			{
-				continue
-			}	
-			
-			# Replace one or more spaces with comma to build CSV line
-			$s +=",$global:time1,$global:date1"	
-			Add-Content -Path $tempFile -Value $s
-		}
-		Import-Csv $tempFile
-		del $tempFile
-	}
 	elseif($Result -match "No virtual volume")
-	{ 
-		Return "No data available : $Result"
-	}
+		{ 	Return "No data available : $Result"
+		}
 	else
-	{
-		return $Result
-	}
-} # End Get-HistRCopyVv
+		{	return $Result
+		}
+}
+}
 
-####################################################################################################################
-## FUNCTION Get-HistVLun
-####################################################################################################################
 
 Function Get-HistVLun
 {
@@ -2121,35 +958,35 @@ Function Get-HistVLun
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
+		[String]
 		$iteration,
 		
 		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
+		[String]
 		$domain,
 		
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$host,
 		
 		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
+		[String]
 		$vvname,
 		
 		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
+		[String]
 		$lun,
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Nodes,
 		
 		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Slots,
 		
 		[Parameter(Position=7, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Ports,
 		
 		[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
@@ -2165,7 +1002,7 @@ Function Get-HistVLun
 		$Beginning,
 		
 		[Parameter(Position=11, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Metric,			
 		
 		[Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
@@ -2484,27 +1321,27 @@ Function Get-HistVv
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
+		[String]
 		$iteration,
 		
 		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
+		[String]
 		$domain,
 		
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Metric,
 		
 		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Timecols,
 		
 		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Sizecols,
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$VVname,		
 		
 		[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
@@ -2520,11 +1357,11 @@ Function Get-HistVv
 		$RW,
 		
 		[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$IntervalInSeconds,
 		
 		[Parameter(Position=10, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$FSpace,
 		
 		[Parameter(Position=11, Mandatory=$false, ValueFromPipeline=$true)]
@@ -2754,7 +1591,7 @@ Function Get-StatChunklet
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 		
 		[Parameter(Position=1, Mandatory=$false)]
@@ -2774,15 +1611,15 @@ Function Get-StatChunklet
 		$NI,
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Delay,
 		
 		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
+		[String]
 		$LDname ,
 		
 		[Parameter(Position=7, Mandatory=$false)]
-		[System.String]
+		[String]
 		$CHnum ,		
 				
 		[Parameter(Position=8, Mandatory=$false, ValueFromPipeline=$true)]
@@ -2984,19 +1821,19 @@ Function Get-StatCMP
 		$NI,
 		
 		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
+		[String]
 		$VVname ,
 		
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Domian ,
 		
 		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Delay  ,
 		
 		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 				
 		[Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
@@ -3151,7 +1988,7 @@ Function Get-StatCPU
 [CmdletBinding()]
 	param(
 		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
+		[String]
 		$delay,
 		
 		[Parameter(Position=1, Mandatory=$false)]
@@ -3159,7 +1996,7 @@ Function Get-StatCPU
 		$total,
 		
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 				
 		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
@@ -3362,23 +2199,23 @@ Function Get-StatLD
 		$NI,
 		
 		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
+		[String]
 		$VVname ,
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$LDname,
 		
 		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Domain,
 		
 		[Parameter(Position=7, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Delay,
 				
 		[Parameter(Position=8, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration,
 				
 		[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
@@ -3594,11 +2431,11 @@ Function Get-StatLink
 		$Detail,
 				
 		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Interval,
 				
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration,
 				
 		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
@@ -3787,23 +2624,23 @@ Function Get-StatPD
 		$NI,
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$wwn ,
 		
 		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
+		[String]
 		$nodes,
 		
 		[Parameter(Position=7, Mandatory=$false)]
-		[System.String]
+		[String]
 		$slots,
 		
 		[Parameter(Position=8, Mandatory=$false)]
-		[System.String]
+		[String]
 		$ports ,
 		
 		[Parameter(Position=9, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 		
 		[Parameter(Position=10, Mandatory=$false)]
@@ -4097,19 +2934,19 @@ Function Get-StatPort
 		$Disk,
 					
 		[Parameter(Position=13, Mandatory=$false)]
-		[System.String]
+		[String]
 		$nodes,
 		
 		[Parameter(Position=14, Mandatory=$false)]
-		[System.String]
+		[String]
 		$slots,
 		
 		[Parameter(Position=15, Mandatory=$false)]
-		[System.String]
+		[String]
 		$ports ,
 		
 		[Parameter(Position=16, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 				
 		[Parameter(Position=17, Mandatory=$false, ValueFromPipeline=$true)]
@@ -4387,31 +3224,31 @@ Function Get-StatRcVv
 	param(
 		
 		[Parameter(Position=0, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,		
 		
 		[Parameter(Position=1, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Interval ,	
 		
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Target ,
 						
 		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Port,
 		
 		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Group ,
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$VVname  ,
 		
 		[Parameter(Position=6, Mandatory=$false)]
-		[System.String]
+		[String]
 		$DomainName  ,
 
 		[Parameter(Position=7, Mandatory=$false)]
@@ -4769,23 +3606,23 @@ Function Get-StatVLun
 		$HostSum,
 		
 		[Parameter(Position=9, Mandatory=$false)]
-		[System.String]
+		[String]
 		$domian  ,
 						
 		[Parameter(Position=10, Mandatory=$false)]
-		[System.String]
+		[String]
 		$VVname ,
 		
 		[Parameter(Position=11, Mandatory=$false)]
-		[System.String]
+		[String]
 		$LUN ,
 		
 		[Parameter(Position=12, Mandatory=$false)]
-		[System.String]
+		[String]
 		$nodes,
 		
 		[Parameter(Position=13, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 				
 		[Parameter(Position=14, Mandatory=$false, ValueFromPipeline=$true)]
@@ -5052,19 +3889,19 @@ Function Get-StatVv
 		$NI ,
 		
 		[Parameter(Position=2, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Delay  ,
 		
 		[Parameter(Position=3, Mandatory=$false)]
-		[System.String]
+		[String]
 		$domian  ,
 					
 		[Parameter(Position=4, Mandatory=$false)]
-		[System.String]
+		[String]
 		$VVname ,	
 		
 		[Parameter(Position=5, Mandatory=$false)]
-		[System.String]
+		[String]
 		$Iteration ,
 				
 		[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
@@ -5230,11 +4067,11 @@ Function Set-Statch
 		$Stop,
 				
 		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$LDname,
 		
 		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$CLnum,	
 		
 		[Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
@@ -5370,7 +4207,7 @@ Function Set-StatPdch
 		$Stop,
 		
 		[Parameter(Position=1, Mandatory=$false,ValueFromPipeline=$true)]
-		[System.String]
+		[String]
 		$PD_ID,		
 		
 		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
@@ -5589,15 +4426,15 @@ Function Measure-SYS()
 [CmdletBinding()]
  param(
 	[Parameter(Position=0, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Cpg,
 
 	[Parameter(Position=1, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Nodepct,
 
 	[Parameter(Position=2, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Spindlepct,
 
 	[Parameter(Position=3, Mandatory=$false)]
@@ -5605,27 +4442,27 @@ Function Measure-SYS()
 	$Force,
 
 	[Parameter(Position=4, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Slth,
 
 	[Parameter(Position=5, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Slsz,
 
 	[Parameter(Position=6, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Chunkpct,
 
 	[Parameter(Position=7, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Devtype,
 
 	[Parameter(Position=8, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Fulldiskpct,
 
 	[Parameter(Position=9, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Maxchunk,
 
 	[Parameter(Position=10, Mandatory=$false)]
@@ -5637,11 +4474,11 @@ Function Measure-SYS()
 	$Ss,
 
 	[Parameter(Position=12, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Cleanwait,
 
 	[Parameter(Position=13, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Compactmb,
 
 	[Parameter(Position=14, Mandatory=$false)]
@@ -5649,11 +4486,11 @@ Function Measure-SYS()
 	$Dr,
 
 	[Parameter(Position=15, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Maxtasks,
 
 	[Parameter(Position=16, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Maxnodetasks,
 
 	[Parameter(Position=17, Mandatory=$false)]
@@ -5911,31 +4748,31 @@ Function Optimize-PD()
 [CmdletBinding()]
  param(
 	[Parameter(Position=0, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Nodes,
 
 	[Parameter(Position=1, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Slots,
 
 	[Parameter(Position=2, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Ports,
 
 	[Parameter(Position=3, Mandatory=$false)]
-	[System.String]
+	[String]
 	$VV_Name,
 
 	[Parameter(Position=4, Mandatory=$false)]
-	[System.String]
+	[String]
 	$D,
 
 	[Parameter(Position=5, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Iter,
 
 	[Parameter(Position=6, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Freq,
 
 	[Parameter(Position=7, Mandatory=$false)]
@@ -5955,7 +4792,7 @@ Function Optimize-PD()
 	$Chstat,
 
 	[Parameter(Position=12, Mandatory=$false)]
-	[System.String]
+	[String]
 	$Maxpd,
 
 	[Parameter(Position=13, Mandatory=$false)]
@@ -5967,11 +4804,11 @@ Function Optimize-PD()
 	$Movech_Manual,
 
 	[Parameter(Position=15, Mandatory=$false)]
-	[System.String]
+	[String]
 	$MaxSvct,
 
 	[Parameter(Position=16, Mandatory=$false)]
-	[System.String]
+	[String]
 	$AvgSvct,
 
 	[Parameter(Position=17, Mandatory=$false, ValueFromPipeline=$true)]
@@ -6088,12 +4925,9 @@ Function Optimize-PD()
  {
 	return	"Please select at list one from [ MaxSvct or AvgSvct]."
  }
-
- $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
- Write-DebugLog "Executing Function : Optimize-PD Command -->" INFO: 
- 
- Return $Result
-} ##  End-of Optimize-PD
+	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $Cmd
+	Return $Result
+} 
 
 Export-ModuleMember Compress-VV , Get-HistChunklet , Get-HistLD , Get-HistPD , Get-HistPort , Get-HistRCopyVv , Get-HistVLun ,
 Get-HistVv , Get-StatChunklet , Get-StatCMP , Get-StatCPU , Get-StatLD , Get-StatLink , Get-StatPD , Get-StatPort , Get-StatRcVv , 

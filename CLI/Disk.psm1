@@ -583,338 +583,91 @@ Function Switch-PD()
 Function Test-PD
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Test-PD command executes surface scans or diagnostics on physical disks.
-	
-  .DESCRIPTION
+.DESCRIPTION
     The Test-PD command executes surface scans or diagnostics on physical disks.	
-	
-  .EXAMPLE
+.EXAMPLE
 	Test-PD -specifier scrub -ch 500 -pd_ID 1
 	This example Test-PD chunklet 500 on physical disk 1 is scanned for media defects.
-   
-  .EXAMPLE  
+.EXAMPLE  
 	Test-PD -specifier scrub -count 150 -pd_ID 1
 	This example scans a number of chunklets starting from -ch 150 on physical disk 1.
-   
-  .EXAMPLE  
+.EXAMPLE  
 	Test-PD -specifier diag -path a -pd_ID 5
 	This example Specifies a physical disk path as a,physical disk 5 is scanned for media defects.
-		
-  .EXAMPLE  	
+.EXAMPLE  	
 	Test-PD -specifier diag -iosize 1s -pd_ID 3
 	This example Specifies I/O size 1s, physical disk 3 is scanned for media defects.
-	
-  .EXAMPLE  	
+.EXAMPLE  	
 	Test-PD -specifier diag -range 5m  -pd_ID 3
 	This example Limits diagnostic to range 5m [mb] physical disk 3 is scanned for media defects.
-		
-  .PARAMETER specifier	
-	scrub - Scans one or more chunklets for media defects.
-	diag - Performs read, write, or verifies test diagnostics.
-  
-  .PARAMETER ch
+.PARAMETER scrub
+	scrub - Scans one or more chunklets for media defects. must be specified unless diag is specified.
+.PARAMETER diag
+	diag - Performs read, write, or verifies test diagnostics. must be specificed unless scrub is specified.
+.PARAMETER ch
 	To scan a specific chunklet rather than the entire disk.
-  
-  .PARAMETER count
+.PARAMETER count
 	To scan a number of chunklets starting from -ch.
-  
-  .PARAMETER path
+.PARAMETER path
 	Specifies a physical disk path as [a|b|both|system].
-  
-  .PARAMETER test
+.PARAMETER test
 	Specifies [read|write|verify] test diagnostics. If no type is specified, the default is read .
-
-  .PARAMETER iosize
+.PARAMETER iosize
 	Specifies I/O size, valid ranges are from 1s to 1m. If no size is specified, the default is 128k .
-	 
-  .PARAMETER range
+.PARAMETER range
 	Limits diagnostic regions to a specified size, from 2m to 2g.
-	
-  .PARAMETER pd_ID
+.PARAMETER pd_ID
 	The ID of the physical disk to be checked. Only one pd_ID can be specified for the “scrub” test.
-	
-  .PARAMETER threads
+.PARAMETER threads
 	Specifies number of I/O threads, valid ranges are from 1 to 4. If the number of threads is not specified, the default is 1.
-	
-  .PARAMETER time
+.PARAMETER time
 	Indicates the number of seconds to run, from 1 to 36000.
-	
-  .PARAMETER total
+.PARAMETER total
 	Indicates total bytes to transfer per disk. If a size is not specified, the default size is 1g.
-	
-  .PARAMETER retry
-	 Specifies the total number of retries on an I/O error.
-	
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Test-PD
-    LASTEDIT: 30/10/2019
-    KEYWORDS: Test-PD
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+.PARAMETER retry
+	Specifies the total number of retries on an I/O error.
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$specifier,
-		
-		[Parameter(Position=1, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$ch,
-		
-		[Parameter(Position=2, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$count,
-		
-		[Parameter(Position=3, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$path,
-		
-		[Parameter(Position=4, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$test,
-		
-		[Parameter(Position=5, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$iosize,
-		
-		[Parameter(Position=6, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$range,
-		
-		[Parameter(Position=7, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$threads,
-		
-		[Parameter(Position=8, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$time,
-		
-		[Parameter(Position=9, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$total,
-		
-		[Parameter(Position=10, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$retry,
-		
-		[Parameter(Position=11, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$pd_ID,
-		
-		[Parameter(Position=12, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection 
-       
+param(	[Parameter(ParameterSetName='scrub', Mandatory)]	[Switch]	$scrub,
+		[Parameter(ParameterSetName='diag', Mandatory)]		[Switch]	$diag,
+		[Parameter(ParameterSetName='scrub')]				[int]		$ch,
+		[Parameter(ParameterSetName='diag')]				[int]		$count,
+		[Parameter(ParameterSetName='diag')]
+		[ValidateSet('a','b','both','system')]				[String]	$path,
+		[Parameter(ParameterSetName='diag')]
+		[ValidateSet('read','write','verify')]				[String]	$test,
+		[Parameter(ParameterSetName='diag')]				[String]	$iosize,
+		[Parameter(ParameterSetName='diag')]				[String]	$range,
+		[Parameter(ParameterSetName='diag')]				[String]	$threads,
+		[Parameter(ParameterSetName='diag')]				[String]	$time,
+		[Parameter(ParameterSetName='diag')]				[String]	$total,
+		[Parameter(ParameterSetName='diag')]				[String]	$retry,
+		[Parameter(Mandatory)]								[String]	$pd_ID
 	)		
-	
-	Write-DebugLog "Start: In Test-PD   - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{				
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Test-PD since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Test-PD since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}		
-	$cmd= "checkpd "	
-	if ($specifier)
-	{
-		$spe = $specifier
-		$demo = "scrub" , "diag"
-		if($demo -eq $spe)
-		{
-			$cmd+=" $spe "
-		}
-		else
-		{
-			return " FAILURE : $spe is not a Valid specifier please use [scrub | diag] only.  "
-		}
-	}
-	else
-	{
-		return " FAILURE :  -specifier is mandatory for Test-PD to execute  "
-	}		
-	if ($ch)
-	{
-		$a=$ch
-		[int]$b=$a
-		if($a -eq $b)
-		{
-			if($cmd -match "scrub")
-			{
-				$cmd +=" -ch $ch "
-			}
-			else
-			{
-				return "FAILURE : -ch $ch cannot be used with -Specification diag "
-			}
-		}	
-		else
-		{
-			Return "Error :  -ch $ch Only Integers are Accepted "
-	
-		}
-	}	
-	if ($count)
-	{
-		$a=$count
-		[int]$b=$a
-		if($a -eq $b)
-		{	
-			if($cmd -match "scrub")
-			{
-				$cmd +=" -count $count "
-			}
-			else
-			{
-				return "FAILURE : -count $count cannot be used with -Specification diag "
-			}
-		}
-		else
-		{
-			Return "Error :  -count $count Only Integers are Accepted "	
-		}
-	}		
-	if ($path)
-	{
-		if($cmd -match "diag")
-		{
-			$a = $path
-			$b = "a","b","both","system"
-			if($b -match $a)
-			{
-				$cmd +=" -path $path "
-			}
-			else
-			{
-				return "FAILURE : -path $path is invalid use [a | b | both | system ] only  "
-			}
-		}
-		else
-		{
-			return " FAILURE : -path $path cannot be used with -Specification scrub "
-		}
-	}		
-	if ($test)
-	{
-		if($cmd -match "diag")
-		{
-			$a = $test 
-			$b = "read","write","verify"
-			if($b -eq $a)
-			{
-				$cmd +=" -test $test "
-			}
-			else
-			{
-				return "FAILURE : -test $test is invalid use [ read | write | verify ] only  "
-			}
-		}
-		else
-		{
-			return " FAILURE : -test $test cannot be used with -Specification scrub "
-		}
-	}			
-	if ($iosize)
-	{	
-		if($cmd -match "diag")
-		{
-			$cmd +=" -iosize $iosize "
-		}
-		else
-		{
-			return "FAILURE : -test $test cannot be used with -Specification scrub "
-		}
-	}			 
-	if ($range )
-	{
-		if($cmd -match "diag")
-		{
-			$cmd +=" -range $range "
-		}
-		else
-		{
-			return "FAILURE : -range $range cannot be used with -Specification scrub "
-		}
-	}	
-	if ($threads )
-	{
-		if($cmd -match "diag")
-		{
-			$cmd +=" -threads $threads "
-		}
-		else
-		{
-			return "FAILURE : -threads $threads cannot be used with -Specification scrub "
-		}
-	}
-	if ($time )
-	{
-		if($cmd -match "diag")
-		{
-			$cmd +=" -time $time "
-		}
-		else
-		{
-			return "FAILURE : -time $time cannot be used with -Specification scrub "
-		}
-	}
-	if ($total )
-	{
-		if($cmd -match "diag")
-		{
-			$cmd +=" -total $total "
-		}
-		else
-		{
-			return "FAILURE : -total $total cannot be used with -Specification scrub "
-		}
-	}
-	if ($retry )
-	{
-		if($cmd -match "diag")
-		{
-			$cmd +=" -retry $retry "
-		}
-		else
-		{
-			return "FAILURE : -retry $retry cannot be used with -Specification scrub "
-		}
-	}
-	if($pd_ID)
-	{	
-		$cmd += " $pd_ID "
-	}
-	else
-	{
-		return " FAILURE :  pd_ID is mandatory for Test-PD to execute  "
-	}	
+Begin	
+{	Test-CLIConnectionB
+}
+Process	
+{	$cmd= "checkpd "	
+	$cmd+=" $specifier "		
+	if ($scrub)	{	$cmd +=" scrub " 			}	
+	if ($diag) 	{	$cmd +=" diag " 			}	
+	if ($ch) 	{	$cmd +=" -ch $ch " 			}	
+	if ($count)	{	$cmd +=" -count $count "	}
+	if ($path)	{	$cmd +=" -path $path "		}		
+	if ($test)	{	$cmd +=" -test $test "		}				
+	if ($iosize){	$cmd +=" -iosize $iosize "	}
+	if ($range ){	$cmd +=" -range $range "	}	
+	if ($threads ){	$cmd +=" -threads $threads "}
+	if ($time )	{	$cmd +=" -time $time "		}
+	if ($total ){	$cmd +=" -total $total "	}
+	if ($retry ){	$cmd +=" -retry $retry "	}
+					$cmd += " $pd_ID "	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
-	write-debuglog "  Executing surface scans or diagnostics on physical disks with the command  " "INFO:" 
 	return $Result	
+}
 }
 
 Export-ModuleMember Set-AdmitsPD , Show-PD , Remove-PD , Set-PD , Switch-PD , Test-PD

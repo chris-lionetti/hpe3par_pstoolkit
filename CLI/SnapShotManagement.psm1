@@ -400,177 +400,69 @@ param(	[Parameter(Mandatory=$true)]
 		[switch]    $Halt,
 		[switch]	$Saves,
 		[switch]	$Blocks,
+		[ValidateSet('high','med','low')]
 		[String]    $Priority
 	)
 Begin
 {	Test-CLIConnectionB
 }
 Process
-{	if(!(($parentName) -and ($vvCopyName)))
-	{
-		write-debuglog " Please specify values for parentName and vvCopyName " "INFO:" 
-		Get-help New-VvCopy
-		return "FAILURE : Please specify values for parentName and vvCopyName"	
-	}
-	if ( $parentName -match "^set:")	
-	{
-		$objName = $item.Split(':')[1]
+{	if ( $parentName -match "^set:")	
+	{	$objName = $item.Split(':')[1]
 		$vvsetName = $objName
 		$objType = "vv set"
 		#$objMsg  = $objType
 		if(!( Test-CLIObject -objectType $objType  -objectName $vvsetName -SANConnection $SANConnection))
-		{
-			write-debuglog " vvset $vvsetName does not exist. Please use New-VvSet to create a new vvset " "INFO:" 
-			return "FAILURE : No vvset $vvSetName found"
+		{	return "FAILURE : No vvset $vvSetName found"
 		}
 	}
 	else
-	{
-		if(!( Test-CLIObject -objectType "vv"  -objectName $parentName -SANConnection $SANConnection))
-		{
-			write-debuglog " vv $parentName does not exist. Please use New-Vv to create a new vv " "INFO:" 
-			return "FAILURE : No parent VV  $parentName found"
+	{	if(!( Test-CLIObject -objectType "vv"  -objectName $parentName -SANConnection $SANConnection))
+		{	return "FAILURE : No parent VV  $parentName found"
 		}
 	}
 	if($online)
-	{			
-		if(!( Test-CLIObject -objectType 'cpg' -objectName $CPGName -SANConnection $SANConnection))
-		{
-			write-debuglog " CPG $CPGName does not exist. Please use New-CPG to create a CPG " "INFO:" 
-			return "FAILURE : No cpg $CPGName found"
-		}		
-		if( Test-CLIObject -objectType 'vv' -objectName $vvCopyName -SANConnection $SANConnection)
-		{
-			write-debuglog " vv $vvCopyName is exist. For online option vv should not be exists..." "INFO:" 
-			#return "FAILURE : vv $vvCopyName is exist. For online option vv should not be exists..."
-		}		
+	{	if(!( Test-CLIObject -objectType 'cpg' -objectName $CPGName -SANConnection $SANConnection))
+			{	return "FAILURE : No cpg $CPGName found"
+			}		
 		$vvcopycmd = "createvvcopy -p $parentName -online "
 		if($snapcpg)
-		{
-			if(!( Test-CLIObject -objectType 'cpg' -objectName $snapcpg -SANConnection $SANConnection))
-			{
-				write-debuglog " Snapshot CPG $snapcpg does not exist. Please use New-CPG to create a CPG " "INFO:" 
-				return "FAILURE : No snapshot cpg $snapcpg found"
+			{	if(!( Test-CLIObject -objectType 'cpg' -objectName $snapcpg -SANConnection $SANConnection))
+					{	return "FAILURE : No snapshot cpg $snapcpg found"
+					}
+				$vvcopycmd += " -snp_cpg $snapcpg"
 			}
-			$vvcopycmd += " -snp_cpg $snapcpg"
-		}
-				
-		if($Tpvv)
-		{
-			$vvcopycmd += " -tpvv "
-		}
-		if($Tdvv)
-		{
-			$vvcopycmd += " -tdvv "
-		}
-		if($Dedup)
-		{
-			$vvcopycmd += " -dedup "
-		}
-		if($Compr)
-		{
-			$vvcopycmd += " -compr "
-		}
-		if($AddToSet)
-		{
-			$vvcopycmd += " -addtoset "
-		}
-		if($Halt)
-		{
-			$vvcopycmd += " -halt "
-		}
-		if($Saves)
-		{
-			$vvcopycmd += " -s "
-		}
-		if($Blocks)
-		{
-			$vvcopycmd += " -b "
-		}
-		if($Priority)
-		{
-			$a = "high","med","low"
-			$l=$Priority
-			if($a -eq $l)
-			{
-				$vvcopycmd += " -pri $Priority "			
-			}
-			else
-			{ 
-				Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-				Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-			}
-			
-		}
-		if($CPGName)
-		{
-			$vvcopycmd += " $CPGName "
-		}
-		
+		if($Tpvv)		{	$vvcopycmd += " -tpvv "	}
+		if($Tdvv)		{	$vvcopycmd += " -tdvv "	}
+		if($Dedup)		{	$vvcopycmd += " -dedup "}
+		if($Compr)		{	$vvcopycmd += " -compr "}
+		if($AddToSet)	{	$vvcopycmd += " -addtoset "}
+		if($Halt)		{	$vvcopycmd += " -halt "	}
+		if($Saves)		{	$vvcopycmd += " -s "	}
+		if($Blocks)		{	$vvcopycmd += " -b "	}
+		if($Priority)	{	$vvcopycmd += " -pri $Priority "	}
+		if($CPGName)	{	$vvcopycmd += " $CPGName "}
 		$vvcopycmd += " $vvCopyName"
-		
 		$Result4 = Invoke-CLICommand -Connection $SANConnection -cmds  $vvcopycmd
-		write-debuglog " Creating online vv copy with the command --> $vvcopycmd" "INFO:" 
-		if($Result4 -match "Copy was started.")
-		{		
-			return "Success : $Result4"
-		}
-		else
-		{
-			return "FAILURE : $Result4"
-		}		
+		write-verbose " Creating online vv copy with the command --> $vvcopycmd" 
+		if($Result4 -match "Copy was started.")	{	return "Success : $Result4"	}
+		else									{	return "FAILURE : $Result4"	}		
 	}
 	else
-	{
-		$vvcopycmd = " createvvcopy "
-		if($R)
-		{ 
-			$vvcopycmd += " -r"
-		}
-		if($Halt)
-		{
-			$vvcopycmd += " -halt "
-		}
-		if($Saves)
-		{
-			$vvcopycmd += " -s "
-		}
-		if($Blocks)
-		{
-			$vvcopycmd += " -b "
-		}
-		if($Priority)
-		{
-			$a = "high","med","low"
-			$l=$Priority
-			if($a -eq $l)
-			{
-				$vvcopycmd += " -pri $Priority "			
-			}
-			else
-			{ 
-				Write-DebugLog "Stop: Exiting Since -Priority $Priority in incorrect "
-				Return "FAILURE : -Priority :- $Priority is an Incorrect Priority  [high | med | low]  can be used only . "
-			}			
-		}
+	{	$vvcopycmd = " createvvcopy "
+		if($R)			{ 	$vvcopycmd += " -r"}
+		if($Halt)		{	$vvcopycmd += " -halt "}
+		if($Saves)		{	$vvcopycmd += " -s "}
+		if($Blocks)		{	$vvcopycmd += " -b "	}
+		if($Priority)	{	$vvcopycmd += " -pri $Priority " }			
 		if( !(Test-CLIObject -objectType 'vv' -objectName $vvCopyName -SANConnection $SANConnection))
-		{
-			write-debuglog " vv $vvCopyName does not exist.Please speicify existing vv name..." "INFO:" 
-			return "FAILURE : No vv $vvCopyName found"
-		}
+			{	return "FAILURE : No vv $vvCopyName found"
+			}
 		$vvcopycmd += " -p $parentName $vvCopyName"
-		
 		$Result3 = Invoke-CLICommand -Connection $SANConnection -cmds  $vvcopycmd
-		write-debuglog " Creating Virtual Copy with the command --> $vvcopycmd" "INFO:" 
-		write-debuglog " Check the task status using Get-Task command --> Get-Task " "INFO:"
-		if($Result3 -match "Copy was started")
-		{
-			return "Success : $Result3"
-		}
-		else
-		{
-			return "FAILURE : $Result3"
-		}
+		write-verbose " Creating Virtual Copy with the command --> $vvcopycmd"  
+		if($Result3 -match "Copy was started")	{	return "Success : $Result3"	}
+		else									{	return "FAILURE : $Result3"	}
 	}
 }
 }
@@ -580,651 +472,269 @@ Function Push-GroupSnapVolume
 <#
 .SYNOPSIS
     Copies the differences of snapshots back to their base volumes.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Copies the differences of snapshots back to their base volumes.
-        
-  .EXAMPLE
+.EXAMPLE
     Push-GroupSnapVolume
-	
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr02F
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames "WSDS_compr02F"
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames "tesWSDS_compr01t_lun"
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr01 -RCP
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr01 -Halt
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr01 -PRI high
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr01 -Online
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr01 -TargetVV at
-
-  .EXAMPLE
+.EXAMPLE
 	Push-GroupSnapVolume -VVNames WSDS_compr01 -TargetVV y
-
-  .PARAMETER VVNames 
+.PARAMETER VVNames 
     Specify virtual copy name of the Snap shot
-	
-  .PARAMETER TargetVV 
+.PARAMETER TargetVV 
     Target vv Name
-
-  .PARAMETER RCP 
-	Allows the promote operation to proceed even if the RW parent volume is
-	currently in a Remote Copy volume group, if that group has not been
-	started. If the Remote Copy group has been started, this command fails.
-	This option cannot be used in conjunction with the -halt option.
-
-  .PARAMETER Halt 
-    Cancels ongoing snapshot promotions. Marks the RW parent volumes with
-	the "cpf" status that can be cleaned up using the promotevvcopy command
-	or by issuing a new instance of the promotesv/promotegroupsv command.
-	This option cannot be used in conjunction with any other option.
-
-  .PARAMETER PRI 
-    Specifies the priority of the copy operation when it is started. This
-	option allows the user to control the overall speed of a particular
-	task.  If this option is not specified, the promotegroupsv operation is
-	started with default priority of medium. High priority indicates that
-	the operation will complete faster. Low priority indicates that the
-	operation will run slower than the default priority task. This option
+.PARAMETER RCP 
+	Allows the promote operation to proceed even if the RW parent volume is currently in a Remote Copy volume group, if that group has not been
+	started. If the Remote Copy group has been started, this command fails. This option cannot be used in conjunction with the -halt option.
+.PARAMETER Halt 
+    Cancels ongoing snapshot promotions. Marks the RW parent volumes with the "cpf" status that can be cleaned up using the promotevvcopy command
+	or by issuing a new instance of the promotesv/promotegroupsv command. This option cannot be used in conjunction with any other option.
+.PARAMETER PRI 
+    Specifies the priority of the copy operation when it is started. This option allows the user to control the overall speed of a particular
+	task.  If this option is not specified, the promotegroupsv operation is started with default priority of medium. High priority indicates that
+	the operation will complete faster. Low priority indicates that the operation will run slower than the default priority task. This option
 	cannot be used with -halt option.
 
-  .PARAMETER Online 
-    Indicates that the promote operation will be executed while the target
-	volumes have VLUN exports. The hosts should take the target LUNs offline
-	to initiate the promote command, but can be brought online and used
-	during the background tasks. Each specified virtual copy and its base
-	volume must be the same size. The base volume is the only possible
-	target of online promote, and is the default. To halt a promote started
-	with the online option, use the canceltask command. The -halt, -target,
-	and -pri options cannot be combined with the -online option.	
-	
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Push-GroupSnapVolume
-    LASTEDIT: December 2019
-    KEYWORDS: Push-GroupSnapVolume
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
- [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[String]
-		$VVNames,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[String]
-		$TargetVV,
-		
-		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-		[switch]
-		$RCP,
-		
-		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-		[switch]
-		$Halt,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[String]
-		$PRI,
-		
-		[Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-		[switch]
-		$Online,
-						
-		[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection 
-       
+.PARAMETER Online 
+    Indicates that the promote operation will be executed while the target volumes have VLUN exports. The hosts should take the target LUNs offline
+	to initiate the promote command, but can be brought online and used during the background tasks. Each specified virtual copy and its base
+	volume must be the same size. The base volume is the only possible target of online promote, and is the default. To halt a promote started
+	with the online option, use the canceltask command. The -halt, -target, and -pri options cannot be combined with the -online option.	
+#>
+[CmdletBinding()]
+param(	[String]	$VVNames,
+		[String]	$TargetVV,
+		[switch]	$RCP,
+		[switch]	$Halt,
+		[ValidateSet('high','med','low')]
+		[String]	$PRI,
+		[switch]	$Online
 	)	
-	Write-DebugLog "Start: In Push-GroupSnapVolume - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Push-GroupSnapVolume since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Push-GroupSnapVolume since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli -SANConnection $SANConnection
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	
-	$PromoteCmd = "promotegroupsv " 	
-	
-	if ($RCP)
-	{
-		$PromoteCmd += " -rcp "
-	}
-	if ($Halt)
-	{
-		$PromoteCmd += " -halt "
-	}
-	if ($PRI)
-	{
-		$val = "high","med","low"
-		$orgVal=$PRI
-		if($val -eq $orgVal)
-		{
-			$PromoteCmd += " -pri $PRI "			
-		}
-		else
-		{ 
-			Write-DebugLog "Stop: Push-GroupSnapVolume  since -PRI $PRI in incorrect "
-			Return "FAILURE : -PRI :- $PRI is an Incorrect,[ high | med | low]  can be used only . "
-		}		
-	}
-	if ($Online)
-	{
-		$PromoteCmd += " -online "
-	}
-	if($VVNames)
-	{
-		$PromoteCmd += " $VVNames"
-	}
-	else
-	{
-		write-debugLog "No VVNames specified to promote " "ERR:" 
-		Get-help Push-GroupSnapVolume
-		return
-	}
-	if ($TargetVV)
-	{
-		$PromoteCmd += ":"
-		$PromoteCmd += "$TargetVV "
-	}
-			
+Begin
+{	Test-ConnectionB
+}
+Process
+{	$PromoteCmd = "promotegroupsv " 	
+	if ($RCP)		{	$PromoteCmd += " -rcp "		}
+	if ($Halt)		{	$PromoteCmd += " -halt "	}
+	if ($PRI)		{	$PromoteCmd += " -pri $PRI "}			
+	if ($Online)	{	$PromoteCmd += " -online "	}
+	if($VVNames)	{	$PromoteCmd += " $VVNames"	}
+	else			{	return "No VVNames specified to promote "
+					}
+	if ($TargetVV)	{	$PromoteCmd += ":"
+						$PromoteCmd += "$TargetVV "
+					}			
 	$result = Invoke-CLICommand -Connection $SANConnection -cmds  $PromoteCmd
-	write-debuglog " Promoting Group Snapshot with $VVNames with the command --> $PromoteCmd" "INFO:" 
+	write-verbose "Promoting Group Snapshot with $VVNames with the command --> $PromoteCmd" 
 	if( $result -match "has been started to promote virtual copy")
-	{
-		return "Success : Execute Push-GroupSnapVolume `n $result"
+	{	return "Success : Execute Push-GroupSnapVolume `n $result"
 	}
 	elseif($result -match "Error: Base volume may not be promoted")
-	{
-		return "FAILURE : While Executing Push-GroupSnapVolume `Error: Base volume may not be promoted"
+	{	return "FAILURE : While Executing Push-GroupSnapVolume `Error: Base volume may not be promoted"
 	}
 	elseif($result -match "has exports defined")
-	{
-		return "FAILURE : While Executing Push-GroupSnapVolume `n $result"
+	{	return "FAILURE : While Executing Push-GroupSnapVolume `n $result"
 	}
 	else
-	{
-		return "FAILURE : While Executing Push-GroupSnapVolume `n $result"
+	{	return "FAILURE : While Executing Push-GroupSnapVolume `n $result"
 	}
-	
-}#END Push-GroupSnapVolume
+}
+}
 
-####################################################################################################################
-## FUNCTION Push-SnapVolume
-#####################################################################################################################
 Function Push-SnapVolume
 {
 <#
-  .SYNOPSIS
-    This command copies the differences of a snapshot back to its base volume, allowing
-	you to revert the base volume to an earlier point in time.
-  
-  .DESCRIPTION
-	This command copies the differences of a snapshot back to its base volume, allowing
-	you to revert the base volume to an earlier point in time.
-        
-  .EXAMPLE
-   Push-SnapVolume -name vv1 
-	copies the differences of a snapshot back to its base volume "vv1"
-	
-  .EXAMPLE
-   Push-SnapVolume -target vv23 -name vv1 
-	copies the differences of a snapshot back to target volume "vv23" of volume "vv1"
-	
-  .PARAMETER name 
+.SYNOPSIS
+    This command copies the differences of a snapshot back to its base volume, allowing you to revert the base volume to an earlier point in time.
+.DESCRIPTION
+	This command copies the differences of a snapshot back to its base volume, allowing you to revert the base volume to an earlier point in time.
+.EXAMPLE
+	Push-SnapVolume -name vv1 copies the differences of a snapshot back to its base volume "vv1"
+.EXAMPLE
+	Push-SnapVolume -target vv23 -name vv1 copies the differences of a snapshot back to target volume "vv23" of volume "vv1"
+.PARAMETER name 
     Specifies the name of the virtual copy volume or set of virtual copy volumes to be promoted 
-	
-  .PARAMETER target 
-    Copy the differences of the virtual copy to the specified RW parent in the same virtual volume
-    family tree.
-	
-  .PARAMETER RCP
-	Allows the promote operation to proceed even if the RW parent volume is
-	currently in a Remote Copy volume group, if that group has not been
-	started. If the Remote Copy group has been started, this command fails.
-	This option cannot be used in conjunction with the -halt option.
-  
-  .PARAMETER Halt
-	Cancels an ongoing snapshot promotion. Marks the RW parent volume with
-	the "cpf" status that can be cleaned up using the promotevvcopy command
-	or by issuing a new instance of the promotesv command. This option
-	cannot be used in conjunction with any other option.    
-   
-  .PARAMETER PRI
-	Specifies the priority of the copy operation when it is started. This
-	option allows the user to control the overall speed of a particular
-	task.  If this option is not specified, the promotesv operation is
-	started with default priority of medium. High priority indicates that
-	the operation will complete faster. Low priority indicates that the
-	operation will run slower than the default priority task. This option
+.PARAMETER target 
+    Copy the differences of the virtual copy to the specified RW parent in the same virtual volume family tree.
+.PARAMETER RCP
+	Allows the promote operation to proceed even if the RW parent volume is currently in a Remote Copy volume group, if that group has not been
+	started. If the Remote Copy group has been started, this command fails. This option cannot be used in conjunction with the -halt option.
+.PARAMETER Halt
+	Cancels an ongoing snapshot promotion. Marks the RW parent volume with the "cpf" status that can be cleaned up using the promotevvcopy command
+	or by issuing a new instance of the promotesv command. This option cannot be used in conjunction with any other option.    
+.PARAMETER PRI
+	Specifies the priority of the copy operation when it is started. This option allows the user to control the overall speed of a particular
+	task.  If this option is not specified, the promotesv operation is started with default priority of medium. High priority indicates that
+	the operation will complete faster. Low priority indicates that the operation will run slower than the default priority task. This option
 	cannot be used with -halt option.    
-  
-  .PARAMETER Online
-	Indicates that the promote operation will be executed while the target
-	volume has VLUN exports. The host should take the target LUN offline to
-	initiate the promote command, but can bring it online and use it during
-	the background task. The specified virtual copy and its base volume must
-	be the same size. The base volume is the only possible target of online
-	promote, and is the default. To halt a promote started with the online
-	option, use the canceltask command. The -halt, -target, and -pri options
-	cannot be combined with the -online option.
-		
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Push-SnapVolume 
-    LASTEDIT: December 2019
-    KEYWORDS: Push-SnapVolume
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
- #>
- [CmdletBinding()]
-	param(	
-		[Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
-		[String]
-		$name,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[String]
-		$target,
-		
-		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
-		[switch]
-		$RCP,
-		
-		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
-		[switch]
-		$Halt,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[String]
-		$PRI,
-		
-		[Parameter(Position=5, Mandatory=$false, ValueFromPipeline=$true)]
-		[switch]
-		$Online,		
-							
-		[Parameter(Position=6, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+.PARAMETER Online
+	Indicates that the promote operation will be executed while the target volume has VLUN exports. The host should take the target LUN offline to
+	initiate the promote command, but can bring it online and use it during the background task. The specified virtual copy and its base volume must
+	be the same size. The base volume is the only possible target of online promote, and is the default. To halt a promote started with the online
+	option, use the canceltask command. The -halt, -target, and -pri options cannot be combined with the -online option.
+#>
+[CmdletBinding()]
+param(	[Parameter(Mandatory)]
+		[String]	$name,
+		[String]	$target,
+		[switch]	$RCP,
+		[switch]	$Halt,
+		[String]	$PRI,
+		[switch]	$Online
 	)	
-	Write-DebugLog "Start: In Push-SnapVolume - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Push-SnapVolume since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Push-SnapVolume since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}	
-	$plinkresult = Test-PARCli -SANConnection $SANConnection
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	
-	$promoCmd = "promotesv"	
+Begin
+{	Test-CLIConnectionB
+}
+Process
+{	$promoCmd = "promotesv"	
 	if($target)
-	{
-		## Check Target Name 
-		if ( !( Test-CLIObject -objectType 'vv' -objectName $target -SANConnection $SANConnection))
-		{
-			write-debuglog " VV $target does not exist. " "INFO:" 
-			$promoCmd += " -target $target "
-			return "FAILURE : No vv $target found"
+		{	if ( !( Test-CLIObject -objectType 'vv' -objectName $target -SANConnection $SANConnection))
+				{	Throw "FAILURE : No vv $target found"
+				}
+			$promoCmd += " -target $target "	
 		}
-		$promoCmd += " -target $target "	
-	}
-	if ($RCP)
- 	{
-		$promoCmd += " -rcp "
-	}
-	if ($Halt)
- 	{
-		$promoCmd += " -halt "
-	}
-	if ($PRI)
- 	{
-		$promoCmd += " -pri $PRI "
-	}
-	if ($Online)
- 	{
-		$promoCmd += " -online "
-	}
-	if ($name)
- 	{	
-		
-		if ( !( Test-CLIObject -objectType 'vv' -objectName $name -SANConnection $SANConnection))
-		{
-			write-debuglog " VV $vvName does not exist. Please use New-Vv to create a VV before creating SV" "INFO:" 
-			return "FAILURE : No vv $vvName found"
-		}								
-		$promoCmd += " $name "
-		$result = Invoke-CLICommand -Connection $SANConnection -cmds  $promoCmd
-		
-		write-debuglog " Promoting Snapshot Volume Name $vvName with the command --> $promoCmd" "INFO:" 
-		Return $result
-	}		
-	else
-	{
-		write-debugLog "No vvName specified to Promote snapshot " "ERR:" 
-		Get-help Push-SnapVolume
-		return
-	}
-}#END Push-SnapVolume
+	if ($RCP)	{	$promoCmd += " -rcp "	}
+	if ($Halt) 	{	$promoCmd += " -halt "	}
+	if ($PRI) 	{	$promoCmd += " -pri $PRI "	}
+	if ($Online){	$promoCmd += " -online "	}
+	if ( !( Test-CLIObject -objectType 'vv' -objectName $name -SANConnection $SANConnection))
+				{	Throw "FAILURE : VV $vvName does not exist. Please use New-Vv to create a VV before creating SV"
+				}								
+	$promoCmd += " $name "
+	$result = Invoke-CLICommand -Connection $SANConnection -cmds  $promoCmd
+	write-verbose " Promoting Snapshot Volume Name $vvName with the command --> $promoCmd" 
+	Return $result		
+}
+}
 
-#####################################################################################################################
-## FUNCTION Push-VvCopy
-#####################################################################################################################
 Function Push-VvCopy
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     Promotes a physical copy back to a regular base volume
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Promotes a physical copy back to a regular base volume
-        
-  .EXAMPLE
-    Push-VvCopy –physicalCopyName volume1
-		Promotes virtual volume "volume1" to a base volume
+.EXAMPLE
+    PS::> Push-VvCopy –physicalCopyName volume1 
 	
-  .PARAMETER –physicalCopyName 
+	Promotes virtual volume "volume1" to a base volume
+.PARAMETER –physicalCopyName 
     Specifies the name of the physical copy to be promoted.
-
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Push-VvCopy 
-    LASTEDIT: December 2019
-    KEYWORDS: Push-VvCopy
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]
-		$physicalCopyName,
-		
-		[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+param(	[Parameter(Mandatory)]	[String]	$physicalCopyName
 	)		
-	
-	Write-DebugLog "Start: In Push-VvCopy - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Push-VvCopy since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Push-VvCopy since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
+begin
+{	Test-CLIConnectionB
+}
+Process
+{	if(!( Test-CLIObject -objectType "vv"  -objectName $physicalCopyName -SANConnection $SANConnection))
+		{	throw "FAILURE : vv $physicalCopyName does not exist. Please use New-Vv to create a new vv"
 		}
-	}
-	$plinkresult = Test-PARCli -SANConnection $SANConnection
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	
-	if($physicalCopyName)
-	{
-		if(!( Test-CLIObject -objectType "vv"  -objectName $physicalCopyName -SANConnection $SANConnection))
-		{
-			write-debuglog " vv $physicalCopyName does not exist. Please use New-Vv to create a new vv" "INFO:" 
-			return "FAILURE : No vv $physicalCopyName found"
+	$promotevvcopycmd = "promotevvcopy $physicalCopyName"
+	$Result3 = Invoke-CLICommand -Connection $SANConnection -cmds  $promotevvcopycmd
+	write-verbose " Promoting Physical volume with the command --> $promotevvcopycmd" 
+	if( $Result3 -match "not a physical copy")
+		{	return "FAILURE : $Result3"
 		}
-		$promotevvcopycmd = "promotevvcopy $physicalCopyName"
-		$Result3 = Invoke-CLICommand -Connection $SANConnection -cmds  $promotevvcopycmd
-		
-		write-debuglog " Promoting Physical volume with the command --> $promotevvcopycmd" "INFO:"
-		if( $Result3 -match "not a physical copy")
-		{
-			return "FAILURE : $Result3"
+	elseif($Result3 -match "FAILURE")
+		{	return "FAILURE : $Result3"
 		}
-		elseif($Result3 -match "FAILURE")
-		{
-			return "FAILURE : $Result3"
+	else
+		{	return $Result3
 		}
-		else
-		{
-			return $Result3
-		}
-	}
-	else 
-	{
-		write-debuglog " Please specify values for physicalCopyName " "INFO:" 
-		Get-help Push-VvCopy
-		return
-	}
-}#END Push-VvCopy
-
-####################################################################################################################
-## FUNCTION Set-Vv
-#####################################################################################################################
+}
+}
 
 Function Set-Vv
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     Updates a snapshot Virtual Volume (VV) with a new snapshot.
-  
-  .DESCRIPTION
+.DESCRIPTION
 	Updates a snapshot Virtual Volume (VV) with a new snapshot.
-        
-  .EXAMPLE
-    Set-Vv -Name volume1 -Force
+.EXAMPLE
+    PS:> Set-Vv -Name volume1 -Force
+	
 	snapshot update of snapshot VV "volume1"
-		
-  .EXAMPLE
-    Set-Vv -Name volume1,volume2 -Force
+.EXAMPLE
+    PS:> Set-Vv -Name volume1,volume2 -Force
+	
 	snapshot update of snapshot VV's "volume1" and "volume2"
-		
-  .EXAMPLE
-    Set-Vv -Name set:vvset1 -Force
+.EXAMPLE
+    PS:> Set-Vv -Name set:vvset1 -Force
+	
 	snapshot update of snapshot VVSet "vvset1"
-		
-  .EXAMPLE
-    Set-Vv -Name set:vvset1,set:vvset2 -Force
+.EXAMPLE
+    PS:> Set-Vv -Name set:vvset1,set:vvset2 -Force
+	
 	snapshot update of snapshot VVSet's "vvset1" and "vvset2"
-
-  .EXAMPLE	
-	Set-Vv -Name as2 -RO
-	
-  .EXAMPLE	
-	Set-Vv -Name as2 -Force -RemoveAndRecreate 
-	
-  .PARAMETER Name 
+.EXAMPLE	
+	PS:> Set-Vv -Name as2 -RO
+.EXAMPLE	
+	PS:> Set-Vv -Name as2 -Force -RemoveAndRecreate 
+.PARAMETER Name 
     Specifies the name(s) of the snapshot virtual volume(s) or virtual volume set(s) to be updated.
-
-  .PARAMETER RO 
+.PARAMETER RO 
     Specifies that if the specified VV (<VV_name>) is a read/write snapshot the snapshot’s read-only
 	parent volume is also updated with a new snapshot if the parent volume is not a member of a
 	virtual volume set
-
-  .PARAMETER Force
-   Specifies that the command is forced.
-
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Set-Vv 
-    LASTEDIT: December 2019
-    KEYWORDS: Set-Vv
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+.PARAMETER Force
+	Specifies that the command is forced.
+#>
 [CmdletBinding()]
-	param(
-		[Parameter(Position=0, Mandatory=$false)]
-		[String]
-		$Name,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[switch]
-		$Force,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[switch]
-		$RemoveAndRecreate,
-
-		[Parameter(Position=3, Mandatory=$false)]
-		[switch]
-		$RO, 	
-		
-		[Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection        
+param(	[Parameter(Mandatory)]	[String]	$Name,
+		[switch]	$Force,
+		[switch]	$RemoveAndRecreate,
+		[switch]	$RO
 	)		
-	
-	Write-DebugLog "Start: In Set-Vv - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{			
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Set-Vv since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Set-Vv since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli -SANConnection $SANConnection
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}
-	if(!($Name))
-	{
-		Get-help Set-Vv
-		return
-	}
-			
-	if($Name)
-	{			
-		$updatevvcmd="updatevv -f "
-		
-		if($RO)
-		{
-			$updatevvcmd += " -ro "
-		}
-		if($RemoveAndRecreate)
-		{
-			$updatevvcmd += " -removeandrecreate  "
-		}
-		
-		$vvtempnames = $Name.split(",")
-		$limit = $vvtempnames.Length - 1
-		foreach ($i in 0..$limit)
-		{				
-			if ( $vvtempnames[$i] -match "^set:")	
-			{
-				$objName = $vvtempnames[$i].Split(':')[1]
+Begin
+{	Test-CLIConnectionB
+}
+Process
+{	$updatevvcmd="updatevv -f "
+	if($RO)					{	$updatevvcmd += " -ro "	}
+	if($RemoveAndRecreate)	{	$updatevvcmd += " -removeandrecreate  "	}
+	$vvtempnames = $Name.split(",")
+	$limit = $vvtempnames.Length - 1
+	foreach ($i in 0..$limit)
+		{	if ( $vvtempnames[$i] -match "^set:")	
+			{	$objName = $vvtempnames[$i].Split(':')[1]
 				$vvsetName = $objName
 				$objType = "vv set"
 				#$objMsg  = $objType
 				if(!( Test-CLIObject -objectType $objType  -objectName $vvsetName -SANConnection $SANConnection))
-				{
-					write-debuglog " vvset $vvsetName does not exist. Please use New-VvSet to create a new vvset " "INFO:" 
-					return "FAILURE : No vvset $vvsetName found"
+				{	return "FAILURE : No vvset $vvsetName found, vvset $vvsetName does not exist. Please use New-VvSet to create a new vvset "
 				}
 			}				
 			else
-			{					
-				$subcmd = $vvtempnames[$i]
+			{	$subcmd = $vvtempnames[$i]
 				if(!( Test-CLIObject -objectType "vv"  -objectName $subcmd -SANConnection $SANConnection))
-				{
-					write-debuglog " vv $vvtempnames[$i] does not exist. Please use New-Vv to create a new vv" "INFO:" 
-					return "FAILURE : No vv $subcmd found"
+				{	return "FAILURE : vv $vvtempnames[$i] does not exist. Please use New-Vv to create a new vv, No vv $subcmd found"
 				}
 			}
 		}		
-
 		$updatevvcmd += " $vvtempnames "
 		$Result1 = Invoke-CLICommand -Connection $SANConnection -cmds  $updatevvcmd
-		write-debuglog " updating a snapshot Virtual Volume (VV) with a new snapshot using--> $updatevvcmd" "INFO:" 
+		write-Verbose " updating a snapshot Virtual Volume (VV) with a new snapshot using--> $updatevvcmd"  
 		return $Result1				
-	}
-	else
-	{
-		write-debuglog " Please specify values for vvname parameter " "INFO:" 
-		return "FAILURE : Please specify values for vvname parameter"
-	}
-	
-}#END Set-Vv
+}
+}
 
 Export-ModuleMember New-GroupSnapVolume , New-GroupVvCopy , New-SnapVolume , New-VvCopy , Push-GroupSnapVolume , Push-SnapVolume , Push-VvCopy , Set-Vv

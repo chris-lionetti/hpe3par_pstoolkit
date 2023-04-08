@@ -1,5 +1,5 @@
 ﻿####################################################################################
-## 	© 2020,2021 Hewlett Packard Enterprise Development LP
+## 	© 2020,2021, 2023 Hewlett Packard Enterprise Development LP
 ##	Description: 	Disk Enclosure Management cmdlets 
 ##
 
@@ -46,19 +46,14 @@ Function Find-Cage
 	Indicates the port specifiers. Accepted values are A0|B0|A1|B1|A2|B2|A3|B3. If a port is specified, the port LED will oscillate between green and off.
 #>
 [CmdletBinding(DefaultParameterSetName='default')]
-param(	[ValidateRange(0,255)]
-		[int]	$Time = 60,
-		[Parameter(Mandatory)]
-		[String]	$CageName,
-		[String]	$ModuleName,
-		[ValidateSet('pcm','iom','drive')]
-		[String]	$ModuleNumber,
+param(	[ValidateRange(0,255)]									[int]		$Time = 60,
+		[Parameter(Mandatory)]									[String]	$CageName,
+																[String]	$ModuleName,
+		[ValidateSet('pcm','iom','drive')]						[String]	$ModuleNumber,
 		[Parameter(ParameterSetName='MAG',Mandatory)]
-		[ValidateRange(0,15)]
-		[int]	$Mag,
+		[ValidateRange(0,15)]									[int]		$Mag,
 		[Parameter(ParameterSetName='PORT',Mandatory)]
-		[ValidateSet('A0','A1','A2','A3','B0','B1','B2','B3')]
-		[String]	$PortName
+		[ValidateSet('A0','A1','A2','A3','B0','B1','B2','B3')]	[String]	$PortName
 	)		
 Begin	
 {	Test-CLIConnection
@@ -67,20 +62,20 @@ Process
 {	$cmd= "locatecage "	
 	$cmd+=" -t $time"
 	$Result2 = Invoke-CLICommand -Connection $SANConnection -cmds 'showcage'
-	if($Result2 -match $CageName)	{	$cmd+=" $CageName"	}
+	if($Result2 -match $CageName)				{	$cmd+=" $CageName"	}
 	else 	{	throw "FAILURE : -CageName $CageName  is Unavailable `n Try using [Get-Cage] Command "	}
-	if ($ModuleName)	{	$cmd+=" $ModuleName"	}	
-	if ($ModuleNumber)	{	$cmd+=" $ModuleNumber"	}
+	if ($ModuleName)							{	$cmd+=" $ModuleName"	}	
+	if ($ModuleNumber)							{	$cmd+=" $ModuleNumber"	}
 	if ($PSCmdlet.ParameterSetName -eq 'PORT')	{	$cmd +=" $Mag"	}	
 	if ($PSCmdlet.ParameterSetName -eq 'PORT')	{	$cmd +=" $PortName"	}	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
 	if([string]::IsNullOrEmpty($Result))
-	{	write-host "Success : Find-Cage Command Executed Successfully $Result" -ForegroundColor Green
-		return  
-	}
+		{	write-host "Success : Find-Cage Command Executed Successfully $Result" -ForegroundColor Green
+			return  
+		}
 	else
-	{	throw  "FAILURE : While Executing Find-Cage `n $Result"
-	} 		
+		{	throw  "FAILURE : While Executing Find-Cage `n $Result"
+		} 		
 }
 }
 
@@ -127,7 +122,7 @@ Process
 		{	$ReturnObject = New-PWSHObjectFromCLIOutput -InterimResults $Result -verbose
 			Return  $ReturnObject
 		}
-		else
+	else
 		{	throw " FAILURE : While Executing Get-Cage `n $Result"		
 		}		
 } 

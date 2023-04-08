@@ -9,10 +9,8 @@ Function Show-CIM
 .SYNOPSIS
     Show the CIM server information
 .DESCRIPTION
-    The Show-CIM cmdlet displays the CIM server service state being configured,
-    either enabled or disabled. It also displays the server current running
-    status, either active or inactive. It displays the current status of the
-    HTTP and HTTPS ports and their port numbers. In addition, it shows the
+    The Show-CIM cmdlet displays the CIM server service state being configured, either enabled or disabled. It also displays the server current running
+    status, either active or inactive. It displays the current status of the HTTP and HTTPS ports and their port numbers. In addition, it shows the
     current status of the SLP port, that is either enabled or disabled.
 .PARAMETER Policy
     Show CIM server policy information
@@ -61,7 +59,7 @@ Process
 
 Function Start-CIM 
 {
-    <#
+<#
 .SYNOPSIS
     Start the CIM server to service CIM requests
 .DESCRIPTION
@@ -73,8 +71,7 @@ Function Start-CIM
     CIM server will start shortly.
 #>
 [CmdletBinding()]
-param(
-    )	
+param()	
 Begin
 {   Test-CLIConnectionB
 }

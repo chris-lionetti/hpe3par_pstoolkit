@@ -2,7 +2,7 @@
 ## 	© 2020,2021, 2023 Hewlett Packard Enterprise Development LP
 ##	Description: 	Inventory Management cmdlets 
 ##		
-Function Get-Inventory()
+Function Get-Inventory
 {
 <#
 .SYNOPSIS

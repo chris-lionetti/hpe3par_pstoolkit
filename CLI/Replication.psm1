@@ -1015,132 +1015,70 @@ Function Set-RCopyTargetWitness
 #>
 [CmdletBinding()]
 	param(
-		[Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$true)]
+		[Parameter(Mandatory)]
+		[ValidateSet("create","start","stop","remove","check")]
 		[String]	$SubCommand,
-		
-		[Parameter(Position=1, Mandatory=$false, ValueFromPipeline=$true)]
 		[switch]	$Remote,
-		
-		[Parameter(Position=2, Mandatory=$false, ValueFromPipeline=$true)]
 		[String]	$Witness_ip,
-		
-		[Parameter(Position=3, Mandatory=$false, ValueFromPipeline=$true)]
 		[String]	$Target,
-		
-		[Parameter(Position=4, Mandatory=$false, ValueFromPipeline=$true)]
 		[String]	$Node_id
 	)		
 Begin
 {	Test-CLIConnectionB
 }
 Process
-{	if($SubCommand)
-	{
-		$Scmd  = "create","start","stop","remove","check"
-		if($Scmd -eq $SubCommand)
-		{		
-			if($SubCommand -eq "create")
-			{
-				if($Witness_ip -And $Target)
-				{
-					$cmd= "setrcopytarget witness $SubCommand"	
-					if ($Remote)
-					{
-						$cmd += " -remote "
-					}
+{	if($SubCommand -eq "create")
+		{	if($Witness_ip -And $Target)
+				{	$cmd= "setrcopytarget witness $SubCommand"	
+					if ($Remote)	{	$cmd += " -remote "	}
 					$cmd +=" $Witness_ip $Target"
-					#write-host "$cmd"
 					$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
-					write-debuglog "  Executing Set-RCopyTargetWitness Changes the name of the indicated target   " "INFO:" 
 					if([string]::IsNullOrEmpty($Result))
-					{
-						return  "Success : Executing Set-RCopyTargetWitness Command`n$result "
-					}
+						{	return  "Success : Executing Set-RCopyTargetWitness Command`n$result "
+						}
 					else
-					{
-						return  "FAILURE : While Executing Set-RCopyTargetWitness`n$result "
-					} 
+						{	return  "FAILURE : While Executing Set-RCopyTargetWitness`n$result "
+						} 
 				}		
 				else
-				{
-					write-debugLog "witness_ip, target missing or anyone of them are missing." "ERR:" 
-					return "FAILURE : witness_ip, target missing or anyone of them are missing."
+				{	return "FAILURE : witness_ip, target missing or anyone of them are missing."
 				}
-			}
-			elseif($SubCommand -eq "start" -Or $SubCommand -eq "stop" -Or $SubCommand -eq "remove")
-			{
-				if($Target)
-				{
-					$cmd= "setrcopytarget witness $SubCommand"	
-					if ($Remote)
-					{
-						$cmd += " -remote "
-					}
+		}
+	if($SubCommand -eq "start" -Or $SubCommand -eq "stop" -Or $SubCommand -eq "remove")
+			{	if($Target)
+				{	$cmd= "setrcopytarget witness $SubCommand"	
+					if ($Remote)	{	$cmd += " -remote "	}
 					$cmd +=" $Target"
-					#write-host "$cmd"
 					$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
-					write-debuglog "  Executing Set-RCopyTargetWitness Changes the name of the indicated target   " "INFO:" 
 					if([string]::IsNullOrEmpty($Result))
-					{
-						return  "Success : Executing Set-RCopyTargetWitness Command`n$result "
-					}
+						{	return  "Success : Executing Set-RCopyTargetWitness Command`n$result "
+						}
 					else
-					{
-						return  "FAILURE : While Executing Set-RCopyTargetWitness`n$result "
-					} 
+						{	return  "FAILURE : While Executing Set-RCopyTargetWitness`n$result "
+						} 
 				}		
 				else
-				{
-					write-debugLog "Target is missing." "ERR:" 
-					return "FAILURE : Target is missing."
+				{	return "FAILURE : Target is missing."
 				}
 			}
 			elseif($SubCommand -eq "check")
-			{
-				if($Witness_ip)
-				{
-					$cmd= "setrcopytarget witness $SubCommand"	
-					if ($Remote)
-					{
-						$cmd += " -remote "
-					}
-					if($Node_Id)
-					{
-						$cmd += " -node $Node_Id "
-					}
+			{	if($Witness_ip)
+				{	$cmd= "setrcopytarget witness $SubCommand"	
+					if ($Remote)	{	$cmd += " -remote "	}
+					if($Node_Id)	{	$cmd += " -node $Node_Id "	}
 					$cmd +=" $Witness_ip $Target"
-					#write-host "$cmd"
 					$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd	
-					write-debuglog "  Executing Set-RCopyTargetWitness Changes the name of the indicated target   " "INFO:" 
 					if([string]::IsNullOrEmpty($Result))
-					{
-						return  "Success : Executing Set-RCopyTargetWitness Command`n$result "
+					{	return  "Success : Executing Set-RCopyTargetWitness Command`n$result "
 					}
 					else
-					{
-						return  "FAILURE : While Executing Set-RCopyTargetWitness`n$result "
+					{	return  "FAILURE : While Executing Set-RCopyTargetWitness`n$result "
 					} 
 				}		
 				else
-				{
-					write-debugLog "Witness_ip is missing." "ERR:" 
-					return "FAILURE : Witness_ip is missing."
+				{	return "FAILURE : Witness_ip is missing."
 				}
 			}
-			else
-			{
-				return "Invalid Sub Command, specify value as [witness create | start | stop | remove | check]"
-			}
-		}
-		else
-		{
-			return "Sub Command should any one of this [witness create | start | stop | remove | check ]"
-		}
-	}
-	else
-	{
-		return "Sub Command is missing, specify value as [witness create | start | stop | remove | check ]"
-	}	
 }
 }
 
@@ -1203,7 +1141,7 @@ Function Start-RCopy
 .DESCRIPTION
     The Start-RCopy command starts the Remote Copy Service.
 .EXAMPLE  
-	Start-RCopy 
+	PS:> Start-RCopy 
     
 	command starts the Remote Copy Service.
 #>
@@ -1461,39 +1399,18 @@ Function Test-RCopyLink
 	Specifies the port on which to run the test. If this specifier is not used, the test automatically runs on port 3492.
 #>
 [CmdletBinding()]
-param(		
-		[Parameter(Position=0, Mandatory=$false)]
-		[switch]	$StartClient,
-		
-		[Parameter(Position=1, Mandatory=$false)]
-		[switch]	$StopClient,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[switch]	$StartServer,
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[switch]	$StopServer,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[switch]	$PortConn,
-	
-		[Parameter(Position=5, Mandatory=$false)]
-		[String]	$TimeInSeconds,	
-
-		[Parameter(Position=6, Mandatory=$false)]
-		[switch]	$FCIP,
-		
-		[Parameter(Position=7, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]	$NSP,
-		
-		[Parameter(Position=8, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]	$Dest_IP_Addr,
-		
-		[Parameter(Position=9, Mandatory=$false)]
-		[String]	$Time,
-		
-		[Parameter(Position=10, Mandatory=$false,ValueFromPipeline=$true)]
-		[String]	$Port      
+param(	[Parameter(ParameterSetName='StartClient',Mandatory)]	[switch]	$StartClient,	
+		[Parameter(ParameterSetName='StopClient',Mandatory)]	[switch]	$StopClient,
+		[Parameter(ParameterSetName='StartServer',Mandatory)]	[switch]	$StartServer,
+		[Parameter(ParameterSetName='StopServer',Mandatory)]	[switch]	$StopServer,		
+		[Parameter(ParameterSetName='PortConnn',Mandatory)]		[switch]	$PortConn,
+		[ValidateRange(300,172800)]								[int]		$TimeInSeconds,	
+																[switch]	$FCIP,
+																[String]	$NSP,
+																[String]	$Dest_IP_Addr,
+		[Parameter(ParameterSetName='StartClient')]
+		[ValidateRange(300,172800)]								[int]		$Time,
+																[String]	$Port      
 	)	
 Begin	
 {	Test-CLIConnectionB
@@ -1501,25 +1418,20 @@ Begin
 Process
 {	$cmd= "checkrclink "
 	if($StartClient)	{	$cmd += " startclient "}
-	elseif($StopClient)	{	$cmd += " stopclient "	}
-	elseif($StartServer){	$cmd += " startserver "	}
-	elseif($StopServer){	$cmd += " stopserver "	}
-	elseif($PortConn)	{	$cmd += " portconn "	}
-	else	{	return "Please Select One of the subcommand from [ startclient | stopclient | startserver | stopserver | portconn] "	}
-
+	if($StopClient)		{	$cmd += " stopclient "	}
+	if($StartServer)	{	$cmd += " startserver "	}
+	if($StopServer)		{	$cmd += " stopserver "	}
+	if($PortConn)		{	$cmd += " portconn "	}
+	
 	if($TimeInSeconds)	{	$cmd += " -time $TimeInSeconds "	}
 	if($FCIP)			{	$cmd += " -fcip "	}
 	if($NSP)			{	$cmd += " $NSP "	}
-	else				{	return "Specifies the interface from which to check the link, expressed as node:slot:port"	}
 	if($Dest_IP_Addr)	{	$cmd += " $Dest_IP_Addr "	}
 	else				{	if($StartClient)	
 								{	return " Specifies the address of the target system Destination Address(for example, the IP address)"	}
 						}
-	if($StartClient)
-		{	if($Time)	{	$cmd += " $Time "	}
-			else		{	return "Specifies the test duration in seconds Time"	}
-		}
-	if($Port)	{		$cmd += " $Port "	}	
+	if($Time)			{	$cmd += " $Time "	}
+	if($Port)			{	$cmd += " $Port "	}	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
 	return 	$Result	
 }
@@ -1528,41 +1440,34 @@ Process
 Function Remove-RCopyVvFromGroup
 {
 <#
-  .SYNOPSIS
-   The Remove-RCopyVvFromGroup command removes a virtual volume from a remote-copy volume group.
-   
-  .DESCRIPTION
-   The Remove-RCopyVvFromGroup command removes a virtual volume from a remote-copy volume group.
-   
-  .EXAMPLE
+.SYNOPSIS
+	The Remove-RCopyVvFromGroup command removes a virtual volume from a remote-copy volume group.
+.DESCRIPTION
+	The Remove-RCopyVvFromGroup command removes a virtual volume from a remote-copy volume group.
+.EXAMPLE
 	Remove-RCopyVvFromGroup -VV_name vv1 -group_name Group1
+
 	dismisses virtual volume vv1 from Group1:
-   
-  .EXAMPLE  
+.EXAMPLE  
 	Remove-RCopyVvFromGroup -Pat -VV_name testvv* -group_name Group1
 	dismisses all virtual volumes that start with the name testvv from Group1:
-   
-  .EXAMPLE  
+.EXAMPLE  
 	Remove-RCopyVvFromGroup -KeepSnap -VV_name vv1 -group_name Group1
+
 	dismisses volume vv1 from Group1 and removes the corresponding volumes of vv1 on all the target systems of Group1.
-	
-  .EXAMPLE 
+.EXAMPLE 
 	Remove-RCopyVvFromGroup -RemoveVV -VV_name vv2 -group_name Group1
+
 	dismisses volume vv2 from Group2 and retains the resync snapshot associated with vv2 for this group.
-	
-  .PARAMETER Pat
+.PARAMETER Pat
 	Specifies that specified patterns are treated as glob-style patterns and that all remote-copy volumes matching the specified pattern will be dismissed from the remote-copy group.
-				
-  .PARAMETER KeepSnap
+.PARAMETER KeepSnap
 	Specifies that the local volume's resync snapshot should be retained.
-	
-  .PARAMETER RemoveVV
+.PARAMETER RemoveVV
 	Remove remote sides' volumes.	
-	    	
-  .PARAMETER VVname
+.PARAMETER VVname
 	The name of the volume to be removed. Volumes are added to a group with the admitrcopyvv command.	
-	
-  .PARAMETER GroupName      
+.PARAMETER GroupName      
 	The name of the group that currently includes the target.
 #>
 [CmdletBinding()]
@@ -1590,8 +1495,7 @@ Process
 				{	$cmd+=" $GroupName "
 				}
 			else
-				{	Write-DebugLog "Stop: Exiting  Remove-RCopyVvFromGroup  GroupName in unavailable "
-					Return "FAILURE : -GroupName $GroupName  is Unavailable to execute. "
+				{	Return "FAILURE : -GroupName $GroupName  is Unavailable to execute. "
 				}	
 		}
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
@@ -1602,461 +1506,189 @@ Process
 Function Sync-RecoverDRRcopyGroup
 {
 <#
-  .SYNOPSIS
+.SYNOPSIS
     The Sync-RecoverDRRcopyGroup command performs the following actions:
     Performs data synchronization from primary remote copy volume groups to secondary remote copy volume groups.
-    Performs the complete recovery operation (synchronization and storage failover operation which performs role reversal to make secondary volumes as primary which becomes read-write) for the remote copy volume group in both planned migration and disaster scenarios.
-
-
-  .DESCRIPTION
+    Performs the complete recovery operation (synchronization and storage failover operation which performs role reversal to make 
+	secondary volumes as primary which becomes read-write) for the remote copy volume group in both planned migration and disaster scenarios.
+.DESCRIPTION
     The Sync-RecoverDRRcopyGroup command performs the following actions:
     Performs data synchronization from primary remote copy volume groups to secondary remote copy volume groups.
-    Performs the complete recovery operation (synchronization and storage failover operation which performs role reversal to make secondary volumes as primary which becomes read-write) for the remote copy volume group in both planned migration and disaster scenarios.
-	
-  .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Target_name test -Group_name Grp1
-
-  .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand recovery -Target_name test -Group_name Grp1
-   
-   EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Force -Group_name Grp1
-   
-   .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Nowaitonsync -Group_name Grp1
-   
-   .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Nosyncbeforerecovery -Group_name Grp1
-   
-   .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Nofailoveronlinkdown -Group_name Grp1
-   
-   .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Forceassecondary -Group_name Grp1
-   
-   .EXAMPLE
-   Sync-RecoverDRRcopyGroup  -Subcommand sync -Waittime 60 -Group_name Grp1
- 
-  .PARAMETER Subcommand
-	sync
-	Performs the data synchronization from primary remote copy volume
-	group to secondary remote copy volume group.
-	
-	recovery
-	Performs complete recovery operation for the remote copy volume
-	group in both planned migration and disaster scenarios.
-		
-  .PARAMETER Target_name <target_name>
-	Specifies the target for the subcommand. This is optional for
-	single target groups but is required for multi-target groups.
-	
-  .PARAMETER Force
+    Performs the complete recovery operation (synchronization and storage failover operation which performs role reversal to make 
+	secondary volumes as primary which becomes read-write) for the remote copy volume group in both planned migration and disaster scenarios.
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Target_name test -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand recovery -Target_name test -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Force -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Nowaitonsync -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Nosyncbeforerecovery -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Nofailoveronlinkdown -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Forceassecondary -Group_name Grp1
+.EXAMPLE
+	Sync-RecoverDRRcopyGroup  -Subcommand sync -Waittime 60 -Group_name Grp1
+.PARAMETER Subcommand
+	Sync: Performs the data synchronization from primary remote copy volume group to secondary remote copy volume group.
+	Recovery: Performs complete recovery operation for the remote copy volume group in both planned migration and disaster scenarios.
+.PARAMETER Target_name <target_name>
+	Specifies the target for the subcommand. This is optional for single target groups but is required for multi-target groups.
+.PARAMETER Force
 	Does not ask for confirmation for this command.
-
-  .PARAMETER Nowaitonsync
-	Specifies that this command should not wait for data synchronization
-	from primary remote copy volume groups to secondary remote copy
-	volume groups.
-	This option is valid only for the sync subcommand.
-
-  .PARAMETER Nosyncbeforerecovery
-	Specifies that this command should not perform data synchronization
-	before the storage failover operation (performing role reversal to
-	make secondary volumes as primary which becomes read-write). This
-	option can be used if data synchronization is already done outside
-	of this command and it is required to do only storage failover
-	operation (performing role reversal to make secondary volumes as
-	primary which becomes read-write).
-	This option is valid only for the recovery subcommand.
-
-  .PARAMETER Nofailoveronlinkdown
-	Specifies that this command should not perform storage failover
-	operation (performing role reversal to make secondary volumes as
-	primary which becomes read-write) when the remote copy link is down.
-	This option is valid only for the recovery subcommand.
-
-  .PARAMETER Forceasprimary
-	Specifies that this command does the storage failover operation
-	(performing role reversal to make secondary volumes as primary
-	which becomes read-write) and forces secondary role as primary
-	irrespective of whether the data is current or not.
-	This option is valid only for the recovery subcommand.
-	The successful execution of this command must be immediately
-	followed by the execution of the recovery subcommand with
-	forceassecondary option on the other array. The incorrect use
-	of this option can lead to the primary secondary volumes not
-	being consistent. see the notes section for additional details.
-
-  .PARAMETER Forceassecondary
+.PARAMETER Nowaitonsync
+	Specifies that this command should not wait for data synchronization from primary remote copy volume groups to secondary remote copy
+	volume groups. This option is valid only for the sync subcommand.
+.PARAMETER Nosyncbeforerecovery
+	Specifies that this command should not perform data synchronization before the storage failover operation (performing role reversal to
+	make secondary volumes as primary which becomes read-write). This option can be used if data synchronization is already done outside
+	of this command and it is required to do only storage failover operation (performing role reversal to make secondary volumes as
+	primary which becomes read-write). This option is valid only for the recovery subcommand.
+.PARAMETER Nofailoveronlinkdown
+	Specifies that this command should not perform storage failover operation (performing role reversal to make secondary volumes as
+	primary which becomes read-write) when the remote copy link is down. This option is valid only for the recovery subcommand.
+.PARAMETER Forceasprimary
+	Specifies that this command does the storage failover operation (performing role reversal to make secondary volumes as primary
+	which becomes read-write) and forces secondary role as primary irrespective of whether the data is current or not.
+	This option is valid only for the recovery subcommand. The successful execution of this command must be immediately
+	followed by the execution of the recovery subcommand with forceassecondary option on the other array. The incorrect use
+	of this option can lead to the primary secondary volumes not being consistent. see the notes section for additional details.
+.PARAMETER Forceassecondary
 	This option must be used after successful execution of recovery subcommand with forceasprimary option on the other array.
-	Specifies that this changes the primary volume groups to secondary
-	volume groups. The incorrect use of this option can lead to the
-	primary secondary volumes not being consistent.
-	This option is valid only for the recovery subcommand.
-
-  .PARAMETER Nostart
+	Specifies that this changes the primary volume groups to secondary volume groups. The incorrect use of this option can lead to the
+	primary secondary volumes not being consistent. This option is valid only for the recovery subcommand.
+.PARAMETER Nostart
 	Specifies that this command does not start the group after storage failover operation is complete.
 	This option is valid only for the recovery subcommand.
-
-  .PARAMETER Waittime <timeout_value>
-	Specifies the timeout value for this command.
-	Specify the time in the format <time>{s|S|m|M}. Value is a positive
-	integer with a range of 1 to 720 minutes (12 Hours).
-	Default time is 720 minutes. 
-		
-  .PARAMETER Group_name
+.PARAMETER Waittime <timeout_value>
+	Specifies the timeout value for this command. Specify the time in the format <time>{s|S|m|M}. Value is a positive
+	integer with a range of 1 to 720 minutes (12 Hours). Default time is 720 minutes. 
+.PARAMETER Group_name
 	Name of the Group
-	 
-  .PARAMETER SANConnection 
-    Specify the SAN Connection object created with New-CLIConnection or New-PoshSshConnection
-	
-  .Notes
-    NAME:  Sync-RecoverDRRcopyGroup
-    LASTEDIT: March 2020
-    KEYWORDS: Sync-RecoverDRRcopyGroup
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
+#>
 [CmdletBinding()]
-	param(
-	
-		[Parameter(Position=0, Mandatory=$false)]
-		[String]
-		$Subcommand,
-	
-		[Parameter(Position=1, Mandatory=$false)]
-		[String]
-		$Target_name,
-		
-		[Parameter(Position=2, Mandatory=$false)]
-		[Switch]
-		$Nowaitonsync,
-		
-		[Parameter(Position=3, Mandatory=$false)]
-		[Switch]
-		$Nosyncbeforerecovery,
-		
-		[Parameter(Position=4, Mandatory=$false)]
-		[Switch]
-		$Nofailoveronlinkdown,
-
-		[Parameter(Position=5, Mandatory=$false)]
-		[Switch]
-		$Forceasprimary,
-		
-		[Parameter(Position=6, Mandatory=$false)]
-		[Switch]
-		$Nostart,
-		
-		[Parameter(Position=7, Mandatory=$false)]
-		[String]
-		$Waittime,
-		
-		[Parameter(Position=8, Mandatory=$false)]
-		[String]
-		$Group_name,		
-				
-		[Parameter(Position=9, Mandatory=$false, ValueFromPipeline=$true)]
-        $SANConnection = $global:SANConnection       
+param(	[Parameter(Mandatory)]	[ValidateSet('sync','recovery')]
+		[String]	$Subcommand,	
+		[String]	$Target_name,
+		[Switch]	$Nowaitonsync,
+		[Switch]	$Nosyncbeforerecovery,
+		[Switch]	$Nofailoveronlinkdown,
+		[Switch]	$Forceasprimary,
+		[Switch]	$Nostart,
+		[String]	$Waittime,
+		[Parameter(Mandatory)]
+		[String]	$Group_name
 	)	
-	
-	Write-DebugLog "Start: In Sync-RecoverDRRcopyGroup   - validating input values" $Debug 
-	#check if connection object contents are null/empty
-	if(!$SANConnection)
-	{		
-		#check if connection object contents are null/empty
-		$Validate1 = Test-CLIConnection $SANConnection
-		if($Validate1 -eq "Failed")
-		{
-			#check if global connection object contents are null/empty
-			$Validate2 = Test-CLIConnection $global:SANConnection
-			if($Validate2 -eq "Failed")
-			{
-				Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-				Write-DebugLog "Stop: Exiting Sync-RecoverDRRcopyGroup since SAN connection object values are null/empty" $Debug
-				return "Unable to execute the cmdlet Sync-RecoverDRRcopyGroup since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-			}
-		}
-	}
-	$plinkresult = Test-PARCli
-	if($plinkresult -match "FAILURE :")
-	{
-		write-debuglog "$plinkresult" "ERR:" 
-		return $plinkresult
-	}		
-	$cmd= "controldrrcopygroup "
-	
-	if ($Subcommand)
-	{	
-		$a = "sync","recovery"
-		$l=$Subcommand
-		if($a -eq $l)
-		{
-			$cmd+=" $Subcommand -f"							
-		}
-		else
-		{ 
-			Write-DebugLog "Stop: Exiting  Sync-RecoverDRRcopyGroup   since -Subcommand $Subcommand in incorrect "
-			Return "FAILURE : -Subcommand :- $Subcommand is an Incorrect Subcommand  [ sync | recovery ]  can be used only . "
-		}		
-	}	
-	else
-	{
-		return " FAILURE :  Subcommand is mandatory please select any one from sync/recovery "
-	}
-	if ($Target_name)
-	{		
-		$cmd+=" -target $Target_name "	
-	}	
-	if ($Nowaitonsync)
-	{		
-		$cmd+=" -nowaitonsync "	
-	}
-	if ($Nosyncbeforerecovery)
-	{		
-		$cmd+=" -nosyncbeforerecovery "	
-	}
-	if ($Nofailoveronlinkdown)
-	{		
-		$cmd+=" -nofailoveronlinkdown "	
-	}
-	if ($Forceasprimary)
-	{		
-		$cmd+=" -forceasprimary "	
-	}
-	if ($Nostart)
-	{		
-		$cmd+=" -nostart "	
-	}
-	if ($Waittime)
-	{		
-		$cmd+=" -waittime $Waittime "	
-	}	
-	if ($Group_name)
-	{		
-		$cmd+=" $Group_name "	
-	}	
-	else
-	{
-		return " FAILURE :  Group_name is mandatory to execute Sync-RecoverDRRcopyGroup command "
-	}	
-		
+Begin	
+{	Test-CLIConnectionB
+}
+Process
+{	$cmd= "controldrrcopygroup "
+	$cmd+=" $Subcommand -f"							
+	if ($Target_name)			{	$cmd+=" -target $Target_name "		}	
+	if ($Nowaitonsync)			{	$cmd+=" -nowaitonsync "		}
+	if ($Nosyncbeforerecovery)	{	$cmd+=" -nosyncbeforerecovery "		}
+	if ($Nofailoveronlinkdown)	{	$cmd+=" -nofailoveronlinkdown "		}
+	if ($Forceasprimary)		{	$cmd+=" -forceasprimary "		}
+	if ($Nostart)				{	$cmd+=" -nostart "		}
+	if ($Waittime)				{	$cmd+=" -waittime $Waittime "	}	
+	if ($Group_name)			{	$cmd+=" $Group_name "		}	
 	$Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
-	write-debuglog " The Sync-RecoverDRRcopyGroup command creates and admits physical disk definitions to enable the use of those disks  " "INFO:" 
 	return 	$Result	
-} # End Sync-RecoverDRRcopyGroup
+}
+}
 
-####################################################################################################################
-## FUNCTION Set-AdmitRCopyHost
-####################################################################################################################
-Function Set-AdmitRCopyHost {
-    <#
-  .SYNOPSIS
+Function Set-AdmitRCopyHost 
+{
+<#
+.SYNOPSIS
     Add hosts to a remote copy group.
-                                                                                                           .
-  .DESCRIPTION
+.DESCRIPTION
     The Set-AdmitRCopyHost command adds hosts to a remote copy group.
-
-  .PARAMETER Proximity
+.PARAMETER Proximity
     Valid values are:
         primary:   Hosts with Active/Optimized I/O paths to the local primary storage device
         secondary: Hosts with Active/Optimized I/O paths to the local secondary storage device
         all:       Hosts with Active/Optimized I/O paths to both storage devices
-
-  .PARAMETER GroupName
+.PARAMETER GroupName
         The group name, as specified with New-RCopyGroup cmdlet.
-
-  .PARAMETER HostName
+.PARAMETER HostName
         The host name, as specified with New-Host cmldet.
-   
-  .EXAMPLES
+.EXAMPLE
     The following example adds host1 to group1 with Proximity primary:
-    Set-AdmitRCopyHost -proximity primary group1 host1
-
+    PS:> Set-AdmitRCopyHost -proximity primary group1 host1
+.EXAMPLE
     The following example shows the Active/Active groups with different proximities set:
-    Get-HostSet -summary
+    PS:> Get-HostSet -summary
 
-         Id Name             HOST_Cnt VVOLSC Flashcache QoS RC_host
+        Id Name             HOST_Cnt VVOLSC Flashcache QoS RC_host
         552 RH2_Group0_1            1 NO     NO         NO  All
         555 RH0_Group0_0            1 NO     NO         NO  Pri
         556 RH1_Group0_2            1 NO     NO         NO  Sec
 
-  .SUPPORTED ARRAY VERSIONS
-     HPE Primera OS 4.3 onwards, HPE Alletra OS 9.3 onwards
+.NOTES
+    HPE Primera OS 4.3 onwards, HPE Alletra OS 9.3 onwards
 
-  .NOTES
-    This command is only supported for groups for which the active_active policy is set.
+	This command is only supported for groups for which the active_active policy is set.
     The policy value can be seen in Get-HostSet -summary under the RC_host column.
-
-    NAME:  Set-AdmitRCopyHost
-    LASTEDIT: 25/04/2021
-    KEYWORDS: Set-AdmitRCopyHost
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Position = 0, Mandatory = $false, ValueFromPipeline = $true)]
-        [ValidateSet("primary", "secondary", "all")]
-        [String]
-        $Proximity,		
-
-        [Parameter(Position = 1, Mandatory = $false, ValueFromPipeline = $true)]
-        [String]
-        $GroupName,
-
-        [Parameter(Position = 2, Mandatory = $false, ValueFromPipeline = $true)]
-        [String]
-        $HostName,		
-		
-        [Parameter(Position = 3, Mandatory = $false, ValueFromPipeline = $true)]
-        $SANConnection = $global:SANConnection 
-       
+#>
+[CmdletBinding()]
+param(	[ValidateSet("primary", "secondary", "all")]
+        [String]    $Proximity,		
+        [String]    $GroupName,
+        [String]    $HostName
     )	
-	
-    Write-DebugLog "Start: In Set-AdmitRCopyHost   - validating input values" $Debug 
-    #check if connection object contents are null/empty
-    if (!$SANConnection) {		
-        #check if connection object contents are null/empty
-        $Validate1 = Test-CLIConnection $SANConnection
-        if ($Validate1 -eq "Failed") {
-            #check if global connection object contents are null/empty
-            $Validate2 = Test-CLIConnection $global:SANConnection
-            if ($Validate2 -eq "Failed") {
-                Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-                Write-DebugLog "Stop: Exiting Set-AdmitRCopyHost since SAN connection object values are null/empty" $Debug
-                return "Unable to execute the cmdlet Set-AdmitRCopyHost since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-            }
-        }
-    }
-    $plinkresult = Test-PARCli
-    if ($plinkresult -match "FAILURE :") {
-        write-debuglog "$plinkresult" "ERR:" 
-        return $plinkresult
-    }		
-    $cmd = "admitrcopyhost  "
-	
-    if ($Proximity) {	
-        $cmd += " -proximity $Proximity "		
-    }	
-    if ($GroupName) {	
-        $cmd += " $GroupName "		
-    }
-    if ($HostName) {	
-        $cmd += " $HostName "		
-    }
-	
+Begin	
+{	Test-CLIConnectionB
+}
+Process
+{	$cmd = "admitrcopyhost  "
+    if ($Proximity) {    $cmd += " -proximity $Proximity "    }	
+    if ($GroupName) {    $cmd += " $GroupName "	}
+    if ($HostName) 	{    $cmd += " $HostName "	}
     $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
-
-    write-debuglog " The Set-AdmitRCopyHost command Add hosts to a remote copy group" "INFO:" 
     return 	$Result	
+}
+}
 
-} # End Set-AdmitRCopyHost
-
-####################################################################################################################
-## FUNCTION Remove-RCopyHost
-####################################################################################################################
 Function Remove-RCopyHost {
-    <#
-  .SYNOPSIS
+<#
+.SYNOPSIS
     Dismiss/Remove hosts from a remote copy group.
-                                                                                                           .
-  .DESCRIPTION
+.DESCRIPTION
     The Remove-RCopyHost command removes hosts from a remote copy group
- 
-  .PARAMETER F
-    Specifies that the command is forced. If this option is not used, the
-    command requires confirmation before proceeding with its operation.
-
-  .PARAMETER GroupName
+.PARAMETER F
+    Specifies that the command is forced. If this option is not used, the command requires confirmation before proceeding with its operation.
+.PARAMETER GroupName
     The group name, as specified with New-RCopyGroup cmdlet.
-
-  .PARAMETER HostName
+.PARAMETER HostName
     The host name, as specified with New-Host cmldet.
-   
-  .EXAMPLES
+.EXAMPLE
     The following example removes host1 from group1:
     Remove-RCopyHost group1 host1
-
-  .SUPPORTED ARRAY VERSIONS
-     HPE Primera OS 4.3 onwards, HPE Alletra OS 9.3 onwards
-
-  .NOTES
+.NOTES
+    HPE Primera OS 4.3 onwards, HPE Alletra OS 9.3 onwards
     This command is only supported for groups for which the active_active policy is set.
-
-    NAME:  Remove-RCopyHost
-    LASTEDIT: 25/04/2021
-    KEYWORDS: Remove-RCopyHost
-   
-  .Link
-     http://www.hpe.com
- 
- #Requires PS -Version 3.0
-
- #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Position = 0, Mandatory = $false, ValueFromPipeline = $true)]
-        [String]
-        $F,
-
-        [Parameter(Position = 1, Mandatory = $false, ValueFromPipeline = $true)]
-        [String]
-        $GroupName,
-
-        [Parameter(Position = 2, Mandatory = $false, ValueFromPipeline = $true)]
-        [String]
-        $HostName,		
-		
-        [Parameter(Position = 3, Mandatory = $false, ValueFromPipeline = $true)]
-        $SANConnection = $global:SANConnection        
+#>
+[CmdletBinding()]
+param(	[String]    $F,
+        [String]    $GroupName,
+        [String]    $HostName
     )	
-	
-    Write-DebugLog "Start: In Remove-RCopyHost   - validating input values" $Debug 
-    #check if connection object contents are null/empty
-    if (!$SANConnection) {
-        #check if connection object contents are null/empty
-        $Validate1 = Test-CLIConnection $SANConnection
-        if ($Validate1 -eq "Failed") {
-            #check if global connection object contents are null/empty
-            $Validate2 = Test-CLIConnection $global:SANConnection
-            if ($Validate2 -eq "Failed") {
-                Write-DebugLog "Connection object is null/empty or the array address (FQDN/IP Address) or user credentials in the connection object are either null or incorrect.  Create a valid connection object using New-CLIConnection or New-PoshSshConnection" "ERR:"
-                Write-DebugLog "Stop: Exiting Remove-RCopyHost since SAN connection object values are null/empty" $Debug
-                return "Unable to execute the cmdlet Remove-RCopyHost since no active storage connection session exists. `nUse New-PoshSSHConnection or New-CLIConnection to start a new storage connection session."
-            }
-        }
-    }
-    $plinkresult = Test-PARCli
-    if ($plinkresult -match "FAILURE :") {
-        write-debuglog "$plinkresult" "ERR:" 
-        return $plinkresult
-    }		
-    $cmd = "dismissrcopyhost  "
-	
-    if ($F) {	
-        $cmd += " -f "		
-    }
-    if ($GroupName) {	
-        $cmd += " $GroupName "		
-    }
-    if ($HostName) {	
-        $cmd += " $HostName "		
-    }
-	
+begin
+{	Test-CLIConnectionB
+}	
+Process
+{	$cmd = "dismissrcopyhost  "
+    if ($F) 		{    $cmd += " -f " 		}
+    if ($GroupName) {    $cmd += " $GroupName "	}
+    if ($HostName) 	{	 $cmd += " $HostName "	}
     $Result = Invoke-CLICommand -Connection $SANConnection -cmds  $cmd
-
-    write-debuglog " The Remove-RCopyHost command removes hosts from a remote copy group" "INFO:" 
     return 	$Result	
-
+}
 } 
 
 Export-ModuleMember Add-RCopyTarget , Add-RCopyVv , Add-RCopyLink , Disable-RCopylink , Disable-RCopyTarget , Disable-RCopyVv , Get-RCopy ,

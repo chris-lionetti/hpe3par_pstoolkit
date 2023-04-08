@@ -57,7 +57,7 @@ Process
 } 
 }
 
-Function New-Maint()
+Function New-Maint
 {
 <#
 .SYNOPSIS
@@ -96,7 +96,7 @@ Process
 } 
 }
 
-Function Set-Maint()
+Function Set-Maint
 {
 <#
 .SYNOPSIS
